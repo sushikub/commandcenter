@@ -332,6 +332,99 @@ header h1#pgTitle{margin:0;font:700 19px/1.15 var(--f-display);letter-spacing:.0
 .zone .tiers i{display:block;height:100%}
 .zone .zm.cum{color:var(--fg)}
 .zsep{font:600 12px var(--f-display);color:var(--muted);letter-spacing:.03em;padding:6px 0 0}
+
+/* ---- sub menu ---- */
+.nav a.sub{padding:7px 10px 7px 22px;font-size:13.5px;position:relative;margin-left:16px;border-left:1.5px solid var(--line);border-radius:0 8px 8px 0}
+.nav a.sub svg{width:16px;height:16px}
+.nav a.parent-on{color:var(--accent)}
+.nav a.parent-on svg{color:var(--accent)}
+
+/* ---- data page ---- */
+.p-sim{background:var(--sunken);color:var(--muted)}
+.p-auto{background:var(--accent-soft);color:var(--accent)}
+.p-none{background:transparent;color:var(--muted);border:1px dashed var(--line)}
+.btn.sm{padding:4px 10px;font-size:12.5px}
+.btn.danger{color:var(--short)}
+.btn.danger:hover{border-color:var(--short)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.dmtop{flex-direction:row;flex-wrap:wrap;gap:12px 20px;padding:14px 16px;align-items:center;justify-content:space-between}
+.dmtop-l{display:flex;flex-direction:column;gap:6px;min-width:0;flex:1 1 420px}
+#dmMode{font-size:14px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.dmtop-r{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.chk{display:flex;gap:7px;align-items:center;font-size:13px;cursor:pointer}
+.chk input{accent-color:var(--accent);margin:0}
+.dmgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,420px),1fr));gap:14px}
+.dmc{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.dmh{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:start}
+.dmn{width:28px;height:28px;border-radius:8px;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;font:700 14px var(--f-display)}
+.dmc.locked .dmn{background:var(--sunken);color:var(--muted)}
+.dmh h3{margin:0;font:600 16px/1.3 var(--f-display)}
+.dmh h3 small{font:500 11.5px var(--f-body);color:var(--muted);margin-left:4px}
+.dmh p{margin:2px 0 0;font-size:12.5px;color:var(--muted)}
+.dmh .pill{white-space:nowrap}
+.dmmeta{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12.5px;color:var(--muted);padding:6px 10px;background:var(--sunken);border-radius:7px}
+.dmmeta b{color:var(--fg);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+.dmcols{display:flex;flex-wrap:wrap;gap:5px}
+.dmcols .col{font-size:11.5px;padding:1px 8px;border-radius:5px;border:1px solid var(--line);color:var(--muted)}
+.dmcols .col.req{color:var(--fg);border-color:color-mix(in srgb,var(--fg) 30%,var(--line));font-weight:600}
+.drop{display:flex;flex-direction:column;align-items:center;gap:4px;padding:16px 12px;border:1.5px dashed color-mix(in srgb,var(--accent) 45%,var(--line));border-radius:9px;background:color-mix(in srgb,var(--accent) 4%,transparent);cursor:pointer;text-align:center;font-size:13px;position:relative}
+.drop:hover,.drop.over{background:var(--accent-soft);border-color:var(--accent)}
+.drop:focus-within{outline:2px solid var(--accent);outline-offset:2px}
+.drop input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%}
+.drop svg{width:22px;height:22px;stroke:var(--accent);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.drop u{color:var(--accent);text-decoration:none;font-weight:600}
+.drop small{font-size:11px;color:var(--muted);letter-spacing:.04em}
+.dmc.locked .drop{border-color:var(--line);background:none;cursor:not-allowed;color:var(--muted)}
+.dmc.locked .drop svg{stroke:var(--muted)}
+.dmc.locked .drop input{cursor:not-allowed}
+.dmact{display:flex;flex-wrap:wrap;gap:6px}
+.dmrow2{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,.8fr) minmax(0,1fr);gap:14px;align-items:stretch}
+#dmCardOpt>.dmc{flex:1}
+.dmrow2>.panel{align-self:start}
+#dmHealthList{display:flex;flex-direction:column}
+.hrow2{display:grid;grid-template-columns:auto auto minmax(0,1fr);gap:8px 10px;align-items:baseline;padding:9px 14px;border-bottom:1px solid var(--line);font-size:13px}
+.hrow2 b{white-space:nowrap}
+.hrow2 span:last-child{color:var(--muted)}
+.hd-ok{background:var(--ok)}.hd-warn{background:var(--over)}.hd-none{background:var(--offline)}
+.dmset{padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.fld{display:flex;flex-direction:column;gap:6px;font-size:13px}
+.fld span{display:flex;align-items:center;gap:6px}
+.fld input[type=number]{width:72px;border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:5px 8px;font-family:var(--f-display)}
+.fld select{border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:5px 8px;max-width:100%}
+.dmlog{max-height:300px;overflow:auto}
+.lg{display:grid;grid-template-columns:auto auto minmax(0,1fr);gap:8px;padding:8px 14px;border-bottom:1px solid var(--line);font-size:12.5px;align-items:baseline}
+.lg .num{color:var(--muted);white-space:nowrap}
+.lg b{white-space:nowrap}
+.lg span:last-child{color:var(--muted);overflow-wrap:anywhere}
+
+/* review dialog */
+.mbox.wide{width:min(860px,100%)}
+.rvh{display:flex;gap:10px;align-items:flex-start}
+.rvh .x{margin-left:auto;border:0;background:var(--sunken);width:32px;height:32px;border-radius:8px;cursor:pointer;flex:none}
+.mbox section{display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--line);padding-top:12px}
+.mbox h4{margin:0;font:600 14px var(--f-display);letter-spacing:.02em}
+.mapg{display:grid;grid-template-columns:minmax(120px,170px) minmax(140px,220px) minmax(0,1fr);gap:6px 12px;align-items:center}
+.mapg select{border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:5px 8px;min-width:0}
+.mapg .mf b{font-weight:500;font-size:13px}
+.mapg .smp{font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vsum{display:flex;flex-wrap:wrap;gap:6px}
+.iss{display:flex;flex-direction:column;gap:4px;font-size:13px}
+.iss>div{display:flex;gap:8px;align-items:baseline}
+.iss .dot{flex:none;transform:translateY(-1px)}
+.iss .err .dot{background:var(--short)}.iss .warn .dot{background:var(--over)}
+.iss .rws{color:var(--muted);font-size:12px}
+.pv{border:1px solid var(--line);border-radius:8px}
+.pv td,.pv th{padding:5px 9px;font-size:12.5px}
+.modes{display:flex;flex-direction:column;gap:6px;font-size:13px}
+.modes label{display:flex;gap:8px;align-items:center;cursor:pointer}
+.modes input{accent-color:var(--accent);margin:0}
+#dmCopyBox{width:100%;font:12px ui-monospace,Menlo,Consolas,monospace;border:1px solid var(--line);border-radius:6px;padding:8px;background:var(--sunken);color:var(--fg)}
+@media (max-width:1100px){.dmrow2{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:620px){.mapg{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.mapg .smp{grid-column:1/-1;margin-top:-4px}.dmh{grid-template-columns:auto minmax(0,1fr)}.dmh .pill{grid-column:2;justify-self:start}}
+
+.stdf{font-size:12.5px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.stdf code{font:600 12px ui-monospace,Menlo,Consolas,monospace;background:var(--accent-soft);color:var(--accent);padding:2px 8px;border-radius:5px}
+.mbox .modes label{flex-direction:row;font-weight:400}
 </style>
 
 <div class="shell">
@@ -342,10 +435,11 @@ header h1#pgTitle{margin:0;font:700 19px/1.15 var(--f-display);letter-spacing:.0
     <a href="#overview" data-go="overview"><svg viewBox="0 0 24 24"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg>ภาพรวมไรเดอร์</a>
     <div class="grp">วางแผนพื้นที่</div>
     <a href="#delivery" data-go="delivery"><svg viewBox="0 0 24 24"><circle cx="12" cy="11" r="8"/><circle cx="12" cy="11" r="2.5"/><path d="M12 19v3"/></svg>พื้นที่จัดส่ง</a>
+    <a href="#data" data-go="data" class="sub"><svg viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="7" ry="2.5"/><path d="M5 6v6c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5V6M5 12v6c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5v-6"/></svg>จัดการข้อมูล</a>
   </div>
   <div class="foot">
     <span class="badge" id="srcBadge">ข้อมูลตัวอย่าง (จำลอง)</span>
-    <button class="btn primary" id="importBtn">นำเข้าข้อมูลจริง</button>
+    <button class="btn primary" id="importBtn">อัปโหลดข้อมูลจริง</button>
   </div>
 </nav>
 <div class="scrim2" id="sideScrim" hidden></div>
@@ -527,6 +621,47 @@ header h1#pgTitle{margin:0;font:700 19px/1.15 var(--f-display);letter-spacing:.0
   </section>
 </div>
 <div id="dtip" hidden></div>
+<div class="wrap" data-page="data" id="dmPage" hidden>
+  <section class="dmtop panel">
+    <div class="dmtop-l">
+      <div id="dmMode"></div>
+      <div class="hint">อัปโหลดตามลำดับเลข ไฟล์สาขาต้องมาก่อน เพราะไฟล์อื่นอ้างถึงรหัสสาขา · รองรับ CSV (UTF-8 หรือภาษาไทยจาก Excel), Excel และ GeoJSON/KML สำหรับเทรดแอเรีย · ไฟล์อ่านในเบราว์เซอร์นี้เท่านั้น ไม่ถูกส่งออกไปที่ใด</div>
+    </div>
+    <div class="dmtop-r">
+      <label class="chk"><input type="checkbox" id="dmRemember"> จำข้อมูลที่อัปโหลดไว้ในเบราว์เซอร์นี้</label>
+      <button class="btn danger" id="dmReset">ล้างข้อมูลทั้งหมด กลับไปใช้ข้อมูลจำลอง</button>
+    </div>
+  </section>
+
+  <section class="dmgrid" id="dmCards"></section>
+
+  <div class="panel" id="dmHealth" hidden>
+    <div class="ph"><h2>ตรวจสุขภาพข้อมูลที่ใช้อยู่</h2><span class="note">ผลจากการรวมไฟล์ทั้งหมดเข้าด้วยกัน</span></div>
+    <div id="dmHealthList"></div>
+  </div>
+
+  <section class="dmrow2">
+    <div id="dmCardOpt" style="display:flex;min-width:0"></div>
+    <div class="panel">
+      <div class="ph"><h2>ตั้งค่า</h2></div>
+      <div class="dmset">
+        <label class="fld">นับว่าสาขา "ไรเดอร์เกิน" เมื่อออนไลน์มากกว่าที่ต้องการตั้งแต่ <span><input type="number" id="overN2" min="1" max="20" value="2"> คน</span></label>
+        <div class="hint">เกณฑ์รัศมีและ SLA ตั้งได้ที่หน้าพื้นที่จัดส่ง</div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="ph"><h2>ประวัติการอัปโหลด</h2></div>
+      <div id="dmLog" class="dmlog"></div>
+    </div>
+  </section>
+</div>
+
+<div class="modal" id="dmRev" hidden><div class="mbox wide" id="dmRevBox" role="dialog" aria-modal="true" aria-label="ตรวจสอบไฟล์ก่อนนำเข้า"></div></div>
+<div class="modal" id="dmCopy" hidden><div class="mbox" role="dialog" aria-modal="true" aria-labelledby="dmCopyT">
+  <h3 id="dmCopyT">คัดลอกข้อความ</h3><div class="hint">เบราว์เซอร์นี้ไม่ให้คัดลอกอัตโนมัติ ข้อความถูกเลือกไว้แล้ว กด Ctrl+C (หรือ ⌘+C) เพื่อคัดลอก</div>
+  <textarea id="dmCopyBox" rows="10" aria-label="ข้อความสำหรับคัดลอก"></textarea>
+  <div class="row"><button class="btn" id="dmCopyX">ปิด</button></div>
+</div></div>
 </main></div>
 
 <div id="tip" hidden></div>
@@ -594,7 +729,8 @@ grp(13,['Narathiwat','Pattani','Yala','Trang','Phatthalung','Songkhla','Satun'])
 const PROV = GEO_PROV;
 const provByCode = Object.fromEntries(PROV.map(p => [p.c, p]));
 const provByName = Object.fromEntries(PROV.map(p => [p.n, p]));
-const bkkArea = d => d.lon < 100.49 ? 3 : d.lat > 13.78 ? 1 : 2;
+let BKK_FIXED = null;
+const bkkArea = d => BKK_FIXED != null ? BKK_FIXED : d.lon < 100.49 ? 3 : d.lat > 13.78 ? 1 : 2;
 
 const DEMAND = [.25,.15,.1,.08,.08,.12,.3,.5,.62,.72,.85,.97,1,.9,.7,.62,.68,.85,1,.95,.8,.6,.45,.35];
 const ST = {deliver:{t:'กำลังส่งงาน',c:'var(--deliver)'},pickup:{t:'ไปรับของ',c:'var(--pickup)'},idle:{t:'ว่าง รองาน',c:'var(--idle)'},break:{t:'พัก',c:'var(--break)'},offline:{t:'ออฟไลน์',c:'var(--offline)'}};
@@ -609,7 +745,7 @@ let filt = {q:'', area:0, prov:'', st:'all', iss:'all'};
 let sortK = 'diff', sortDir = 1, showN = 50, mapMode = 'prov', openBranch = null, hlRider = null;
 const fmt = n => n.toLocaleString('th-TH');
 const now = () => Date.now();
-const bkkHour = () => +new Intl.DateTimeFormat('en-GB',{hour:'2-digit',hour12:false,timeZone:'Asia/Bangkok'}).format(new Date()) % 24;
+const bkkHour = () => new Date(Date.now() + 7 * 3600e3).getUTCHours();
 const ago = ms => { const m = Math.floor(ms / 60000); return m < 1 ? 'เมื่อสักครู่' : m < 60 ? `${m} นาที` : `${Math.floor(m/60)} ชม. ${m%60} นาที`; };
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
@@ -762,7 +898,7 @@ function renderMap() {
   for (const p of PROV) {
     const list = BR.filter(b => b.prov === p.c);
     let s;
-    if (mapMode === 'area') { const aid = p.c === '10' ? null : AREA_OF_PROV_EN[p.e]; s = aid ? statOf['a' + aid] : (() => { const a = agg(list); const r = a.req ? a.online / a.req : 1; return {a, ratio: r, st: statusOfRatio(r)}; })(); }
+    if (mapMode === 'area') { const aid = p.c === '10' ? BKK_FIXED : AREA_OF_PROV_EN[p.e]; s = aid ? statOf['a' + aid] : (() => { const a = agg(list); const r = a.req ? a.online / a.req : 1; return {a, ratio: r, st: statusOfRatio(r)}; })(); }
     else s = statOf[p.c];
     const el = provPath[p.c];
     el.style.fill = s ? colorFor(s.st, s.ratio) : '';
@@ -786,11 +922,11 @@ function renderMap() {
   gLbl.innerHTML = '';
   if (mapMode === 'area' && !filt.prov) {
     for (const ar of AREAS) {
-      const list = BR.filter(b => b.area === ar.id); if (!list.length || ar.id <= 3) continue;
+      const list = BR.filter(b => b.area === ar.id); if (!list.length || (BKK_FIXED == null && ar.id <= 3)) continue;
       const cx = list.reduce((s, b) => s + proj(b.lon, b.lat)[0], 0) / list.length, cy = list.reduce((s, b) => s + proj(b.lon, b.lat)[1], 0) / list.length;
       const t = document.createElementNS(svgNS, 'text'); t.setAttribute('x', cx.toFixed(1)); t.setAttribute('y', cy.toFixed(1)); t.textContent = ar.id; gLbl.append(t);
     }
-    const t = document.createElementNS(svgNS, 'text'); const [bx, by] = proj(100.55, 13.75); t.setAttribute('x', bx + 14); t.setAttribute('y', by + 3); t.textContent = '1–3'; gLbl.append(t);
+    const t = document.createElementNS(svgNS, 'text'); const [bx, by] = proj(100.55, 13.75); t.setAttribute('x', bx + 14); t.setAttribute('y', by + 3); t.textContent = BKK_FIXED ?? '1–3'; if (BKK_FIXED == null) gLbl.append(t);
   }
   const k = viewBox[2] / 335; gLbl.querySelectorAll('text').forEach(x => { x.style.fontSize = (9 * Math.max(k, .15)) + 'px'; x.style.strokeWidth = (2.5 * Math.max(k, .15)) + 'px'; });
   document.getElementById('mapReset').hidden = !(filt.area || filt.prov);
@@ -800,7 +936,7 @@ mapEl.addEventListener('pointermove', e => {
   const c = e.target.dataset?.c; if (!c || e.pointerType !== 'mouse') { tip.hidden = true; return; }
   const p = provByCode[c], list = BR.filter(b => b.prov === c), a = agg(list), r = a.req ? a.online / a.req : 1, st = statusOfRatio(r);
   tip.hidden = false; tip.style.left = Math.min(e.clientX + 14, innerWidth - 200) + 'px'; tip.style.top = (e.clientY + 14) + 'px';
-  tip.innerHTML = `<h4>${p.n}</h4><div class="r"><span>พื้นที่</span><b>${c === '10' ? '1–3' : AREA_OF_PROV_EN[p.e]} · ${c === '10' ? 'กทม.' : areaName(AREA_OF_PROV_EN[p.e])}</b></div>
+  tip.innerHTML = `<h4>${p.n}</h4><div class="r"><span>พื้นที่</span><b>${c === '10' ? (BKK_FIXED ?? '1–3') : AREA_OF_PROV_EN[p.e]} · ${c === '10' ? (BKK_FIXED != null ? areaName(BKK_FIXED) : 'กทม.') : areaName(AREA_OF_PROV_EN[p.e])}</b></div>
     <div class="r"><span>สาขา</span><b class="num">${fmt(a.n)}</b></div><div class="r"><span>ออนไลน์ / ต้องการ</span><b class="num">${fmt(a.online)} / ${fmt(a.req)}</b></div>
     <div class="r"><span>ความพร้อม</span><span class="pill p-${st}">${Math.round(r * 100)}%</span></div>
     <div class="r"><span>สาขาขาด · ครบ · เกิน</span><b class="num">${a.short} · ${a.ok} · ${a.over}</b></div>`;
@@ -1072,7 +1208,7 @@ const AREA_NAME_OVERRIDE = {};
 function setSource(fname) {
   const badge = document.getElementById('srcBadge'), live = document.getElementById('live'), pb = document.getElementById('pauseBtn');
   if (MODE === 'sim') { badge.textContent = 'ข้อมูลตัวอย่าง (จำลอง)'; live.classList.toggle('paused', !running); pb.hidden = false; pb.textContent = running ? 'หยุดชั่วคราว' : 'เล่นต่อ'; document.getElementById('liveLbl').textContent = running ? 'อัปเดตทุก 5 วินาที' : 'หยุดชั่วคราว'; }
-  else { badge.textContent = 'ข้อมูลจากไฟล์ ' + fname; live.classList.add('paused'); pb.hidden = true; document.getElementById('liveLbl').textContent = 'ข้อมูลจากไฟล์'; }
+  else { badge.textContent = fname; live.classList.add('paused'); pb.hidden = true; document.getElementById('liveLbl').textContent = 'ข้อมูลจากไฟล์'; }
 }
 document.getElementById('pauseBtn').onclick = () => { running = !running; setSource(); };
 
@@ -1099,7 +1235,8 @@ const radAt = (rad, brg) => { const n = rad.length, st = 360 / n, x = (((brg % 3
   return den > 1e-12 ? r0 * r1 * Math.sin(D) / den : r0; };
 const NV = 72;
 const polyArea = r => { let a = 0; for (let i = 0; i < r.length; i++) a += .5 * r[i] * r[(i + 1) % r.length] * Math.sin(2 * Math.PI / r.length); return a; };
-const ridersAtPeak = b => Math.max(1, Math.min(b.riders.length, MODE === 'sim' ? Math.round(b.reqPeak * b.bias) : b.riders.filter(r => r.st !== 'offline').length || 1));
+const ridersAtPeak = b => MODE === 'sim' ? Math.max(1, Math.min(b.riders.length, Math.round(b.reqPeak * b.bias)))
+  : b.riders.length ? Math.max(1, b.riders.filter(r => r.st !== 'offline').length) : Math.max(1, b.reqFixed || 1);
 
 function allocCust(n) {
   return {n, lon: new Float32Array(n), lat: new Float32Array(n), my: new Float32Array(n), dist: new Float32Array(n), time: new Float32Array(n),
@@ -1179,11 +1316,14 @@ function clipAll() {
       if (d < .005) { ux = b.code < x.b.code ? 1 : -1; uy = 0; d = .005; } else { ux /= d; uy /= d; }
       nb.push({b: x.b, ux, uy, d});
     }
-    const rad = new Array(NV), adj = new Set();
+    nb.sort((p, q) => p.d - q.d);
+    const rad = new Array(NV), adj = new Set(), keep = b.radSrc === 'trade' && !b.ovl;
     for (let k = 0; k < NV; k++) {
       const th = k * 360 / NV * Math.PI / 180, vx = Math.sin(th), vy = Math.cos(th);
       let bound = radAt(b.reach, k * 360 / NV), who = null;
-      for (const n of nb) { const dot = vx * n.ux + vy * n.uy; if (dot <= 1e-6) continue; const t = n.d / (2 * dot) - .002; if (t < bound) { bound = t; who = n.b; } }
+      for (const n of nb) { if (n.d / 2 - .002 >= bound) break; const dot = vx * n.ux + vy * n.uy; if (dot <= 1e-6) continue; const t = n.d / (2 * dot) - .002;
+        if (keep) { if (t < bound + .05) adj.add(n.b); continue; }
+        if (t < bound) { bound = t; who = n.b; } }
       rad[k] = Math.max(.02, bound); if (who) adj.add(who);
     }
     b.rad = rad; b.adj = [...adj];
@@ -1215,7 +1355,7 @@ function importDelivery(rows) {
 function afterDeliveryData(clip) {
   for (const b of BR) b.my = MERC(b.lat);
   buildGrid();
-  if (clip) clipAll();
+  if (clip) { detectTradeOverlaps(); clipAll(); }
   computeAllDelivery();
 }
 
@@ -1224,16 +1364,18 @@ let GRID = new Map();
 const GSZ = .02, gkey = (lon, lat) => Math.floor(lon / GSZ) + ':' + Math.floor(lat / GSZ);
 function buildGrid() { GRID = new Map(); for (const b of BR) { const k = gkey(b.lon, b.lat); if (!GRID.has(k)) GRID.set(k, []); GRID.get(k).push(b); } }
 function nearBranches(lon, lat, maxKm) {
-  const out = [], gx = Math.floor(lon / GSZ), gy = Math.floor(lat / GSZ), span = Math.ceil(maxKm / 2) + 1;
-  for (let x = gx - span; x <= gx + span; x++) for (let y = gy - span; y <= gy + span; y++) {
-    const l = GRID.get(x + ':' + y); if (l) for (const b of l) { const d = distKm(lon, lat, b.lon, b.lat); if (d <= maxKm) out.push({b, d}); }
+  const out = [], kx = kmLon(lat), sxn = Math.ceil(maxKm / (GSZ * kx)), syn = Math.ceil(maxKm / (GSZ * KM_LAT)), gx = Math.floor(lon / GSZ), gy = Math.floor(lat / GSZ), m2 = maxKm * maxKm;
+  for (let x = gx - sxn; x <= gx + sxn; x++) for (let y = gy - syn; y <= gy + syn; y++) {
+    const l = GRID.get(x + ':' + y); if (!l) continue;
+    for (const b of l) { const dx = (b.lon - lon) * kx, dy = (b.lat - lat) * KM_LAT, d2 = dx * dx + dy * dy; if (d2 <= m2) out.push({b, d: Math.sqrt(d2)}); }
   }
   return out.sort((a, c) => a.d - c.d);
 }
 
 /* derive a service polygon from customers (used for imported data) */
 function deriveRad(b) {
-  if (b.c1 > b.c0) {
+  if (b.trade) { b.reach = b.trade; b.radSrc = 'trade'; }
+  else if (b.c1 > b.c0) {
     const buckets = Array.from({length: 16}, () => []);
     for (let i = b.c0; i < b.c1; i++) buckets[Math.round(CUST.brg[i] / 22.5) % 16].push(CUST.dist[i]);
     const fallback = b.svcR || Math.max(...Array.from({length: b.c1 - b.c0}, (_, k) => CUST.dist[b.c0 + k]));
@@ -1241,7 +1383,7 @@ function deriveRad(b) {
     for (let i = 0; i < 16; i++) if (b.reach[i] == null) { const a = b.reach[(i + 15) % 16], c = b.reach[(i + 1) % 16]; b.reach[i] = a != null && c != null ? (a + c) / 2 : a ?? c ?? fallback * .6; }
     b.radSrc = 'cust';
   } else if (b.svcR) { b.reach = Array(16).fill(b.svcR); b.radSrc = 'cfg'; }
-  else { b.reach = null; b.radSrc = null; }
+  else { b.reach = Array(16).fill(limitOf(b)); b.radSrc = 'std'; }
 }
 
 /* ================= delivery area: per-branch analysis ================= */
@@ -1373,6 +1515,17 @@ const DMAP = (() => {
   function polyLL(b, radFn, a0 = 0, a1 = 360, step = 7.5) {
     for (let a = a0; a <= a1 + 1e-6; a += step) { const aa = ((a % 360) + 360) % 360, [lon, lat] = offsetLL(b.lon, b.lat, aa, radFn(aa)); const X = sx(lon), Y = sy(MERC(lat)); a === a0 ? ctx.moveTo(X, Y) : ctx.lineTo(X, Y); }
   }
+  function polyOf(b) {
+    if (b._poly && b._polySrc === b.rad && b._polyT === b.tradeRings) return b._poly;
+    let rings;
+    if (b.tradeRings && !b.ovl) rings = b.tradeRings.map(r => { const a = new Float64Array(r.length * 2); r.forEach((p, i) => { a[2 * i] = p[0]; a[2 * i + 1] = MERC(p[1]); }); return a; });
+    else { const n = b.rad.length, a = new Float64Array(n * 2); for (let i = 0; i < n; i++) { const [lon, lat] = offsetLL(b.lon, b.lat, i * 360 / n, b.rad[i]); a[2 * i] = lon; a[2 * i + 1] = MERC(lat); } rings = [a]; }
+    b._poly = rings; b._polySrc = b.rad; b._polyT = b.tradeRings; return rings;
+  }
+  function tracePoly(b, k) {
+    const px = Math.max(...b.rad) * k, step = px < 12 ? 6 : px < 40 ? 2 : 1;
+    for (const a of polyOf(b)) { const n = a.length / 2, st = n > 24 ? step : 1; ctx.moveTo(sx(a[0]), sy(a[1])); for (let i = st; i < n; i += st) ctx.lineTo(sx(a[2 * i]), sy(a[2 * i + 1])); ctx.closePath(); }
+  }
   const issueCol = b => b.dv ? col[b.dv.issue === 'ok' ? 'ok' : b.dv.issue] : col.muted;
   let visible = [];
   function draw() {
@@ -1396,9 +1549,12 @@ const DMAP = (() => {
     if (detail && L.area) {
       ctx.globalAlpha = 1;
       const adjSet = new Set(sel?.adj || []);
-      for (const b of visible) { if (!b.rad) continue; const st = 360 / b.rad.length; ctx.beginPath(); polyLL(b, a => radAt(b.rad, a), 0, 360 - st, st); ctx.closePath();
-        const isAdj = adjSet.has(b);
-        ctx.fillStyle = col.area; ctx.globalAlpha = b === sel ? .2 : isAdj ? .08 : sel ? .03 : .08; ctx.fill(); ctx.globalAlpha = b === sel ? 1 : isAdj ? .85 : sel ? .3 : .6; ctx.strokeStyle = col.area; ctx.lineWidth = b === sel ? 2.2 : isAdj ? 1.4 : 1; ctx.stroke(); }
+      // areas never overlap, so all ordinary ones go into one path: one fill and one stroke per frame
+      const groups = [[], [], []];
+      for (const b of visible) { if (!b.rad) continue; groups[b === sel ? 2 : adjSet.has(b) ? 1 : 0].push(b); }
+      const style = [[sel ? .03 : .08, sel ? .3 : .6, 1], [.08, .85, 1.4], [.2, 1, 2.2]];
+      groups.forEach((list, gi) => { for (let s0 = 0; s0 < list.length; s0 += 60) { ctx.beginPath(); for (let j = s0; j < Math.min(list.length, s0 + 60); j++) tracePoly(list[j], k);
+        ctx.fillStyle = col.area; ctx.globalAlpha = style[gi][0]; ctx.fill(); ctx.globalAlpha = style[gi][1]; ctx.strokeStyle = col.area; ctx.lineWidth = style[gi][2]; ctx.stroke(); } });
       ctx.globalAlpha = 1;
     }
     if (detail && L.cut) {
@@ -1441,12 +1597,15 @@ const DMAP = (() => {
     }
     if (L.stores) {
       const r = k > 18 ? 6 : k > 4 ? 4.2 : k > 1.2 ? 2.8 : 2;
-      for (const b of visible) {
-        const X = sx(b.lon), Y = sy(b.my);
-        ctx.beginPath(); ctx.arc(X, Y, b === sel ? r + 2 : r, 0, 6.283); ctx.fillStyle = issueCol(b); ctx.fill();
-        if (r >= 4 || b === sel) { ctx.lineWidth = b === sel ? 3 : 1.5; ctx.strokeStyle = col.surface; ctx.stroke(); }
-        if (k > 18) { ctx.beginPath(); ctx.arc(X, Y, r * .38, 0, 6.283); ctx.fillStyle = col.surface; ctx.fill(); }
+      const byCol = new Map();
+      for (const b of visible) { if (b === sel) continue; const c = issueCol(b); let l = byCol.get(c); if (!l) byCol.set(c, l = []); l.push(b); }
+      for (const [c, list] of byCol) {
+        ctx.beginPath(); for (const b of list) { const X = sx(b.lon), Y = sy(b.my); ctx.moveTo(X + r, Y); ctx.arc(X, Y, r, 0, 6.283); }
+        ctx.fillStyle = c; ctx.fill(); if (r >= 4) { ctx.lineWidth = 1.5; ctx.strokeStyle = col.surface; ctx.stroke(); }
       }
+      if (k > 18) { ctx.beginPath(); for (const b of visible) { if (b === sel) continue; const X = sx(b.lon), Y = sy(b.my); ctx.moveTo(X + r * .38, Y); ctx.arc(X, Y, r * .38, 0, 6.283); } ctx.fillStyle = col.surface; ctx.fill(); }
+      if (sel && visible.includes(sel)) { const X = sx(sel.lon), Y = sy(sel.my); ctx.beginPath(); ctx.arc(X, Y, r + 2, 0, 6.283); ctx.fillStyle = issueCol(sel); ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = col.surface; ctx.stroke();
+        if (k > 18) { ctx.beginPath(); ctx.arc(X, Y, (r + 2) * .38, 0, 6.283); ctx.fillStyle = col.surface; ctx.fill(); } }
       if (k > 30 || sel) {
         ctx.font = '600 12px "IBM Plex Sans Thai",system-ui,sans-serif'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round';
         for (const b of k > 30 ? visible : [sel]) { const X = sx(b.lon) + 9, Y = sy(b.my) - 10; ctx.lineWidth = 3.5; ctx.strokeStyle = col.surface; ctx.strokeText(b.name, X, Y); ctx.fillStyle = col.fg; ctx.fillText(b.name, X, Y); }
@@ -1675,7 +1834,7 @@ function renderDDetail() {
   const wi = whatR != null ? whatIf(b, whatR) : null;
   const gm = `https://www.google.com/maps/search/?api=1&query=${b.lat.toFixed(5)},${b.lon.toFixed(5)}`;
   el.innerHTML = `<div class="ddh"><button class="linkbtn" id="dBack">← กลับไปรายการแนะนำ</button>
-      <div class="m">สาขา ${b.code} · ${esc(provByCode[b.prov]?.n || '')} · ${isBkk(b) ? 'กทม.' : 'ต่างจังหวัด'}</div>
+      <div class="m">สาขา ${b.code} · ${esc(provByCode[b.prov]?.n || '')} · ${isBkk(b) ? 'กทม.' : 'ต่างจังหวัด'} · ที่มาพื้นที่: ${SRC_TH[b.radSrc] || '–'}</div>${b.ovl ? '<div class="m" style="color:var(--over)">เทรดแอเรียในไฟล์ทับกับสาขาข้างเคียง ระบบแบ่งที่กึ่งกลางระหว่างร้านให้</div>' : ''}
       <h3>${esc(b.name)}</h3><div class="pills">${issuePills(b)}</div></div>
     <div class="dgrid">
       <div><div class="l">รัศมีไกลสุด</div><div class="v ${d.flags.over ? 'bad' : ''}">${f1(d.rMax)} <small>/ ${d.lim} กม.</small></div></div>
@@ -1757,7 +1916,8 @@ document.querySelectorAll('.tile[data-iss]').forEach(t => t.onclick = () => { fi
 
 /* ================= router ================= */
 let page = 'overview';
-const PAGES = {overview: {t: 'ภาพรวมไรเดอร์', s: 'ไรเดอร์ออนไลน์ ออฟไลน์ และสาขาที่ขาด ครบ เกิน'}, delivery: {t: 'พื้นที่จัดส่ง', s: 'ร้าน 7-Eleven ขนาดพื้นที่จัดส่ง บ้านลูกค้า และคำแนะนำปรับรัศมี'}};
+const PAGES = {overview: {t: 'ภาพรวมไรเดอร์', s: 'ไรเดอร์ออนไลน์ ออฟไลน์ และสาขาที่ขาด ครบ เกิน'}, delivery: {t: 'พื้นที่จัดส่ง', s: 'ร้าน 7-Eleven ขนาดพื้นที่จัดส่ง บ้านลูกค้า และคำแนะนำปรับรัศมี'},
+  data: {t: 'จัดการข้อมูล', s: 'พื้นที่จัดส่ง › อัปโหลดไฟล์สาขา เทรดแอเรีย หมุดลูกค้า และสถานะไรเดอร์'}};
 function go(p) {
   if (!PAGES[p]) p = 'overview';
   page = p;
@@ -1765,6 +1925,8 @@ function go(p) {
   document.querySelectorAll('.nav a').forEach(a => a.toggleAttribute('aria-current', a.dataset.go === p));
   document.getElementById('pgTitle').textContent = PAGES[p].t; document.getElementById('pgSub').textContent = PAGES[p].s;
   document.getElementById('stChips').hidden = p !== 'overview'; document.getElementById('issChips').hidden = p !== 'delivery';
+  document.querySelector('.fwrap').hidden = p === 'data'; document.getElementById('pauseBtn').style.visibility = p === 'data' ? 'hidden' : '';
+  document.querySelector('.nav a[data-go="delivery"]').classList.toggle('parent-on', p === 'data');
   if (location.hash !== '#' + p) history.replaceState(null, '', '#' + p);
   closeSide();
   if (p === 'delivery') { DMAP.resize(); }
@@ -1782,6 +1944,645 @@ document.getElementById('menuBtn').onclick = () => { side.classList.add('open');
 sideScrim.onclick = closeSide;
 document.querySelectorAll('[data-iss]').forEach(b => { if (b.classList.contains('chip')) b.onclick = () => { filt.iss = (filt.iss === b.dataset.iss && b.dataset.iss !== 'all') ? 'all' : b.dataset.iss; if (filt.iss !== 'all') dTab = filt.iss; dShowN = 40; dTShow = 50; syncFilterUI(); render(); }; });
 
+/* ================= data management ================= */
+const nk = s => String(s ?? '').toLowerCase().replace(/[\s_\-.()/]/g, '');
+const numOf = v => typeof v === 'number' ? v : parseFloat(String(v ?? '').replace(/,/g, '').trim());
+const inTH = (lat, lon) => lat >= 5.4 && lat <= 20.7 && lon >= 97.2 && lon <= 105.8;
+const COL_CODE = ['branch_code', 'branchcode', 'store_code', 'storecode', 'code', 'store_id', 'storeid', 'branch_id', 'branchid', 'store_no', 'storeno', 'รหัสสาขา', 'รหัสร้าน', 'เลขที่สาขา'];
+const SPEC = {
+  branches: {n: 1, t: 'ไฟล์สาขา', d: 'รายชื่อร้าน 7-Eleven พิกัด และจำนวนไรเดอร์ที่ต้องการ ใช้เป็นฐานของทุกหน้า', acc: '.csv,.txt,.xlsx,.xls',
+    fields: [
+      {k: 'code', t: 'รหัสสาขา', req: 1, syn: COL_CODE},
+      {k: 'name', t: 'ชื่อสาขา', syn: ['branch_name', 'store_name', 'name', 'ชื่อสาขา', 'ชื่อร้าน', 'สาขา', 'branch']},
+      {k: 'lat', t: 'ละติจูด', req: 1, syn: ['lat', 'latitude', 'ละติจูด', 'y']},
+      {k: 'lng', t: 'ลองจิจูด', req: 1, syn: ['lng', 'lon', 'long', 'longitude', 'ลองจิจูด', 'ลองติจูด', 'x']},
+      {k: 'province', t: 'จังหวัด', syn: ['province', 'province_name', 'prov', 'จังหวัด']},
+      {k: 'area', t: 'พื้นที่ (1–13)', syn: ['area', 'area_id', 'zone', 'พื้นที่', 'เขตพื้นที่', 'region']},
+      {k: 'req', t: 'ไรเดอร์ที่ต้องการ', syn: ['required', 'rider_required', 'required_riders', 'req', 'target_rider', 'ไรเดอร์ที่ต้องการ', 'จำนวนไรเดอร์ที่ต้องการ']},
+      {k: 'radius', t: 'รัศมีส่ง (กม.)', syn: ['service_radius_km', 'radius_km', 'radius', 'รัศมี', 'รัศมีส่ง', 'รัศมีกม']}],
+    ex: 'branch_code,branch_name,lat,lng,province,area,required,service_radius_km\n10234,สีลม 2,13.7270,100.5240,กรุงเทพมหานคร,1,6,1.0\n20871,เมืองเชียงใหม่ 3,18.7883,98.9853,เชียงใหม่,8,4,2.0'},
+  trade: {n: 2, t: 'ขนาดเทรดแอเรีย', d: 'ขอบเขตพื้นที่ให้บริการของแต่ละสาขา เป็น polygon (GeoJSON, KML, WKT) หรือรัศมีเป็นกิโลเมตร', acc: '.geojson,.json,.kml,.csv,.txt,.xlsx,.xls', dep: 'branches',
+    fields: [
+      {k: 'code', t: 'store_code', req: 1, syn: COL_CODE},
+      {k: 'wkt', t: 'geometry', req: 1, syn: ['geometry', 'geom', 'geojson', 'polygon', 'wkt', 'polygon_wkt', 'shape', 'the_geom']},
+      {k: 'date', t: 'created_at', syn: ['created_at', 'createdat', 'created', 'create_date', 'updated_at', 'update_date', 'วันที่', 'วันที่สร้าง', 'date']},
+      {k: 'radius', t: 'radius_km', syn: ['radius_km', 'radius', 'service_radius_km', 'รัศมี', 'รัศมีกม']}],
+    ex: 'store_code,geometry,created_at\n7,"{""type"":""Polygon"",""coordinates"":[[[100.6506,13.7964],[100.6406,13.7922],[100.6416,13.7905],[100.6519,13.7937],[100.6506,13.7964]]]}",15/10/2026 0:17\n10234,"{""type"":""Polygon"",""coordinates"":[[[100.519,13.731],[100.531,13.731],[100.531,13.722],[100.519,13.722],[100.519,13.731]]]}",15/10/2026 0:17',
+    std: 'store_code, geometry, created_at',
+    note: 'geometry เป็นข้อความ GeoJSON (Polygon หรือ MultiPolygon) ใส่ WKT ได้เช่นกัน · ถ้าสาขาเดียวมีหลายแถว ระบบใช้แถวที่ created_at ล่าสุด · ยังรับไฟล์ GeoJSON/KML ทั้งไฟล์ และคอลัมน์ radius_km แทน geometry ได้'},
+  customers: {n: 3, t: 'หมุดลูกค้า', d: 'ตำแหน่งบ้านลูกค้าและจำนวนครั้งที่สั่งใน 30 วัน ใช้แบ่งระดับลูกค้าและคำนวณพื้นที่จัดส่ง', acc: '.csv,.txt,.xlsx,.xls', dep: 'branches',
+    fields: [
+      {k: 'id', t: 'รหัสลูกค้า', syn: ['customer_id', 'cust_id', 'customerid', 'member_id', 'รหัสลูกค้า', 'id']},
+      {k: 'code', t: 'รหัสสาขา', syn: COL_CODE},
+      {k: 'lat', t: 'ละติจูด', req: 1, syn: ['lat', 'latitude', 'ละติจูด', 'y']},
+      {k: 'lng', t: 'ลองจิจูด', req: 1, syn: ['lng', 'lon', 'long', 'longitude', 'ลองจิจูด', 'ลองติจูด', 'x']},
+      {k: 'orders', t: 'ครั้งที่สั่ง/30 วัน', syn: ['orders_30d', 'orders30d', 'orders', 'order_count', 'ordercount', 'frequency', 'freq', 'จำนวนครั้ง', 'จำนวนออเดอร์', 'ความถี่', 'ครั้งต่อเดือน']},
+      {k: 'time', t: 'เวลาส่งเฉลี่ย (นาที)', syn: ['avg_delivery_min', 'delivery_min', 'avg_time', 'avgtime', 'lead_time', 'เวลาส่ง', 'เวลาส่งเฉลี่ย']}],
+    ex: 'customer_id,branch_code,lat,lng,orders_30d,avg_delivery_min\nC-000981,10234,13.7301,100.5292,9,24\nC-000982,,13.7244,100.5188,1,31',
+    note: 'ไม่ใส่รหัสสาขาได้ ระบบจะผูกกับสาขาที่ใกล้ที่สุด'},
+  riders: {n: 4, t: 'สถานะไรเดอร์', d: 'สถานะล่าสุดของไรเดอร์แต่ละคน ใช้ในหน้าภาพรวมไรเดอร์', acc: '.csv,.txt,.xlsx,.xls', dep: 'branches',
+    fields: [
+      {k: 'id', t: 'รหัสไรเดอร์', req: 1, syn: ['rider_id', 'riderid', 'rider', 'driver_id', 'รหัสไรเดอร์', 'รหัสพนักงาน', 'id']},
+      {k: 'code', t: 'รหัสสาขา', req: 1, syn: COL_CODE},
+      {k: 'status', t: 'สถานะ', req: 1, syn: ['status', 'rider_status', 'สถานะ']},
+      {k: 'time', t: 'อัปเดตล่าสุด', syn: ['last_update', 'updated_at', 'update_time', 'timestamp', 'time', 'เวลา', 'เวลาล่าสุด']}],
+    ex: 'rider_id,branch_code,status,last_update\nRD-00123,10234,delivering,2026-10-13 12:05\nRD-00124,10234,offline,13/10/2569 09:40',
+    note: 'สถานะ: delivering · pickup · idle · break · offline (หรือภาษาไทย ส่งงาน รับของ ว่าง พัก ออฟไลน์)'},
+  areas: {n: 5, t: 'ตาราง 13 พื้นที่', d: 'จังหวัดไหนอยู่พื้นที่ใด ใช้แทนการจัดกลุ่มตามภูมิภาคที่ระบบใช้อยู่', acc: '.csv,.txt,.xlsx,.xls', opt: 1,
+    fields: [
+      {k: 'province', t: 'จังหวัด', req: 1, syn: ['province', 'province_name', 'จังหวัด']},
+      {k: 'area', t: 'รหัสพื้นที่', req: 1, syn: ['area_id', 'areaid', 'area', 'รหัสพื้นที่', 'พื้นที่', 'zone']},
+      {k: 'aname', t: 'ชื่อพื้นที่', syn: ['area_name', 'areaname', 'ชื่อพื้นที่', 'zone_name']}],
+    ex: 'province,area_id,area_name\nกรุงเทพมหานคร,1,กรุงเทพฯ\nนนทบุรี,2,ปริมณฑลเหนือ\nเชียงใหม่,8,เหนือตอนบน'}
+};
+const DS_KEYS = ['branches', 'trade', 'customers', 'riders', 'areas'];
+const DS = {branches: null, trade: null, customers: null, riders: null, areas: null, log: []};
+let TRADE_OVL = [];
+
+/* ---- province lookup ---- */
+const PROV_IDX = new Map();
+for (const p of PROV) { PROV_IDX.set(nk(p.n), p.c); PROV_IDX.set(nk(p.e), p.c); }
+['กรุงเทพ', 'กรุงเทพฯ', 'กทม', 'bkk', 'bangkokmetropolis'].forEach(a => PROV_IDX.set(nk(a), '10'));
+const provCodeOf = s => { const v = nk(String(s ?? '').replace(/^\s*(จ\.|จังหวัด)\s*/, '')); return v ? PROV_IDX.get(v) || null : null; };
+let PROV_BB = null;
+function provAt(lon, lat) {
+  if (!PROV_BB) PROV_BB = PROV.map(p => p.rings.map(r => { let a = 1e9, b = 1e9, c = -1e9, d = -1e9; for (let i = 0; i < r.lon.length; i++) { a = Math.min(a, r.lon[i]); c = Math.max(c, r.lon[i]); b = Math.min(b, r.lat[i]); d = Math.max(d, r.lat[i]); } return [a, b, c, d]; }));
+  let best = null, bd = Infinity;
+  for (let pi = 0; pi < PROV.length; pi++) {
+    let inside = false;
+    PROV[pi].rings.forEach((r, ri) => { const bb = PROV_BB[pi][ri]; if (lon < bb[0] || lon > bb[2] || lat < bb[1] || lat > bb[3]) return;
+      for (let i = 0, j = r.lon.length - 1; i < r.lon.length; j = i++) if ((r.lat[i] > lat) !== (r.lat[j] > lat) && lon < (r.lon[j] - r.lon[i]) * (lat - r.lat[i]) / (r.lat[j] - r.lat[i]) + r.lon[i]) inside = !inside; });
+    if (inside) return PROV[pi].c;
+    const d = (PROV[pi].lon - lon) ** 2 + (PROV[pi].lat - lat) ** 2; if (d < bd) { bd = d; best = PROV[pi].c; }
+  }
+  return best;
+}
+const codeKey = v => String(v ?? '').trim().replace(/\.0+$/, '').replace(/^0+(?=\d)/, '');
+const parseArea = v => { const s = String(v ?? '').trim(); if (!s) return null; const m = s.match(/^\D*?(\d{1,3})\D*$/); return m ? +m[1] : s; };
+
+/* ---- time parsing (ISO, dd/mm/yyyy, Buddhist year, Excel serial) ---- */
+function parseTime(v) {
+  if (v instanceof Date) return v.getTime();
+  if (typeof v === 'number') { if (v > 20000 && v < 80000) return Math.round((v - 25569) * 864e5) - 7 * 3600e3; if (v > 1e12) return v; if (v > 1e9) return v * 1000; return NaN; }
+  const s = String(v ?? '').trim(); if (!s) return NaN;
+  let m = s.match(/^(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{4})(?:[ T,]+(\d{1,2})[:.](\d{2})(?:[:.](\d{2}))?)?$/);
+  if (m) { let y = +m[3]; if (y > 2400) y -= 543; return Date.UTC(y, m[2] - 1, +m[1], (+m[4] || 0) - 7, +m[5] || 0, +m[6] || 0); }
+  m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})(?:[ T](\d{1,2}):(\d{2})(?::(\d{2}))?)?$/);
+  if (m) { let y = +m[1]; if (y > 2400) y -= 543; return Date.UTC(y, m[2] - 1, +m[3], (+m[4] || 0) - 7, +m[5] || 0, +m[6] || 0); }
+  return Date.parse(s);
+}
+const ST_MAP2 = Object.assign({}, ST_MAP, {busy: 'deliver', on_delivery: 'deliver', ondelivery: 'deliver', delivery: 'deliver', 'กำลังส่ง': 'deliver', picking: 'pickup', picking_up: 'pickup', 'กำลังรับของ': 'pickup',
+  available: 'idle', active: 'idle', waiting: 'idle', 'รองาน': 'idle', 'ว่างงาน': 'idle', 'ออนไลน์': 'idle', rest: 'break', 'พักเบรก': 'break', inactive: 'offline', 'ปิดระบบ': 'offline', 'ไม่ออนไลน์': 'offline', 'ออฟไลน์แล้ว': 'offline'});
+
+/* ---- reading files ---- */
+let XLSX_P = null;
+const loadXLSX = () => XLSX_P ||= new Promise((ok, no) => { if (window.XLSX) return ok(window.XLSX); const s = document.createElement('script');
+  s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'; s.onload = () => ok(window.XLSX); s.onerror = () => { XLSX_P = null; no(new Error('โหลดตัวอ่าน Excel ไม่สำเร็จ บันทึกไฟล์เป็น CSV (UTF-8) แล้วลองใหม่')); }; document.head.append(s); });
+function decodeText(buf) {
+  const u = new Uint8Array(buf);
+  try { return new TextDecoder('utf-8', {fatal: true}).decode(u).replace(/^﻿/, ''); }
+  catch { return new TextDecoder('windows-874').decode(u); }   // Thai Excel "CSV" default encoding
+}
+function splitTable(text) {
+  const nl = text.indexOf('\n'), first = text.slice(0, nl < 0 ? 2000 : nl), cnt = c => first.split(c).length;
+  const sep = cnt('\t') > cnt(',') && cnt('\t') > cnt(';') ? '\t' : cnt(';') > cnt(',') ? ';' : ',';
+  const rows = [], n = text.length; let row = [], i = 0;
+  while (i < n) {
+    let cell;
+    if (text.charCodeAt(i) === 34) {                       // quoted cell
+      let j = i + 1, parts = '';
+      for (;;) { const q = text.indexOf('"', j); if (q < 0) { parts += text.slice(j); i = n; break; }
+        if (text.charCodeAt(q + 1) === 34) { parts += text.slice(j, q + 1); j = q + 2; continue; }
+        parts += text.slice(j, q); i = q + 1; break; }
+      cell = parts;
+    } else {
+      let a = text.indexOf(sep, i), b = text.indexOf('\n', i); if (a < 0) a = n; if (b < 0) b = n;
+      const e = Math.min(a, b); cell = text.slice(i, e); i = e;
+      if (cell.charCodeAt(cell.length - 1) === 13) cell = cell.slice(0, -1);
+    }
+    row.push(cell);
+    const ch = text.charCodeAt(i);
+    if (ch === 13) i++;
+    if (text.charCodeAt(i) === 10 || i >= n) { if (row.length > 1 || String(row[0]).trim()) rows.push(row); row = []; i++; }
+    else if (text[i] === sep) { i++; if (i >= n) { row.push(''); rows.push(row); row = []; } }
+  }
+  if (row.length) rows.push(row);
+  return rows.filter(r => r.some(c => c.trim()));
+}
+const ringsOfGeom = g => !g ? [] : g.type === 'Polygon' ? g.coordinates : g.type === 'MultiPolygon' ? g.coordinates.flat() : g.type === 'GeometryCollection' ? g.geometries.flatMap(ringsOfGeom) : [];
+function parseKML(text) {
+  const doc = new DOMParser().parseFromString(text, 'application/xml');
+  if (doc.querySelector('parsererror')) throw new Error('อ่านไฟล์ KML ไม่ได้ ตรวจว่าไฟล์ไม่เสีย');
+  return [...doc.getElementsByTagName('Placemark')].map(pm => {
+    const props = {};
+    const nm = pm.getElementsByTagName('name')[0]; if (nm) props.name = nm.textContent.trim();
+    for (const d of pm.getElementsByTagName('Data')) props[d.getAttribute('name')] = (d.getElementsByTagName('value')[0]?.textContent || '').trim();
+    for (const d of pm.getElementsByTagName('SimpleData')) props[d.getAttribute('name')] = d.textContent.trim();
+    const rings = [...pm.getElementsByTagName('coordinates')].map(c => c.textContent.trim().split(/\s+/).map(t => t.split(',').map(Number)).filter(p => p.length >= 2 && isFinite(p[0]) && isFinite(p[1])));
+    return {props, rings: rings.filter(r => r.length >= 3)};
+  }).filter(f => f.rings.length);
+}
+function parseWKT(s) {
+  const t = String(s ?? '').trim(); if (!/polygon/i.test(t)) return null;
+  const rings = []; for (const m of t.matchAll(/\(\s*([-\d.eE+\s,]+?)\s*\)/g)) { const r = m[1].split(',').map(p => p.trim().split(/\s+/).map(Number)).filter(p => p.length >= 2 && isFinite(p[0]) && isFinite(p[1])); if (r.length >= 3) rings.push(r); }
+  return rings.length ? rings : null;
+}
+async function readAny(file) {
+  const name = file.name.toLowerCase(), buf = await file.arrayBuffer();
+  if (/\.kmz$/.test(name)) throw new Error('ไฟล์ KMZ เป็นไฟล์บีบอัด แตกไฟล์ให้ได้ .kml ก่อนแล้วอัปโหลดใหม่');
+  if (/\.(xlsx|xlsm|xls)$/.test(name)) {
+    const X = await loadXLSX(), wb = X.read(new Uint8Array(buf), {type: 'array', cellDates: true});
+    const sheets = wb.SheetNames.map(n => ({name: n, rows: X.utils.sheet_to_json(wb.Sheets[n], {header: 1, raw: true, defval: ''}).filter(r => r.some(c => String(c).trim()))})).filter(s => s.rows.length);
+    if (!sheets.length) throw new Error('ไม่พบข้อมูลในไฟล์ Excel นี้');
+    return {kind: 'table', sheets};
+  }
+  const text = decodeText(buf);
+  if (/\.kml$/.test(name) || /^\s*<\?xml|<kml/i.test(text.slice(0, 200))) return {kind: 'geo', feats: parseKML(text)};
+  if (/\.(geo)?json$/.test(name) || /^\s*\{/.test(text)) {
+    let j; try { j = JSON.parse(text); } catch { throw new Error('อ่านไฟล์ JSON ไม่ได้ ตรวจรูปแบบไฟล์'); }
+    const feats = (j.type === 'FeatureCollection' ? j.features : j.type === 'Feature' ? [j] : []).map(f => ({props: f.properties || {}, rings: ringsOfGeom(f.geometry)})).filter(f => f.rings.length);
+    if (!feats.length) throw new Error('ไม่พบ Polygon ในไฟล์ GeoJSON นี้');
+    return {kind: 'geo', feats};
+  }
+  const rows = splitTable(text);
+  if (rows.length < 2) throw new Error('ไฟล์ต้องมีแถวหัวตารางและข้อมูลอย่างน้อย 1 แถว');
+  return {kind: 'table', sheets: [{name: file.name, rows}]};
+}
+
+/* ---- column auto-mapping ---- */
+function autoMap(spec, head) {
+  const H = head.map(nk), used = new Set(), map = {};
+  for (const f of spec.fields) { const s = f.syn.map(nk); let i = H.findIndex((h, j) => !used.has(j) && s.includes(h)); if (i >= 0) { map[f.k] = i; used.add(i); } }
+  for (const f of spec.fields) { if (map[f.k] != null) continue; const s = f.syn.map(nk).filter(x => x.length >= 3);
+    const i = H.findIndex((h, j) => !used.has(j) && s.some(x => h.includes(x))); if (i >= 0) { map[f.k] = i; used.add(i); } }
+  return map;
+}
+
+/* ---- validation: rows -> normalized records + grouped issues ---- */
+function issueBag() {
+  const g = new Map();
+  return {add(sev, msg, row) { let x = g.get(msg); if (!x) g.set(msg, x = {sev, msg, n: 0, rows: []}); x.n++; if (x.rows.length < 6 && row != null) x.rows.push(row); },
+    list() { return [...g.values()].sort((a, b) => (a.sev === 'err' ? 0 : 1) - (b.sev === 'err' ? 0 : 1) || b.n - a.n); }};
+}
+function branchIndex() {
+  const rows = DS.branches?.rows || [], byCode = new Map(rows.map(r => [codeKey(r.code), r])), grid = new Map();
+  for (const r of rows) { const k = Math.floor(r.lng / .05) + ':' + Math.floor(r.lat / .05); if (!grid.has(k)) grid.set(k, []); grid.get(k).push(r); }
+  const nearest = (lon, lat, maxKm) => { let best = null, bd = maxKm; const gx = Math.floor(lon / .05), gy = Math.floor(lat / .05), sp = Math.ceil(maxKm / 5) + 1;
+    for (let x = gx - sp; x <= gx + sp; x++) for (let y = gy - sp; y <= gy + sp; y++) for (const r of grid.get(x + ':' + y) || []) { const d = distKm(lon, lat, r.lng, r.lat); if (d < bd) { bd = d; best = r; } }
+    return best ? {r: best, d: bd} : null; };
+  return {byCode, nearest};
+}
+function validate(key, src, map) {
+  const bag = issueBag(), out = [], g = (row, k) => map[k] != null ? row[map[k]] : '', S = SPEC[key];
+  const miss = src.kind === 'geo' ? (src.propKey ? [] : [S.fields[0]]) : S.fields.filter(f => f.req && map[f.k] == null && !(key === 'trade' && f.k === 'wkt' && map.radius != null));
+  if (miss.length) return {rows: [], issues: [{sev: 'err', msg: `ยังไม่ได้เลือกคอลัมน์ ${miss.map(f => f.t).join(', ')}`, n: 0, rows: []}], fatal: true};
+  const rows = src.kind === 'geo' ? src.feats : src.rows, base = src.kind === 'geo' ? 1 : 2;
+  const BI = S.dep ? branchIndex() : null;
+  
+  const seen = new Map();
+  rows.forEach((row, i) => {
+    const ln = i + base;
+    if (key === 'branches') {
+      const code = String(g(row, 'code')).trim(); if (!code) return bag.add('err', 'ไม่มีรหัสสาขา', ln);
+      let lat = numOf(g(row, 'lat')), lng = numOf(g(row, 'lng'));
+      if (!isFinite(lat) || !isFinite(lng)) return bag.add('err', 'ไม่มีพิกัดหรือพิกัดไม่ใช่ตัวเลข', ln);
+      if (!inTH(lat, lng) && inTH(lng, lat)) { [lat, lng] = [lng, lat]; bag.add('warn', 'สลับละติจูด/ลองจิจูดให้อัตโนมัติ', ln); }
+      if (!inTH(lat, lng)) return bag.add('err', 'พิกัดอยู่นอกประเทศไทย', ln);
+      let prov = provCodeOf(g(row, 'province'));
+      if (!prov) { prov = provAt(lng, lat); bag.add('warn', map.province == null ? 'หาจังหวัดจากพิกัด (ไม่มีคอลัมน์จังหวัด)' : String(g(row, 'province')).trim() ? 'ชื่อจังหวัดไม่ตรง ใช้จังหวัดจากพิกัดแทน' : 'ไม่ระบุจังหวัด ใช้จังหวัดจากพิกัด', ln); }
+      let req = parseInt(numOf(g(row, 'req')), 10);
+      if (!(req >= 0)) { req = 3; bag.add('warn', 'ไม่ระบุจำนวนไรเดอร์ที่ต้องการ ใช้ค่าเริ่มต้น 3 คน', ln); }
+      const radius = numOf(g(row, 'radius'));
+      if (seen.has(code)) bag.add('warn', 'รหัสสาขาซ้ำ ใช้แถวล่าสุด', ln);
+      seen.set(code, out.length);
+      out.push({code, name: String(g(row, 'name')).trim() || code, lat, lng, prov, area: parseArea(g(row, 'area')), req, radius: radius > 0 && radius < 30 ? radius : 0});
+    } else if (key === 'riders') {
+      const id = String(g(row, 'id')).trim(), br = BI.byCode.get(codeKey(g(row, 'code')));
+      if (!id) return bag.add('err', 'ไม่มีรหัสไรเดอร์', ln);
+      if (!br) return bag.add('err', 'ไม่พบรหัสสาขานี้ในไฟล์สาขา', ln);
+      const code = br.code;
+      const raw = String(g(row, 'status')).trim(), st = ST_MAP2[raw.toLowerCase()] || ST_MAP2[raw];
+      if (!st) bag.add('warn', `สถานะไม่รู้จัก ตั้งเป็นออฟไลน์`, ln);
+      const t = parseTime(g(row, 'time'));
+      if (map.time != null && !isFinite(t)) bag.add('warn', 'อ่านเวลาอัปเดตไม่ได้ ใช้เวลาปัจจุบัน', ln);
+      if (seen.has(id)) bag.add('warn', 'รหัสไรเดอร์ซ้ำ ใช้แถวล่าสุด', ln);
+      seen.set(id, out.length);
+      out.push({id, code, st: st || 'offline', t: isFinite(t) ? t : Date.now()});
+    } else if (key === 'customers') {
+      let lat = numOf(g(row, 'lat')), lng = numOf(g(row, 'lng'));
+      if (!isFinite(lat) || !isFinite(lng)) return bag.add('err', 'ไม่มีพิกัดหรือพิกัดไม่ใช่ตัวเลข', ln);
+      if (!inTH(lat, lng) && inTH(lng, lat)) { [lat, lng] = [lng, lat]; bag.add('warn', 'สลับละติจูด/ลองจิจูดให้อัตโนมัติ', ln); }
+      if (!inTH(lat, lng)) return bag.add('err', 'พิกัดอยู่นอกประเทศไทย', ln);
+      let code = String(g(row, 'code')).trim();
+      if (code && BI.byCode.has(codeKey(code))) code = BI.byCode.get(codeKey(code)).code;
+      else {
+        const nb = BI.nearest(lng, lat, 15);
+        if (!nb) return bag.add('err', 'อยู่ไกลจากทุกสาขาเกิน 15 กม.', ln);
+        bag.add('warn', code ? 'รหัสสาขาไม่ตรง ผูกกับสาขาที่ใกล้ที่สุดแทน' : 'ไม่มีรหัสสาขา ผูกกับสาขาที่ใกล้ที่สุด', ln);
+        code = nb.r.code;
+      }
+      let o = parseInt(numOf(g(row, 'orders')), 10);
+      if (!(o >= 1)) { o = 1; if (map.orders != null) bag.add('warn', 'จำนวนครั้งที่สั่งว่างหรือเป็น 0 นับเป็น 1 ครั้ง', ln); }
+      const t = numOf(g(row, 'time'));
+      out.push({id: String(g(row, 'id')).trim(), code, lat, lng, o: Math.min(255, o), t: t > 0 && t < 600 ? t : null});
+    } else if (key === 'trade') {
+      let raw, rings = null, radius = 0, t = NaN;
+      if (src.kind === 'geo') { raw = row.props[src.propKey]; rings = row.rings.map(r => r.map(p => [p[0], p[1]])); }
+      else {
+        raw = g(row, 'code'); radius = numOf(g(row, 'radius')); t = parseTime(g(row, 'date'));
+        if (map.date != null && String(g(row, 'date')).trim() && !isFinite(t)) bag.add('warn', 'อ่าน created_at ไม่ได้', ln);
+        const cell = String(g(row, 'wkt') ?? '').trim();
+        if (cell) { const r = parseGeomCell(cell); rings = r.rings; if (!rings) { if (!(radius > 0)) return bag.add('err', r.msg, ln); bag.add('warn', r.msg + ' ใช้ radius_km แทน', ln); } }
+      }
+      if (!String(raw ?? '').trim()) return bag.add('err', 'ไม่มี store_code', ln);
+      const b = BI.byCode.get(codeKey(raw)); if (!b) return bag.add('err', 'ไม่พบ store_code นี้ในไฟล์สาขา', ln);
+      if (String(raw).trim() !== b.code) bag.add('warn', `store_code เขียนไม่ตรงกับไฟล์สาขา (เช่น ${String(raw).trim()} = ${b.code}) จับคู่ให้แล้ว`, ln);
+      if (rings) {
+        const p0 = rings[0][0]; if (!inTH(p0[1], p0[0]) && inTH(p0[0], p0[1])) { rings = rings.map(r => r.map(p => [p[1], p[0]])); bag.add('warn', 'สลับลำดับพิกัดใน polygon ให้อัตโนมัติ', ln); }
+        if (!inTH(rings[0][0][1], rings[0][0][0])) return bag.add('err', 'polygon อยู่นอกประเทศไทย (ต้องเป็นพิกัด WGS84 ลองจิจูดก่อนละติจูด)', ln);
+        if (!rings.some(r => pipRing(b.lng, b.lat, r))) bag.add('warn', 'ร้านอยู่นอก polygon ของตัวเอง ตรวจว่าพิกัดร้านหรือ store_code ถูก', ln);
+        const far = Math.max(...rings.flat().map(p => distKm(b.lng, b.lat, p[0], p[1])));
+        if (far > 25) return bag.add('err', 'polygon อยู่ห่างจากร้านเกิน 25 กม.', ln);
+      } else if (!(radius > 0 && radius < 30)) return bag.add('err', map.radius != null ? 'ไม่มี geometry และ radius_km ไม่ถูกต้อง' : 'ไม่มี geometry', ln);
+      out.push(Object.assign(rings ? {code: b.code, rings} : {code: b.code, radius}, {t: isFinite(t) ? t : null, ln}));
+    } else if (key === 'areas') {
+      const prov = provCodeOf(g(row, 'province')); if (!prov) return bag.add('err', 'ไม่รู้จักชื่อจังหวัด', ln);
+      const area = parseArea(g(row, 'area')); if (area == null) return bag.add('err', 'ไม่มีรหัสพื้นที่', ln);
+      if (seen.has(prov)) bag.add('warn', 'จังหวัดซ้ำ ใช้แถวล่าสุด', ln);
+      seen.set(prov, out.length);
+      out.push({prov, area, aname: String(g(row, 'aname')).trim()});
+    }
+  });
+  let rowsOut = out;
+  if (key === 'trade') {
+    const by = new Map(); for (const r of out) { if (!by.has(r.code)) by.set(r.code, []); by.get(r.code).push(r); }
+    rowsOut = [];
+    for (const list of by.values()) {
+      if (list.length === 1) { rowsOut.push(list[0]); continue; }
+      const dated = list.filter(r => r.t != null), newest = dated.length ? Math.max(...dated.map(r => r.t)) : null;
+      const keep = newest != null && dated.some(r => r.t !== newest) ? list.filter(r => r.t === newest) : list;
+      for (const r of list) if (!keep.includes(r)) bag.add('warn', 'มีหลายเวอร์ชันของสาขาเดียวกัน ใช้แถวที่ created_at ล่าสุด', r.ln);
+      if (keep.length > 1) keep.slice(1).forEach(r => bag.add('warn', 'สาขาเดียวมีหลาย polygon วันเดียวกัน รวมเป็นพื้นที่เดียว', r.ln));
+      const poly = keep.filter(r => r.rings);
+      rowsOut.push(poly.length ? {code: keep[0].code, rings: poly.flatMap(r => r.rings), t: keep[0].t} : keep[0]);
+    }
+    rowsOut.forEach(r => delete r.ln);
+  }
+  else if (['branches', 'riders', 'areas'].includes(key)) { const keyOf = r => key === 'riders' ? r.id : key === 'areas' ? r.prov : r.code; const last = new Map(); out.forEach(r => last.set(keyOf(r), r)); rowsOut = [...last.values()]; }
+  if (key === 'areas') { const missing = PROV.filter(p => !rowsOut.some(r => r.prov === p.c)); if (missing.length) bag.add('warn', `ไม่มี ${missing.length} จังหวัดในตาราง จะใช้การจัดกลุ่มเดิม (${missing.slice(0, 4).map(p => p.n).join(', ')}${missing.length > 4 ? ' …' : ''})`, null); }
+  return {rows: rowsOut, issues: bag.list(), total: rows.length};
+}
+function parseGeomCell(s) {
+  if (/^[{[]/.test(s)) {
+    let j; try { j = JSON.parse(s); } catch { return {rings: null, msg: s.length >= 32000 ? 'geometry ไม่ครบ อาจถูก Excel ตัดเพราะเกิน 32,767 ตัวอักษรต่อช่อง ให้ส่งออก CSV จากระบบต้นทางโดยไม่เปิดผ่าน Excel' : 'geometry ไม่ใช่ GeoJSON ที่ถูกต้อง'}; }
+    const geom = j.type === 'Feature' ? j.geometry : j.type === 'FeatureCollection' ? {type: 'GeometryCollection', geometries: j.features.map(f => f.geometry)} : j;
+    const rings = ringsOfGeom(geom).filter(r => r.length >= 3);
+    return rings.length ? {rings} : {rings: null, msg: `geometry เป็น ${geom?.type || 'ชนิดที่ไม่รู้จัก'} ต้องเป็น Polygon หรือ MultiPolygon`};
+  }
+  const w = parseWKT(s); return w ? {rings: w} : {rings: null, msg: 'อ่าน geometry ไม่ได้ (ต้องเป็น GeoJSON หรือ WKT)'};
+}
+function ringsAreaKm(rings) {
+  let tot = 0; for (const r of rings) { const lat0 = r[0][1], kx = kmLon(lat0); let a = 0; for (let i = 0; i < r.length; i++) { const p = r[i], q = r[(i + 1) % r.length]; a += (p[0] * kx) * (q[1] * KM_LAT) - (q[0] * kx) * (p[1] * KM_LAT); } tot += a / 2; }
+  return Math.abs(tot);
+}
+function pipRing(x, y, r) { let c = false; for (let i = 0, j = r.length - 1; i < r.length; j = i++) if ((r[i][1] > y) !== (r[j][1] > y) && x < (r[j][0] - r[i][0]) * (y - r[i][1]) / (r[j][1] - r[i][1]) + r[i][0]) c = !c; return c; }
+
+/* ---- polygon -> star-shaped reach around the store (72 rays, farthest boundary crossing) ---- */
+function castReach(b, rings) {
+  const kx = kmLon(b.lat), out = new Float64Array(NV), step = 2 * Math.PI / NV;
+  for (const r of rings) {
+    let px = (r[0][0] - b.lon) * kx, py = (r[0][1] - b.lat) * KM_LAT, pa = Math.atan2(px, py);
+    for (let i = 1; i <= r.length; i++) {
+      const q = r[i % r.length], qx = (q[0] - b.lon) * kx, qy = (q[1] - b.lat) * KM_LAT, qa = Math.atan2(qx, qy);
+      let a0 = pa, da = qa - pa; if (da > Math.PI) da -= 2 * Math.PI; else if (da < -Math.PI) da += 2 * Math.PI;
+      if (da < 0) { a0 = qa; da = -da; }
+      const ex = qx - px, ey = qy - py, k0 = Math.ceil(a0 / step - 1e-9), k1 = Math.floor((a0 + da) / step + 1e-9);
+      for (let k = k0; k <= k1; k++) {
+        const th = k * step, dx = Math.sin(th), dy = Math.cos(th), den = dx * ey - dy * ex; if (Math.abs(den) < 1e-12) continue;
+        const t = (px * ey - py * ex) / den, kk = ((k % NV) + NV) % NV; if (t > out[kk]) out[kk] = t;
+      }
+      px = qx; py = qy; pa = qa;
+    }
+  }
+  const res = new Array(NV); for (let k = 0; k < NV; k++) res[k] = out[k] || .05;
+  return res;
+}
+/* a trade area from the file is kept exactly unless it overlaps a neighbour's area; overlapping ones get split at the midline */
+function detectTradeOverlaps() {
+  TRADE_OVL = [];
+  const all = BR.filter(b => b.reach);
+  for (const b of all) { b.ovl = false; b._rmax = Math.max(...b.reach); b._rmin = Math.min(...b.reach); }
+  if (!all.some(b => b.radSrc === 'trade')) return;
+  const RM = Math.min(25, Math.max(0, ...all.map(b => b._rmax)));
+  const ptsOf = o => { if (o._pts) return o._pts; const n = o.reach.length * 2, p = new Float64Array(n * 2);
+    for (let k = 0; k < n; k++) { const brg = k * 180 / o.reach.length, th = brg * Math.PI / 180, r = radAt(o.reach, brg) * .995; p[2 * k] = Math.sin(th) * r; p[2 * k + 1] = Math.cos(th) * r; }
+    return o._pts = p; };
+  // is a point (km, relative to o) inside o's star polygon?
+  const insideRel = (o, x, y) => { const d2 = x * x + y * y; if (d2 >= o._rmax * o._rmax) return false; if (d2 < o._rmin * o._rmin * .98) return true;
+    const brg = (Math.atan2(x, y) * 180 / Math.PI + 360) % 360, R = radAt(o.reach, brg) - .01; return d2 < R * R; };
+  const anyInside = (src, dst, ox, oy) => { const p = ptsOf(src); for (let k = 0; k < p.length; k += 2) if (insideRel(dst, p[k] + ox, p[k + 1] + oy)) return true; return false; };
+  for (const a of all) {
+    if (a.radSrc !== 'trade') continue;
+    for (const {b: o, d} of nearBranches(a.lon, a.lat, a._rmax + RM)) {
+      if (o === a || !o.reach || (o.radSrc === 'trade' && o.code < a.code) || d >= a._rmax + o._rmax) continue;
+      const kx = kmLon((a.lat + o.lat) / 2), dx = (a.lon - o.lon) * kx, dy = (a.lat - o.lat) * KM_LAT;   // a's centre seen from o
+      const hit = d < a._rmin + o._rmin - .02 || anyInside(a, o, dx, dy) || anyInside(o, a, -dx, -dy);
+      if (hit) { a.ovl = true; if (o.radSrc === 'trade') o.ovl = true; TRADE_OVL.push([a, o]); }
+    }
+  }
+  for (const b of all) delete b._pts;
+}
+
+/* ---- compose the working data set from whatever has been uploaded ---- */
+const AREAS_DEF = AREAS.map(a => ({...a})), AOP_DEF = {...AREA_OF_PROV_EN};
+function applyAreaMap() {
+  AREAS.length = 0; AREAS_DEF.forEach(a => AREAS.push({...a}));
+  for (const k in AREA_OF_PROV_EN) delete AREA_OF_PROV_EN[k]; Object.assign(AREA_OF_PROV_EN, AOP_DEF);
+  BKK_FIXED = null;
+  if (!DS.areas) return;
+  for (const r of DS.areas.rows) {
+    const p = provByCode[r.prov]; if (!p) continue;
+    if (p.c === '10') BKK_FIXED = r.area; else AREA_OF_PROV_EN[p.e] = r.area;
+    const ex = AREAS.find(a => a.id === r.area);
+    if (ex) { if (r.aname) ex.name = r.aname; } else AREAS.push({id: r.area, name: r.aname || ('พื้นที่ ' + r.area)});
+  }
+  AREAS.sort((a, b) => typeof a.id === 'number' && typeof b.id === 'number' ? a.id - b.id : String(a.id).localeCompare(String(b.id), 'th'));
+}
+const areaFor = (prov, lon, lat) => prov === '10' ? bkkArea({lon, lat}) : (AREA_OF_PROV_EN[provByCode[prov]?.e] ?? 'ไม่ระบุ');
+let BUILD_NOTE = [];
+function rebuildRiders() {
+  const byCode = new Map(BR.map(b => (b.riders = [], [b.code, b]))); RD = []; let lost = 0;
+  for (const r of DS.riders?.rows || []) { const b = byCode.get(r.code); if (!b) { lost++; continue; } const rd = {id: r.id, b, st: r.st, since: r.t, jobs: 0}; b.riders.push(rd); RD.push(rd); }
+  BUILD_NOTE = BUILD_NOTE.filter(n => !n.startsWith('ไรเดอร์')); if (lost) BUILD_NOTE.push(`ไรเดอร์ ${fmt(lost)} คนอ้างถึงสาขาที่ไม่มีในไฟล์สาขา`);
+  computeAllDelivery(); openBranch = null; render();
+}
+const nextPaint = () => new Promise(r => requestAnimationFrame(() => setTimeout(r, 0)));
+function rebuildAll(changed) {
+  if (changed === 'riders' && DS.branches && MODE === 'import') return rebuildRiders();
+  applyAreaMap();
+  BUILD_NOTE = [];
+  if (!DS.branches) { buildSim(); running = true; }
+  else {
+    BR = DS.branches.rows.map(x => ({code: x.code, name: x.name, prov: x.prov, lat: x.lat, lon: x.lng, area: x.area != null && (typeof x.area !== 'number' || AREAS.some(a => a.id === x.area)) ? x.area : areaFor(x.prov, x.lng, x.lat),
+      reqFixed: x.req, reqPeak: x.req, riders: [], bias: 1, svcR: x.radius || 0}));
+    const byCode = new Map(BR.map(b => [b.code, b]));
+    RD = []; let lostR = 0;
+    for (const r of DS.riders?.rows || []) { const b = byCode.get(r.code); if (!b) { lostR++; continue; } const rd = {id: r.id, b, st: r.st, since: r.t, jobs: 0}; b.riders.push(rd); RD.push(rd); }
+    let lostT = 0;
+    for (const t of DS.trade?.rows || []) { const b = byCode.get(t.code); if (!b) { lostT++; continue; } b.trade = t.rings ? castReach(b, t.rings) : Array(NV).fill(t.radius); b.tradeRings = t.rings || null; }
+    const cust = (DS.customers?.rows || []).map(c => ({branch_code: c.code, lat: c.lat, lng: c.lng, orders_30d: c.o, avg_delivery_min: c.t ?? NaN}));
+    MODE = 'import'; running = false;
+    const ci = importDelivery(cust);
+    if (lostR) BUILD_NOTE.push(`ไรเดอร์ ${fmt(lostR)} คนอ้างถึงสาขาที่ไม่มีในไฟล์สาขา`);
+    if (lostT) BUILD_NOTE.push(`เทรดแอเรีย ${fmt(lostT)} สาขาไม่มีในไฟล์สาขา`);
+    if (ci.orphan) BUILD_NOTE.push(`หมุดลูกค้า ${fmt(ci.orphan)} รายอ้างถึงสาขาที่ไม่มีในไฟล์สาขา`);
+  }
+  dSel = null; whatR = null; dFirst = true; openBranch = null;
+  filt = {q: '', area: 0, prov: '', st: 'all', iss: 'all'}; qEl.value = '';
+  setSource(MODE === 'sim' ? '' : 'ข้อมูลจริงจากไฟล์ที่อัปโหลด');
+  fillFilterOptions(); render();
+  if (page === 'overview') zoomForFilter();
+}
+
+/* ---- browser persistence (IndexedDB, per viewer) ---- */
+const IDB = (() => {
+  const open = () => new Promise((ok, no) => { const r = indexedDB.open('rcc-data', 1); r.onupgradeneeded = () => r.result.createObjectStore('kv'); r.onsuccess = () => ok(r.result); r.onerror = () => no(r.error); });
+  const tx = (mode, fn) => open().then(db => new Promise((ok, no) => { const t = db.transaction('kv', mode), s = t.objectStore('kv'), q = fn(s); t.oncomplete = () => ok(q?.result); t.onerror = () => no(t.error); }));
+  return {get: k => tx('readonly', s => s.get(k)).catch(() => null), put: (k, v) => tx('readwrite', s => s.put(v, k)).catch(() => false), del: k => tx('readwrite', s => s.delete(k)).catch(() => false)};
+})();
+let remember = true; try { remember = localStorage.getItem('rcc-remember') !== '0'; } catch {}
+function packDS() {
+  const o = {log: DS.log};
+  for (const k of DS_KEYS) { const e = DS[k]; if (!e) { o[k] = null; continue; }
+    if (k === 'customers') { const r = e.rows, n = r.length, lat = new Float64Array(n), lng = new Float64Array(n), ord = new Uint8Array(n), t = new Float32Array(n);
+      for (let i = 0; i < n; i++) { lat[i] = r[i].lat; lng[i] = r[i].lng; ord[i] = r[i].o; t[i] = r[i].t ?? NaN; }
+      o[k] = {file: e.file, at: e.at, col: {id: r.map(x => x.id).join('\n'), code: r.map(x => x.code).join('\n'), lat, lng, ord, t}}; }
+    else if (k === 'trade') { const rings = [], meta = []; let len = 0;
+      for (const r of e.rows) { const rs = r.rings || []; meta.push({code: r.code, radius: r.radius, t: r.t, n: rs.map(x => x.length)}); len += rs.reduce((s, x) => s + x.length, 0); }
+      const flat = new Float64Array(len * 2); let p = 0; for (const r of e.rows) for (const ring of r.rings || []) for (const pt of ring) { flat[p++] = pt[0]; flat[p++] = pt[1]; }
+      o[k] = {file: e.file, at: e.at, meta, flat}; }
+    else o[k] = e;
+  }
+  return o;
+}
+function unpackDS(o) {
+  for (const k of DS_KEYS) { const e = o[k]; if (!e) { DS[k] = null; continue; }
+    if (k === 'customers' && e.col) { const c = e.col, id = c.id.split('\n'), code = c.code.split('\n'), n = c.lat.length, rows = new Array(n);
+      for (let i = 0; i < n; i++) rows[i] = {id: id[i], code: code[i], lat: c.lat[i], lng: c.lng[i], o: c.ord[i], t: isNaN(c.t[i]) ? null : c.t[i]};
+      DS[k] = {file: e.file, at: e.at, rows}; }
+    else if (k === 'trade' && e.flat) { let p = 0; const f = e.flat;
+      DS[k] = {file: e.file, at: e.at, rows: e.meta.map(m => { const r = {code: m.code, t: m.t}; if (m.n.length) r.rings = m.n.map(len => { const ring = new Array(len); for (let i = 0; i < len; i++) { ring[i] = [f[p], f[p + 1]]; p += 2; } return ring; }); else r.radius = m.radius; return r; })}; }
+    else DS[k] = e;
+  }
+  DS.log = o.log || [];
+}
+let persistT = null;
+function persist() { if (!remember) return; clearTimeout(persistT); persistT = setTimeout(() => IDB.put('ds', packDS()), 400); }
+
+/* ---- page rendering ---- */
+const ago2 = t => { const m = Math.round((Date.now() - t) / 60000); return m < 1 ? 'เมื่อสักครู่' : m < 60 ? `${m} นาทีที่แล้ว` : m < 1440 ? `${Math.floor(m / 60)} ชม.ที่แล้ว` : new Date(t).toLocaleDateString('th-TH', {day: 'numeric', month: 'short', year: '2-digit'}); };
+const UNIT = {branches: 'สาขา', trade: 'สาขา', customers: 'ราย', riders: 'คน', areas: 'จังหวัด'};
+const SRC_TH = {sim: 'จำลอง', trade: 'เทรดแอเรียจากไฟล์', cust: 'คำนวณจากหมุดลูกค้า', cfg: 'รัศมีจากไฟล์สาขา', std: 'รัศมีมาตรฐาน (ยังไม่มีข้อมูล)'};
+const armed = {};
+function dsStatus(key) {
+  const e = DS[key];
+  if (e) return {pill: 'p-ok', t: 'ใช้ข้อมูลจริง'};
+  if (SPEC[key].dep && !DS.branches) return {pill: 'p-sim', t: 'ข้อมูลจำลอง'};
+  if (key === 'areas') return {pill: 'p-sim', t: 'ใช้การจัดกลุ่มเดิม'};
+  if (key === 'trade') return {pill: 'p-auto', t: DS.customers ? 'คำนวณจากหมุดลูกค้า' : 'ใช้รัศมีมาตรฐาน'};
+  if (key === 'branches') return {pill: 'p-sim', t: 'ข้อมูลจำลอง'};
+  return {pill: 'p-none', t: 'ยังไม่มีข้อมูล'};
+}
+function renderData() {
+  const $ = id => document.getElementById(id);
+  const real = !!DS.branches;
+  $('dmMode').innerHTML = real ? `<span class="pill p-ok">ข้อมูลจริง</span> ระบบใช้ข้อมูลจากไฟล์ที่อัปโหลด ${fmt(BR.length)} สาขา`
+    : `<span class="pill p-sim">ข้อมูลจำลอง</span> ยังไม่มีไฟล์สาขา ทุกหน้าใช้ข้อมูลตัวอย่าง เริ่มจากอัปโหลดไฟล์สาขาก่อน`;
+  const card = key => {
+    const S = SPEC[key], e = DS[key], st = dsStatus(key), locked = S.dep && !DS.branches;
+    return `<article class="dmc ${locked ? 'locked' : ''}" data-k="${key}">
+      <div class="dmh"><span class="dmn">${S.opt ? '–' : S.n}</span><div style="min-width:0"><h3>${S.t}${S.opt ? ' <small>ไม่บังคับ</small>' : ''}</h3><p>${S.d}</p></div><span class="pill ${st.pill}">${st.t}</span></div>
+      <div class="dmmeta">${e ? `<b>${esc(e.file)}</b><span>${fmt(e.rows.length)} ${UNIT[key]}</span><span>อัปเดต ${ago2(e.at)}</span>` : `<span>ยังไม่ได้อัปโหลด</span>`}</div>
+      <div class="dmcols">${S.fields.map(f => `<span class="col ${f.req ? 'req' : ''}" title="${f.req ? 'ต้องมี' : 'ไม่บังคับ'}">${f.t}${f.req ? ' *' : ''}</span>`).join('')}</div>
+      ${S.std ? `<div class="stdf">รูปแบบมาตรฐาน <code>${S.std}</code></div>` : ''}${S.note ? `<div class="hint">${S.note}</div>` : ''}
+      <label class="drop" ${locked ? 'aria-disabled="true"' : ''}>
+        <input type="file" accept="${S.acc}" data-k="${key}" ${locked ? 'disabled' : ''}>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m0 0-4 4m4-4 4 4M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>
+        <span>${locked ? 'อัปโหลดไฟล์สาขาก่อน' : `ลากไฟล์มาวาง หรือ <u>เลือกไฟล์</u>`}</span>
+        <small>${S.acc.replace(/\./g, '').toUpperCase().split(',').filter((x, i, a) => a.indexOf(x) === i && x !== 'TXT').join(' · ')}</small>
+      </label>
+      <div class="dmact">
+        <button class="btn sm" data-act="tpl" data-k="${key}">คัดลอกตัวอย่างไฟล์</button>
+        <button class="btn sm" data-act="exp" data-k="${key}" ${key === 'areas' || BR.length ? '' : 'disabled'}>คัดลอกข้อมูลที่ใช้อยู่</button>
+        ${e ? `<button class="btn sm danger" data-act="del" data-k="${key}">${armed[key] ? 'กดอีกครั้งเพื่อลบ' : 'ลบข้อมูลนี้'}</button>` : ''}
+      </div></article>`; };
+  $('dmCards').innerHTML = DS_KEYS.filter(k => k !== 'areas').map(card).join('');
+  $('dmCardOpt').innerHTML = card('areas');
+  // health check of what is in use
+  const H = [];
+  if (real) {
+    const src = {}; for (const b of BR) src[b.radSrc] = (src[b.radSrc] || 0) + 1;
+    H.push(['พื้นที่จัดส่ง', Object.entries(src).map(([k, v]) => `${SRC_TH[k] || k} ${fmt(v)} สาขา`).join(' · '), src.std ? 'warn' : 'ok']);
+    H.push(['เทรดแอเรียทับซ้อน', TRADE_OVL.length ? `${fmt(TRADE_OVL.length)} คู่ แบ่งที่กึ่งกลางระหว่างร้านให้แล้ว เช่น ${TRADE_OVL.slice(0, 3).map(([a, b]) => `${esc(a.name)} กับ ${esc(b.name)}`).join(', ')}` : DS.trade ? 'ไม่พบพื้นที่ทับกัน' : 'ยังไม่มีไฟล์เทรดแอเรีย', TRADE_OVL.length ? 'warn' : DS.trade ? 'ok' : 'none']);
+    const noCust = BR.filter(b => b.c1 <= b.c0).length;
+    H.push(['หมุดลูกค้า', DS.customers ? `${fmt(CUST.n)} ราย${noCust ? ` · ${fmt(noCust)} สาขายังไม่มีลูกค้า` : ''}` : 'ยังไม่มี หน้าพื้นที่จัดส่งจะไม่มีคำแนะนำตัดพื้นที่', DS.customers ? (noCust ? 'warn' : 'ok') : 'none']);
+    const noR = BR.filter(b => !b.riders.length).length;
+    H.push(['ไรเดอร์', DS.riders ? `${fmt(RD.length)} คน${noR ? ` · ${fmt(noR)} สาขาไม่มีไรเดอร์` : ''}` : 'ยังไม่มี หน้าภาพรวมจะแสดงทุกสาขาเป็นขาด', DS.riders ? (noR ? 'warn' : 'ok') : 'none']);
+    for (const n of BUILD_NOTE) H.push(['ข้อมูลที่ไม่ได้ใช้', n, 'warn']);
+  }
+  $('dmHealth').hidden = !real;
+  $('dmHealthList').innerHTML = H.map(([a, b, s]) => `<div class="hrow2"><span class="dot hd-${s}"></span><b>${a}</b><span>${b}</span></div>`).join('');
+  $('dmLog').innerHTML = DS.log.length ? DS.log.slice().reverse().map(l => `<div class="lg"><span class="num">${new Date(l.at).toLocaleString('th-TH', {day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'})}</span><b>${esc(SPEC[l.k]?.t || l.k)}</b><span>${esc(l.msg)}</span></div>`).join('') : '<div class="empty">ยังไม่มีการอัปโหลด</div>';
+  $('dmRemember').checked = remember;
+  $('dmReset').textContent = armed.all ? 'กดอีกครั้งเพื่อล้างทั้งหมด' : 'ล้างข้อมูลทั้งหมด กลับไปใช้ข้อมูลจำลอง';
+  $('dmReset').disabled = !DS_KEYS.some(k => DS[k]);
+}
+function logAdd(k, msg) { DS.log.push({at: Date.now(), k, msg}); if (DS.log.length > 40) DS.log.splice(0, DS.log.length - 40); }
+
+/* ---- exports (copied, since page downloads are blocked in the viewer) ---- */
+const fmtStamp = t => { const d = new Date(t + 7 * 3600e3); return `${d.getUTCDate()}/${d.getUTCMonth() + 1}/${d.getUTCFullYear()} ${d.getUTCHours()}:${String(d.getUTCMinutes()).padStart(2, '0')}`; };
+const csvCell = v => { const s = String(v ?? ''); return /[",\n\t]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+function exportText(key) {
+  const rows = [];
+  if (key === 'branches') { rows.push(['branch_code', 'branch_name', 'lat', 'lng', 'province', 'area', 'required', 'service_radius_km']); for (const b of BR) rows.push([b.code, b.name, b.lat.toFixed(6), b.lon.toFixed(6), provByCode[b.prov]?.n || '', b.area, b.reqFixed ?? b.reqPeak, b.svcR || '']); }
+  else if (key === 'riders') { rows.push(['rider_id', 'branch_code', 'status', 'last_update']); const S = {deliver: 'delivering', pickup: 'pickup', idle: 'idle', break: 'break', offline: 'offline'};
+    for (const r of RD) rows.push([r.id, r.b.code, S[r.st], new Date(r.since + 7 * 3600e3).toISOString().slice(0, 16).replace('T', ' ')]); }
+  else if (key === 'customers') { rows.push(['customer_id', 'branch_code', 'lat', 'lng', 'orders_30d', 'avg_delivery_min']); for (let i = 0; i < CUST.n; i++) rows.push(['C-' + String(i + 1).padStart(7, '0'), BR[CUST.br[i]].code, CUST.lat[i].toFixed(6), CUST.lon[i].toFixed(6), CUST.orders[i], CUST.time[i].toFixed(1)]); }
+  else if (key === 'areas') { rows.push(['province', 'area_id', 'area_name']); for (const p of PROV) { const id = p.c === '10' ? (BKK_FIXED ?? '1-3') : AREA_OF_PROV_EN[p.e]; rows.push([p.n, id, p.c === '10' && BKK_FIXED == null ? 'กทม. (แบ่ง 3 พื้นที่ตามทิศ)' : areaName(id)]); } }
+  else if (key === 'trade') {
+    const stamp = fmtStamp(Date.now());
+    rows.push(['store_code', 'geometry', 'created_at']);
+    for (const b of BR) { if (!b.rad) continue;
+      if (b.tradeRings && !b.ovl) { rows.push([b.code, JSON.stringify(b.tradeRings.length > 1 ? {type: 'MultiPolygon', coordinates: b.tradeRings.map(r => [r])} : {type: 'Polygon', coordinates: b.tradeRings}), DS.trade?.rows.find(t => t.code === b.code)?.t ? fmtStamp(DS.trade.rows.find(t => t.code === b.code).t) : stamp]); continue; }
+      const st = 360 / b.rad.length, ring = b.rad.map((r, k) => offsetLL(b.lon, b.lat, k * st, r).map(v => +v.toFixed(9))); ring.push(ring[0]);
+      rows.push([b.code, JSON.stringify({type: 'Polygon', coordinates: [ring]}), stamp]); }
+    return {text: rows.map(r => r.map(csvCell).join(',')).join('\n'), n: rows.length - 1, what: 'store_code, geometry, created_at · พื้นที่หลังแบ่งไม่ทับซ้อน'};
+  }
+  return {text: rows.map(r => r.map(csvCell).join(',')).join('\n'), n: rows.length - 1, what: 'CSV'};
+}
+function copyText(text, okMsg) {
+  navigator.clipboard.writeText(text).then(() => toast(okMsg), () => {
+    const ta = document.getElementById('dmCopyBox'); ta.value = text.length > 2e6 ? text.slice(0, 2e6) : text; document.getElementById('dmCopy').hidden = false; ta.focus(); ta.select();
+  });
+}
+document.getElementById('dmCopyX').onclick = () => document.getElementById('dmCopy').hidden = true;
+
+/* ---- upload review dialog ---- */
+let REV = null;
+const rev = document.getElementById('dmRev');
+async function startUpload(key, file) {
+  if (!file) return;
+  const S = SPEC[key];
+  REV = {key, file: file.name, loading: true}; rev.hidden = false; renderRev();
+  try {
+    const src = await readAny(file);
+    if (src.kind === 'geo' && key !== 'trade') throw new Error(`ไฟล์ ${S.t} ต้องเป็นตาราง (CSV หรือ Excel)`);
+    REV = Object.assign(REV, {loading: false, src, sheet: 0, mode: 'replace'});
+    if (src.kind === 'table') { const sh = src.sheets[0]; REV.head = sh.rows[0].map(h => String(h).trim()); REV.map = autoMap(S, REV.head); }
+    else { const keys = [...new Set(src.feats.flatMap(f => Object.keys(f.props)))]; REV.propKeys = keys;
+      const s = COL_CODE.map(nk); src.propKey = keys.find(k => s.includes(nk(k))) || keys.find(k => /code|รหัส/i.test(k)) || keys.find(k => nk(k) === 'name') || keys[0] || ''; REV.map = {}; }
+    runValidate();
+  } catch (err) { REV.loading = false; REV.err = err.message || 'อ่านไฟล์ไม่สำเร็จ'; }
+  renderRev();
+}
+function runValidate() {
+  const {key, src} = REV, sh = src.kind === 'table' ? src.sheets[REV.sheet] : null;
+  REV.res = validate(key, src.kind === 'table' ? {kind: 'table', rows: sh.rows.slice(1)} : src, REV.map);
+}
+function previewCells(key, r) {
+  if (key === 'branches') return [r.code, r.name, r.lat.toFixed(5), r.lng.toFixed(5), provByCode[r.prov]?.n || '', r.area ?? '–', r.req, r.radius || '–'];
+  if (key === 'riders') return [r.id, r.code, ST[r.st].t, new Date(r.t).toLocaleString('th-TH', {day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'})];
+  if (key === 'customers') return [r.id || '–', r.code, r.lat.toFixed(5), r.lng.toFixed(5), r.o, TIER[tierOf(r.o)].t, r.t ?? '–'];
+  if (key === 'trade') { const b = branchIndex().byCode.get(codeKey(r.code)); return [r.code, b?.name || '', r.rings ? `${r.rings.length > 1 ? 'MultiPolygon' : 'Polygon'} ${r.rings.reduce((s, x) => s + x.length, 0)} จุด` : `รัศมี ${r.radius} กม.`, r.rings ? f1(ringsAreaKm(r.rings)) : f1(Math.PI * r.radius ** 2), r.t ? new Date(r.t).toLocaleString('th-TH', {day: 'numeric', month: 'short', year: '2-digit', hour: '2-digit', minute: '2-digit'}) : '–']; }
+  return [provByCode[r.prov]?.n, r.area, r.aname || '–'];
+}
+const PREV_HEAD = {branches: ['รหัส', 'ชื่อ', 'lat', 'lng', 'จังหวัด', 'พื้นที่', 'ต้องการ', 'รัศมี'], riders: ['ไรเดอร์', 'สาขา', 'สถานะ', 'อัปเดต'],
+  customers: ['ลูกค้า', 'สาขา', 'lat', 'lng', 'ครั้ง/30 วัน', 'ระดับ', 'เวลาส่ง'], trade: ['store_code', 'สาขา', 'รูปแบบ', 'พื้นที่ ตร.กม.', 'created_at'], areas: ['จังหวัด', 'พื้นที่', 'ชื่อพื้นที่']};
+function renderRev() {
+  const box = document.getElementById('dmRevBox'); if (!REV) return;
+  const S = SPEC[REV.key];
+  if (REV.loading) { box.innerHTML = `<h3>${S.t}</h3><div class="hint">กำลังอ่าน ${esc(REV.file)}…</div>`; return; }
+  if (REV.err) { box.innerHTML = `<h3>${S.t}</h3><div class="msg err">${esc(REV.err)}</div><div class="row"><button class="btn" data-rv="close">ปิด</button></div>`; return; }
+  const {src, res} = REV, sh = src.kind === 'table' ? src.sheets[REV.sheet] : null;
+  const sample = i => sh ? sh.rows.slice(1, 4).map(r => r[i]).filter(v => String(v).trim() !== '').map(v => v instanceof Date ? v.toLocaleString('th-TH') : String(v)).slice(0, 3).join(' · ') : '';
+  const errN = res.issues.filter(x => x.sev === 'err').reduce((s, x) => s + x.n, 0), warnN = res.issues.filter(x => x.sev === 'warn').reduce((s, x) => s + x.n, 0);
+  const canMerge = DS[REV.key] && REV.key !== 'areas';
+  box.innerHTML = `<div class="rvh"><div><h3>${S.t}</h3><div class="hint">${esc(REV.file)} · ${fmt(sh ? sh.rows.length - 1 : src.feats.length)} แถว</div></div><button class="x" data-rv="close" aria-label="ปิด">✕</button></div>
+    ${sh && src.sheets.length > 1 ? `<label class="fld">ชีต <select id="rvSheet">${src.sheets.map((s, i) => `<option value="${i}" ${i === REV.sheet ? 'selected' : ''}>${esc(s.name)} (${fmt(s.rows.length - 1)} แถว)</option>`).join('')}</select></label>` : ''}
+    <section><h4>1. จับคู่คอลัมน์</h4><div class="hint">ระบบเลือกให้จากชื่อหัวตาราง ตรวจแล้วแก้ได้ ช่องที่มี * ต้องมี</div>
+      <div class="mapg">${src.kind === 'geo' ? `<div class="mf"><b>รหัสสาขา *</b></div><select id="rvProp">${REV.propKeys.map(k => `<option ${k === src.propKey ? 'selected' : ''}>${esc(k)}</option>`).join('')}</select>
+        <div class="smp">${esc(src.feats.slice(0, 3).map(f => f.props[src.propKey]).join(' · '))}</div>` :
+        S.fields.map(f => `<div class="mf"><b>${f.t}${f.req ? ' *' : ''}</b></div><select data-f="${f.k}"><option value="">— ไม่มี —</option>${REV.head.map((h, i) => `<option value="${i}" ${REV.map[f.k] === i ? 'selected' : ''}>${esc(h || 'คอลัมน์ ' + (i + 1))}</option>`).join('')}</select>
+          <div class="smp">${REV.map[f.k] != null ? esc(sample(REV.map[f.k])) : ''}</div>`).join('')}</div></section>
+    <section><h4>2. ตรวจสอบข้อมูล</h4>
+      <div class="vsum"><span class="pill p-ok">ใช้ได้ ${fmt(res.rows.length)} ${UNIT[REV.key]}</span>${warnN ? `<span class="pill p-over">เตือน ${fmt(warnN)} แถว</span>` : ''}${errN ? `<span class="pill p-short">ข้าม ${fmt(errN)} แถว</span>` : ''}</div>
+      ${res.issues.length ? `<div class="iss">${res.issues.map(x => `<div class="${x.sev}"><span class="dot"></span><span>${esc(x.msg)}${x.n ? ` <b>${fmt(x.n)} แถว</b>` : ''}${x.rows.length ? ` <span class="rws">แถว ${x.rows.join(', ')}${x.n > x.rows.length ? ' …' : ''}</span>` : ''}</span></div>`).join('')}</div>` : '<div class="hint">ไม่พบปัญหา</div>'}
+      ${res.rows.length ? `<div class="tscroll pv"><table><thead><tr>${PREV_HEAD[REV.key].map(h => `<th>${h}</th>`).join('')}</tr></thead><tbody>${res.rows.slice(0, 6).map(r => `<tr>${previewCells(REV.key, r).map(c => `<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>` : ''}</section>
+    <section><h4>3. นำเข้า</h4>
+      ${canMerge ? `<div class="modes"><label><input type="radio" name="rvMode" value="replace" ${REV.mode === 'replace' ? 'checked' : ''}> แทนที่ข้อมูลเดิมทั้งหมด (${fmt(DS[REV.key].rows.length)} ${UNIT[REV.key]})</label>
+        <label><input type="radio" name="rvMode" value="merge" ${REV.mode === 'merge' ? 'checked' : ''}> ${REV.key === 'customers' ? 'แทนที่เฉพาะสาขาที่อยู่ในไฟล์นี้ สาขาอื่นคงเดิม' : 'เพิ่มและอัปเดตตามรหัส ข้อมูลอื่นคงเดิม'}</label></div>` : ''}
+      ${REV.key === 'branches' && DS.branches && (DS.customers || DS.riders || DS.trade) ? '<div class="hint">ไรเดอร์ หมุดลูกค้า และเทรดแอเรียที่อ้างถึงสาขาที่ไม่มีในไฟล์ใหม่จะไม่ถูกใช้</div>' : ''}
+      <div class="row"><button class="btn" data-rv="close">ยกเลิก</button><button class="btn primary" data-rv="apply" ${res.rows.length ? '' : 'disabled'}>ใช้ข้อมูลนี้ ${fmt(res.rows.length)} ${UNIT[REV.key]}</button></div></section>`;
+  const sel = box.querySelector('#rvSheet'); if (sel) sel.onchange = () => { REV.sheet = +sel.value; const s = src.sheets[REV.sheet]; REV.head = s.rows[0].map(h => String(h).trim()); REV.map = autoMap(S, REV.head); runValidate(); renderRev(); };
+  const pk = box.querySelector('#rvProp'); if (pk) pk.onchange = () => { src.propKey = pk.value; runValidate(); renderRev(); };
+  box.querySelectorAll('select[data-f]').forEach(s => s.onchange = () => { const v = s.value; if (v === '') delete REV.map[s.dataset.f]; else REV.map[s.dataset.f] = +v; runValidate(); renderRev(); });
+  box.querySelectorAll('input[name=rvMode]').forEach(r => r.onchange = () => REV.mode = r.value);
+}
+rev.addEventListener('click', e => {
+  const a = e.target.closest('[data-rv]')?.dataset.rv;
+  if (a === 'close' || e.target === rev) { rev.hidden = true; REV = null; }
+  if (a === 'apply') applyRev();
+});
+async function applyRev() {
+  const btn = document.querySelector('#dmRevBox [data-rv="apply"]'); if (btn) { btn.disabled = true; btn.textContent = 'กำลังประมวลผล…'; }
+  document.querySelectorAll('#dmRevBox [data-rv="close"]').forEach(x => x.disabled = true);
+  await nextPaint();
+  const {key, res, mode, file} = REV, idOf = r => key === 'riders' ? r.id : r.code;
+  let rows = res.rows;
+  if (mode === 'merge' && DS[key]) {
+    if (key === 'customers') { const codes = new Set(rows.map(r => r.code)); rows = DS[key].rows.filter(r => !codes.has(r.code)).concat(rows); }
+    else { const m = new Map(DS[key].rows.map(r => [idOf(r), r])); for (const r of rows) m.set(idOf(r), r); rows = [...m.values()]; }
+  }
+  DS[key] = {file, at: Date.now(), rows};
+  logAdd(key, `${file} · ${mode === 'merge' ? 'เพิ่ม/อัปเดต' : 'แทนที่'} ${fmt(res.rows.length)} ${UNIT[key]} (รวม ${fmt(rows.length)})`);
+  rebuildAll(key); rev.hidden = true; REV = null; persist();
+  toast(`ใช้ข้อมูล${SPEC[key].t}แล้ว ${fmt(rows.length)} ${UNIT[key]}${BUILD_NOTE.length ? ' · ' + BUILD_NOTE[0] : ''}`);
+}
+
+/* ---- events on the data page ---- */
+const dmCards = document.getElementById('dmPage');
+dmCards.addEventListener('change', e => { const inp = e.target.closest('input[type=file]'); if (inp) { startUpload(inp.dataset.k, inp.files[0]); inp.value = ''; } });
+dmCards.addEventListener('dragover', e => { const d = e.target.closest('.drop'); if (d && !d.closest('.locked')) { e.preventDefault(); d.classList.add('over'); } });
+dmCards.addEventListener('dragleave', e => e.target.closest('.drop')?.classList.remove('over'));
+dmCards.addEventListener('drop', e => { const d = e.target.closest('.drop'); if (!d) return; e.preventDefault(); d.classList.remove('over'); if (d.closest('.locked')) return; startUpload(d.closest('.dmc').dataset.k, e.dataTransfer.files[0]); });
+dmCards.addEventListener('click', e => {
+  const b = e.target.closest('button[data-act]'); if (!b) return; const key = b.dataset.k;
+  if (b.dataset.act === 'tpl') copyText(SPEC[key].ex, `คัดลอกตัวอย่าง${SPEC[key].t}แล้ว วางใน Excel หรือ Notepad แล้วบันทึกเป็น CSV`);
+  if (b.dataset.act === 'exp') { const x = exportText(key); copyText(x.text, `คัดลอก${SPEC[key].t} ${fmt(x.n)} แถว (${x.what}) แล้ว`); }
+  if (b.dataset.act === 'del') {
+    if (!armed[key]) { armed[key] = true; renderData(); setTimeout(() => { armed[key] = false; if (page === 'data') renderData(); }, 3500); return; }
+    armed[key] = false; DS[key] = null;
+    if (key === 'branches') logAdd(key, 'ลบไฟล์สาขา กลับไปใช้ข้อมูลจำลอง'); else logAdd(key, 'ลบข้อมูล');
+    rebuildAll(key); persist(); toast(`ลบ${SPEC[key].t}แล้ว`);
+  }
+});
+document.getElementById('dmRemember').onchange = e => { remember = e.target.checked; try { localStorage.setItem('rcc-remember', remember ? '1' : '0'); } catch {} if (remember) persist(); else { clearTimeout(persistT); IDB.del('ds'); } toast(remember ? 'จะจำข้อมูลไว้ในเบราว์เซอร์นี้' : 'ลบข้อมูลที่จำไว้ในเบราว์เซอร์แล้ว'); };
+document.getElementById('dmReset').onclick = () => {
+  if (!armed.all) { armed.all = true; renderData(); setTimeout(() => { armed.all = false; if (page === 'data') renderData(); }, 3500); return; }
+  armed.all = false; DS_KEYS.forEach(k => DS[k] = null); logAdd('branches', 'ล้างข้อมูลทั้งหมด กลับไปใช้ข้อมูลจำลอง');
+  rebuildAll(); persist(); toast('กลับไปใช้ข้อมูลจำลองแล้ว');
+};
+document.getElementById('overN2').onchange = e => { overN = Math.max(1, Math.min(20, +e.target.value || 2)); e.target.value = overN; render(); toast(`สาขาที่ออนไลน์เกินที่ต้องการตั้งแต่ ${overN} คน นับเป็น "เกิน"`); };
+document.getElementById('importBtn').onclick = () => { go('data'); scrollTo(0, 0); };
+function bootSavedData() {
+  if (!remember) return;
+  IDB.get('ds').then(saved => {
+    if (!saved || !DS_KEYS.some(k => saved[k])) return;
+    unpackDS(saved); toast('กำลังโหลดข้อมูลที่อัปโหลดไว้ครั้งก่อน…');
+    nextPaint().then(() => { rebuildAll(); toast(`โหลดข้อมูลที่อัปโหลดไว้แล้ว ${fmt(BR.length)} สาขา`); });
+  });
+}
+
 /* ================= main render ================= */
 function render() {
   BR.forEach(branchStats);
@@ -1790,7 +2591,7 @@ function render() {
     const list = scoped.filter(b => filt.st === 'all' || b.status === filt.st);
     renderKPI(scoped);
     renderMap(); renderAreas(); renderBranches(list.slice()); renderAlerts(list); renderMoves(list); renderChart(scoped);
-  } else renderDelivery();
+  } else if (page === 'delivery') renderDelivery(); else renderData();
   const parts = [];
   if (filt.area) parts.push(`พื้นที่ <b>${esc(areaName(filt.area))}</b>`);
   if (filt.prov) parts.push(`<b>${provByCode[filt.prov].n}</b>`);
@@ -1803,7 +2604,7 @@ function render() {
 }
 function clock() { document.getElementById('clock').textContent = new Intl.DateTimeFormat('th-TH', {hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false, timeZone: 'Asia/Bangkok'}).format(new Date()); }
 
-buildSim(); setSource(); fillFilterOptions(); initRouter(); clock();
+buildSim(); setSource(); fillFilterOptions(); initRouter(); clock(); bootSavedData();
 setInterval(clock, 1000);
 setInterval(() => { if (running && MODE === 'sim' && document.visibilityState === 'visible') { tick(); if (page === 'overview') render(); } }, 5000);
 window.__cc = {get BR() { return BR; }, get CUST() { return CUST; }, go, selectDBranch, DMAP, render};
