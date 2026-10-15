@@ -333,6 +333,10 @@ header h1#pgTitle{margin:0;font:700 19px/1.15 var(--f-display);letter-spacing:.0
 .zone .zm.cum{color:var(--fg)}
 .zsep{font:600 12px var(--f-display);color:var(--muted);letter-spacing:.03em;padding:6px 0 0}
 
+#dEmpty{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(380px,calc(100% - 40px));background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:8px;align-items:flex-start;box-shadow:0 10px 30px rgba(0,0,0,.12);font-size:13px;z-index:2}
+#dEmpty b{font:600 16px var(--f-display)}
+#dEmpty span{color:var(--muted)}
+
 /* ---- sub menu ---- */
 .nav a.sub{padding:7px 10px 7px 22px;font-size:13.5px;position:relative;margin-left:16px;border-left:1.5px solid var(--line);border-radius:0 8px 8px 0}
 .nav a.sub svg{width:16px;height:16px}
@@ -575,7 +579,7 @@ header h1#pgTitle{margin:0;font:700 19px/1.15 var(--f-display);letter-spacing:.0
               <label class="bmrow">แผนที่พื้นหลัง <select id="bmSel" aria-label="แผนที่พื้นหลัง">
                 <option value="osm">OpenStreetMap</option><option value="cartoL">OSM สว่าง (CARTO)</option><option value="cartoD">OSM มืด (CARTO)</option><option value="none">ไม่มี (เส้นเขตอย่างเดียว)</option></select></label>
               <label><input type="checkbox" data-l="stores" checked>ร้าน 7-Eleven (สีตามประเด็น)</label>
-              <label><input type="checkbox" data-l="area" checked><span class="sw" style="background:color-mix(in srgb,var(--svc) 25%,transparent);border:1.5px solid var(--svc)"></span>พื้นที่จัดส่ง (แบ่งไม่ทับซ้อน)</label>
+              <label><input type="checkbox" data-l="area" checked><span class="sw" style="background:color-mix(in srgb,var(--svc) 25%,transparent);border:1.5px solid var(--svc)"></span>เทรดแอเรียจากไฟล์</label>
               <label><input type="checkbox" data-l="std" checked><span class="sw" style="border:1.5px dashed var(--fg)"></span>รัศมีมาตรฐาน</label>
               <label><input type="checkbox" data-l="cut" checked><span class="sw" style="background:repeating-linear-gradient(135deg,var(--short) 0 2px,transparent 2px 5px);border:1px solid var(--short)"></span>แนะนำให้ตัด (เลขคือลำดับ)</label>
               <label><input type="checkbox" data-l="bounds" checked>เส้นเขตจังหวัด/อำเภอ</label>
@@ -591,6 +595,7 @@ header h1#pgTitle{margin:0;font:700 19px/1.15 var(--f-display);letter-spacing:.0
         <div class="dctl"><button id="dzin" aria-label="ซูมเข้า">+</button><button id="dzout" aria-label="ซูมออก">−</button><button id="dzhome" aria-label="พอดีกับขอบเขต">⌂</button></div>
         <div id="bmAttr"></div>
         <div id="bmNote" hidden><b>โหลดแผนที่ OpenStreetMap ไม่ได้ในหน้านี้</b> หน้าที่เปิดผ่าน Claude ไม่อนุญาตให้โหลดรูปแผนที่จากเว็บภายนอก จึงแสดงเส้นเขตแทน เปิดไฟล์ HTML นี้จากเซิร์ฟเวอร์ภายในของบริษัทเพื่อดูแผนที่ถนน <button class="linkbtn" id="bmNoteX">ปิด</button></div>
+        <div id="dEmpty" hidden><b id="dEmptyT">ยังไม่มีข้อมูลเทรดแอเรีย</b><span>หน้านี้แสดงเฉพาะเทรดแอเรียจากไฟล์ที่อัปโหลด รูปแบบ store_code, geometry, created_at</span><button class="btn primary" id="dEmptyGo">อัปโหลดไฟล์เทรดแอเรีย</button></div>
         <div id="dZoomHint">ซูมเข้าระดับเมืองเพื่อดูพื้นที่จัดส่งและบ้านลูกค้า</div>
       </div>
     </div>
@@ -787,7 +792,7 @@ function buildSim() {
     });
   }
   MODE = 'sim';
-  buildDelivery();
+  emptyDelivery();
 }
 const reqAt = (b, h) => b.reqFixed != null ? b.reqFixed : Math.max(1, Math.round(b.reqPeak * DEMAND[h]));
 
@@ -1243,6 +1248,11 @@ function allocCust(n) {
     brg: new Float32Array(n), orders: new Uint8Array(n), tier: new Uint8Array(n), br: new Uint32Array(n)};
 }
 
+function emptyDelivery() {
+  CUST = allocCust(0);
+  for (const b of BR) { b.c0 = b.c1 = 0; b.reach = null; b.rad = null; b.adj = []; b.ovl = false; b.radSrc = 'none'; b.tradeRings = null; }
+  afterDeliveryData(false);
+}
 function buildDelivery() {
   seed = 99173;
   // pass 1: how far each store could reach on its own (irregular, road-shaped)
@@ -1310,14 +1320,15 @@ function clipAll() {
     if (!b.reach) { b.rad = null; continue; }
     const rr = Math.max(...b.reach), nb = [];
     for (const x of nearBranches(b.lon, b.lat, Math.min(14, 2 * rr + .2))) {
-      if (x.b === b) continue;
+      if (x.b === b || !x.b.reach) continue;
       const mlat = (b.lat + x.b.lat) / 2;
       let ux = (x.b.lon - b.lon) * kmLon(mlat), uy = (x.b.lat - b.lat) * KM_LAT, d = Math.hypot(ux, uy);
       if (d < .005) { ux = b.code < x.b.code ? 1 : -1; uy = 0; d = .005; } else { ux /= d; uy /= d; }
       nb.push({b: x.b, ux, uy, d});
     }
     nb.sort((p, q) => p.d - q.d);
-    const rad = new Array(NV), adj = new Set(), keep = b.radSrc === 'trade' && !b.ovl;
+    if (b.radSrc === 'trade') { b.rad = b.reach.slice(); b.adj = b.adjT || []; continue; }
+    const rad = new Array(NV), adj = new Set(), keep = false;
     for (let k = 0; k < NV; k++) {
       const th = k * 360 / NV * Math.PI / 180, vx = Math.sin(th), vy = Math.cos(th);
       let bound = radAt(b.reach, k * 360 / NV), who = null;
@@ -1331,9 +1342,9 @@ function clipAll() {
 }
 
 function importDelivery(rows) {
-  const by = new Map(BR.map(b => [b.code, []])); let orphan = 0;
+  const by = new Map(BR.map(b => [b.code, []])), key = new Map(BR.map(b => [codeKey(b.code), b.code])); let orphan = 0;
   for (const x of rows) {
-    const l = by.get(x.branch_code), lat = parseFloat(x.lat), lon = parseFloat(x.lng ?? x.lon);
+    const l = by.get(key.get(codeKey(x.branch_code))), lat = parseFloat(x.lat), lon = parseFloat(x.lng ?? x.lon);
     if (!l || !isFinite(lat) || !isFinite(lon)) { orphan++; continue; }
     l.push({lat, lon, o: Math.max(1, Math.min(255, parseInt(x.orders_30d, 10) || 1)), t: parseFloat(x.avg_delivery_min)});
   }
@@ -1375,7 +1386,9 @@ function nearBranches(lon, lat, maxKm) {
 /* derive a service polygon from customers (used for imported data) */
 function deriveRad(b) {
   if (b.trade) { b.reach = b.trade; b.radSrc = 'trade'; }
-  else if (b.c1 > b.c0) {
+  else { b.reach = null; b.radSrc = 'none'; }
+  return;
+  if (b.c1 > b.c0) {
     const buckets = Array.from({length: 16}, () => []);
     for (let i = b.c0; i < b.c1; i++) buckets[Math.round(CUST.brg[i] / 22.5) % 16].push(CUST.dist[i]);
     const fallback = b.svcR || Math.max(...Array.from({length: b.c1 - b.c0}, (_, k) => CUST.dist[b.c0 + k]));
@@ -1402,7 +1415,7 @@ function statsFor(b, keep, adj = 0) {
 function computeDeliveryStats(b) {
   const lim = limitOf(b);
   const s = statsFor(b);
-  const rMax = b.rad ? Math.max(...b.rad) : 0, area = b.rad ? polyArea(b.rad) : 0;
+  const tg = b.tradeRings ? tradeGeom(b) : null, rMax = tg ? tg.rmax : b.rad ? Math.max(...b.rad) : 0, area = b.tradeRings ? ringsAreaKm(b.tradeRings) : b.rad ? polyArea(b.rad) : 0;
   const has = s.ord > 0;
   const flags = {over: rMax > lim + .05, sla: has && (s.avgT > DSET.sla || s.lateP >= .25), cap: has && s.load > 1};
   let outC = 0, outOrd = 0;
@@ -1518,12 +1531,12 @@ const DMAP = (() => {
   function polyOf(b) {
     if (b._poly && b._polySrc === b.rad && b._polyT === b.tradeRings) return b._poly;
     let rings;
-    if (b.tradeRings && !b.ovl) rings = b.tradeRings.map(r => { const a = new Float64Array(r.length * 2); r.forEach((p, i) => { a[2 * i] = p[0]; a[2 * i + 1] = MERC(p[1]); }); return a; });
+    if (b.tradeRings) rings = b.tradeRings.map(r => { const a = new Float64Array(r.length * 2); r.forEach((p, i) => { a[2 * i] = p[0]; a[2 * i + 1] = MERC(p[1]); }); return a; });
     else { const n = b.rad.length, a = new Float64Array(n * 2); for (let i = 0; i < n; i++) { const [lon, lat] = offsetLL(b.lon, b.lat, i * 360 / n, b.rad[i]); a[2 * i] = lon; a[2 * i + 1] = MERC(lat); } rings = [a]; }
     b._poly = rings; b._polySrc = b.rad; b._polyT = b.tradeRings; return rings;
   }
   function tracePoly(b, k) {
-    const px = Math.max(...b.rad) * k, step = px < 12 ? 6 : px < 40 ? 2 : 1;
+    const px = Math.max(...b.rad) * k, step = px < 10 ? 6 : px < 25 ? 2 : 1;
     for (const a of polyOf(b)) { const n = a.length / 2, st = n > 24 ? step : 1; ctx.moveTo(sx(a[0]), sy(a[1])); for (let i = st; i < n; i += st) ctx.lineTo(sx(a[2 * i]), sy(a[2 * i + 1])); ctx.closePath(); }
   }
   const issueCol = b => b.dv ? col[b.dv.issue === 'ok' ? 'ok' : b.dv.issue] : col.muted;
@@ -1550,16 +1563,17 @@ const DMAP = (() => {
       ctx.globalAlpha = 1;
       const adjSet = new Set(sel?.adj || []);
       // areas never overlap, so all ordinary ones go into one path: one fill and one stroke per frame
-      const groups = [[], [], []];
-      for (const b of visible) { if (!b.rad) continue; groups[b === sel ? 2 : adjSet.has(b) ? 1 : 0].push(b); }
+      const groups = [[], [], []], ovl = [];
+      for (const b of visible) { if (!b.rad) continue; groups[b === sel ? 2 : adjSet.has(b) ? 1 : 0].push(b); if (b.ovl) ovl.push(b); }
       const style = [[sel ? .03 : .08, sel ? .3 : .6, 1], [.08, .85, 1.4], [.2, 1, 2.2]];
       groups.forEach((list, gi) => { for (let s0 = 0; s0 < list.length; s0 += 60) { ctx.beginPath(); for (let j = s0; j < Math.min(list.length, s0 + 60); j++) tracePoly(list[j], k);
         ctx.fillStyle = col.area; ctx.globalAlpha = style[gi][0]; ctx.fill(); ctx.globalAlpha = style[gi][1]; ctx.strokeStyle = col.area; ctx.lineWidth = style[gi][2]; ctx.stroke(); } });
+      if (ovl.length) { ctx.beginPath(); for (const b of ovl) tracePoly(b, k); ctx.globalAlpha = .9; ctx.strokeStyle = col.over; ctx.lineWidth = 1.6; ctx.setLineDash([5, 3]); ctx.stroke(); ctx.setLineDash([]); }
       ctx.globalAlpha = 1;
     }
     if (detail && L.cut) {
       for (const b of visible) { const c = b.dv?.cut; if (!c || !b.rad) continue; if (sel ? b !== sel : k < 25) continue;
-        const labels = [];
+        const labels = []; ctx.save(); if (b.tradeRings) { ctx.beginPath(); tracePoly(b, 1e9); ctx.clip('evenodd'); }
         c.steps.forEach((z, idx) => { const a0 = z.k * 45 - 22.5, a1 = z.k * 45 + 22.5, rec = idx < c.recN;
           if (!rec && (b !== sel || idx >= c.recN + 3)) return;
           const outer = a => Math.max(z.r0, Math.min(z.r1, radAt(b.rad, ((a % 360) + 360) % 360)));
@@ -1571,6 +1585,7 @@ const DMAP = (() => {
           ctx.strokeStyle = cc; ctx.globalAlpha = rec ? 1 : .7; ctx.lineWidth = b === sel ? 1.6 : 1; ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1;
           if (b === sel && k > 8) { const [lon, lat] = offsetLL(b.lon, b.lat, z.k * 45, (z.r0 + outer(z.k * 45)) / 2); labels.push([sx(lon), sy(MERC(lat)), idx + 1, cc, rec]); }
         });
+        ctx.restore();
         for (const [X, Y, n, cc, rec] of labels) { ctx.beginPath(); ctx.arc(X, Y, 10, 0, 6.283); ctx.fillStyle = rec ? cc : col.surface; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = rec ? col.surface : cc; ctx.stroke();
           ctx.font = '700 11px "Chakra Petch",system-ui,sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = rec ? '#fff' : cc; ctx.fillText(n, X, Y + .5); ctx.textAlign = 'start'; }
       }
@@ -1616,7 +1631,7 @@ const DMAP = (() => {
     ctx.fillStyle = col.surface; ctx.globalAlpha = .85; ctx.fillRect(12, H - 30, len + 16, 20); ctx.globalAlpha = 1;
     ctx.strokeStyle = col.fg; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(20, H - 16); ctx.lineTo(20, H - 12); ctx.lineTo(20 + len, H - 12); ctx.lineTo(20 + len, H - 16); ctx.stroke();
     ctx.font = '500 11px "IBM Plex Sans Thai",system-ui,sans-serif'; ctx.fillStyle = col.fg; ctx.textBaseline = 'alphabetic'; ctx.fillText(nice < 1 ? (nice * 1000) + ' ม.' : nice + ' กม.', 24, H - 17);
-    document.getElementById('dZoomHint').hidden = k > 18;
+    document.getElementById('dZoomHint').hidden = k > 18 || !document.getElementById('dEmpty').hidden;
   }
   /* ---- OpenStreetMap raster basemap (web-mercator tiles; our y axis is already mercator degrees) ---- */
   const BASEMAPS = {
@@ -1690,10 +1705,11 @@ const DMAP = (() => {
   }
   function fitBranch(b) { const R = Math.max(b.dv?.rMax || 1, limitOf(b)) * 1.15, dLon = R / kmLon(b.lat), dLat = R / KM_LAT; flyTo(b.lon - dLon, b.lat - dLat, b.lon + dLon, b.lat + dLat, 30); }
   function fitScope() {
-    const list = BR.filter(b => dScope(b));
-    if (!list.length || (!filt.area && !filt.prov && !filt.q)) return flyTo(97.3, 5.6, 105.7, 20.5, 20);
-    let a = Infinity, c = Infinity, e = -Infinity, f = -Infinity; for (const b of list) { a = Math.min(a, b.lon); c = Math.min(c, b.lat); e = Math.max(e, b.lon); f = Math.max(f, b.lat); }
-    const p = .02; flyTo(a - p, c - p, e + p, f + p, 40);
+    const all = BR.filter(b => dScope(b)), withArea = all.filter(b => b.rad), list = withArea.length ? withArea : all;
+    if (!list.length) return flyTo(97.3, 5.6, 105.7, 20.5, 20);
+    let a = Infinity, c = Infinity, e = -Infinity, f = -Infinity;
+    for (const b of list) { const r = b.rad ? Math.max(...b.rad) : 0, dl = r / kmLon(b.lat), dt = r / KM_LAT; a = Math.min(a, b.lon - dl); c = Math.min(c, b.lat - dt); e = Math.max(e, b.lon + dl); f = Math.max(f, b.lat + dt); }
+    const p = .004; flyTo(a - p, c - p, e + p, f + p, 40);
   }
   // interaction
   const ptrs = new Map(); let downAt = null, pinch0 = null;
@@ -1736,21 +1752,24 @@ const DMAP = (() => {
 
 /* ================= delivery area: UI ================= */
 let dSel = null, whatR = null, dTab = 'sla', dShowN = 40, dSortK = 'avgT', dSortDir = -1, dTShow = 50, dFirst = true;
-const dScope = b => inScope(b, true) && (filt.iss === 'all' || (b.dv && b.dv.flags[filt.iss]));
+const dScope = b => MODE !== 'sim' && inScope(b, true) && (filt.iss === 'all' || (b.dv && b.dv.flags[filt.iss]));
 const ISSUE = {sla: {t: 'SLA สูง', c: 'p-short'}, over: {t: 'เกินรัศมี', c: 'p-over'}, cap: {t: 'เกินกำลังไรเดอร์', c: 'p-cap'}};
-function issuePills(b) { const f = b.dv?.flags || {}; const p = ['sla', 'cap', 'over'].filter(k => f[k]).map(k => `<span class="pill ${ISSUE[k].c}">${ISSUE[k].t}</span>`); return p.join(' ') || '<span class="pill p-ok">ปกติ</span>'; }
+function issuePills(b) { if (!b.rad && !b.dv?.cnt) return '<span class="pill p-none">ยังไม่มีเทรดแอเรีย</span>'; const f = b.dv?.flags || {}; const p = ['sla', 'cap', 'over'].filter(k => f[k]).map(k => `<span class="pill ${ISSUE[k].c}">${ISSUE[k].t}</span>`); return p.join(' ') || '<span class="pill p-ok">ปกติ</span>'; }
 const f1 = v => (Math.round(v * 10) / 10).toLocaleString('th-TH', {minimumFractionDigits: 1, maximumFractionDigits: 1});
 const pct = v => Math.round(v * 100) + '%';
 
 function renderDelivery() {
-  const scoped = BR.filter(b => inScope(b, true));
+  const scoped = MODE === 'sim' ? [] : BR.filter(b => inScope(b, true));
   const $ = id => document.getElementById(id);
   // KPIs
   let cust = 0, tiers = [0, 0, 0], ord = 0, tSum = 0, nSla = 0, nOver = 0, nCap = 0, outC = 0;
   for (const b of scoped) { const d = b.dv; if (!d) continue; cust += d.cnt; d.tiers.forEach((v, i) => tiers[i] += v); ord += d.ord; tSum += d.avgT * d.ord; outC += d.outC;
     if (d.flags.sla) nSla++; if (d.flags.over) nOver++; if (d.flags.cap) nCap++; }
   $('dkStores').innerHTML = `${fmt(scoped.length)}<small>สาขา</small>`;
-  $('dkStoresS').textContent = `กทม. ${fmt(scoped.filter(isBkk).length)} · ต่างจังหวัด ${fmt(scoped.length - scoped.filter(isBkk).length)}`;
+  const nArea = scoped.filter(b => b.rad).length;
+  $('dkStoresS').textContent = MODE === 'sim' ? 'ยังไม่มีข้อมูลจากไฟล์' : `มีเทรดแอเรีย ${fmt(nArea)} สาขา${scoped.length - nArea ? ` · ยังไม่มี ${fmt(scoped.length - nArea)}` : ''}`;
+  document.getElementById('dEmpty').hidden = MODE !== 'sim' && nArea > 0;
+  document.getElementById('dEmptyT').textContent = MODE === 'sim' ? 'ยังไม่มีข้อมูลเทรดแอเรีย' : 'สาขาในขอบเขตนี้ยังไม่มีเทรดแอเรีย';
   $('dkCust').innerHTML = `${fmt(cust)}<small>ราย</small>`;
   $('dkCustStack').innerHTML = [2, 1, 0].map(t => `<i style="width:${cust ? tiers[t] / cust * 100 : 0}%;background:var(${TIER[t].v})"></i>`).join('');
   $('dkCustLeg').innerHTML = [2, 1, 0].map(t => `<span><span class="dot" style="background:var(${TIER[t].v})"></span>${TIER[t].t} <b>${fmt(tiers[t])}</b></span>`).join('');
@@ -1766,6 +1785,7 @@ function renderDelivery() {
   $('dRecs').hidden = !!dSel; $('dDetail').hidden = !dSel;
   if (dSel) renderDDetail(); else renderRecs(scoped);
   renderDTable(scoped.filter(b => filt.iss === 'all' || b.dv?.flags[filt.iss]));
+  if (dFirst) { const cnt = {sla: nSla, over: nOver, cap: nCap}; if (!cnt[dTab]) { const k = ['sla', 'over', 'cap'].find(x => cnt[x]); if (k) { dTab = k; if (!dSel) renderRecs(scoped); } } }
   if (dFirst && DMAP.isFresh()) { dFirst = false; DMAP.fitScope(); }
   DMAP.redraw();
 }
@@ -1801,7 +1821,7 @@ function selectDBranch(b) {
   if (innerWidth < 1100) document.getElementById('dmapPanel').scrollIntoView({behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start'});
 }
 function bandChart(b) {
-  const d = b.dv, step = isBkk(b) ? .25 : .5, nB = Math.max(2, Math.ceil(d.rMax / step)), bands = Array.from({length: nB}, () => ({o: 0, t: 0}));
+  const d = b.dv, step = isBkk(b) ? .25 : .5, span = d.rMax || Math.max(d.lim, ...Array.from({length: b.c1 - b.c0}, (_, k) => CUST.dist[b.c0 + k])), nB = Math.max(2, Math.ceil(span / step)), bands = Array.from({length: nB}, () => ({o: 0, t: 0}));
   for (let i = b.c0; i < b.c1; i++) { const k = Math.min(nB - 1, Math.floor(CUST.dist[i] / step)); bands[k].o += CUST.orders[i]; bands[k].t += CUST.orders[i] * CUST.time[i]; }
   const W = 360, H = 170, pl = 32, pr = 48, pt = 12, pb = 26, bw = (W - pl - pr) / nB;
   const oMax = Math.max(1, ...bands.map(x => x.o)), tMax = Math.max(DSET.sla * 1.25, ...bands.map(x => x.o ? x.t / x.o : 0)) * 1.08;
@@ -1834,7 +1854,7 @@ function renderDDetail() {
   const wi = whatR != null ? whatIf(b, whatR) : null;
   const gm = `https://www.google.com/maps/search/?api=1&query=${b.lat.toFixed(5)},${b.lon.toFixed(5)}`;
   el.innerHTML = `<div class="ddh"><button class="linkbtn" id="dBack">← กลับไปรายการแนะนำ</button>
-      <div class="m">สาขา ${b.code} · ${esc(provByCode[b.prov]?.n || '')} · ${isBkk(b) ? 'กทม.' : 'ต่างจังหวัด'} · ที่มาพื้นที่: ${SRC_TH[b.radSrc] || '–'}</div>${b.ovl ? '<div class="m" style="color:var(--over)">เทรดแอเรียในไฟล์ทับกับสาขาข้างเคียง ระบบแบ่งที่กึ่งกลางระหว่างร้านให้</div>' : ''}
+      <div class="m">สาขา ${b.code} · ${esc(provByCode[b.prov]?.n || '')} · ${isBkk(b) ? 'กทม.' : 'ต่างจังหวัด'} · ที่มาพื้นที่: ${SRC_TH[b.radSrc] || '–'}</div>${b.ovl ? `<div class="m" style="color:var(--over)">เทรดแอเรียในไฟล์ทับกับ ${TRADE_OVL.filter(p => p[0] === b || p[1] === b).map(p => esc((p[0] === b ? p[1] : p[0]).name) + ' ' + Math.round(p[2] * 1000) + ' ม.').join(', ')} ควรแก้ในระบบวาดเทรดแอเรีย</div>` : ''}
       <h3>${esc(b.name)}</h3><div class="pills">${issuePills(b)}</div></div>
     <div class="dgrid">
       <div><div class="l">รัศมีไกลสุด</div><div class="v ${d.flags.over ? 'bad' : ''}">${f1(d.rMax)} <small>/ ${d.lim} กม.</small></div></div>
@@ -1847,7 +1867,7 @@ function renderDDetail() {
     <div class="dsec2"><div class="h">ลูกค้า ${fmt(d.cnt)} ราย</div>
       <div class="stack">${[2, 1, 0].map(t => `<i style="width:${d.cnt ? d.tiers[t] / d.cnt * 100 : 0}%;background:var(${TIER[t].v})"></i>`).join('')}</div>
       <div class="legend">${[2, 1, 0].map(t => `<span><span class="dot" style="background:var(${TIER[t].v})"></span>${TIER[t].t} <b>${fmt(d.tiers[t])}</b></span>`).join('')}<span>นอกรัศมีมาตรฐาน <b>${fmt(d.outC)}</b></span></div></div>
-    ${b.adj?.length ? `<div class="dsec2"><div class="h">พื้นที่ติดกับ ${b.adj.length} สาขา</div><div class="adjl">${b.adj.slice().sort((x, y) => distKm(b.lon, b.lat, x.lon, x.lat) - distKm(b.lon, b.lat, y.lon, y.lat)).map(o => `<button class="adjb" data-go="${o.code}"><span class="dot" style="background:var(--${o.dv?.issue === 'sla' ? 'short' : o.dv?.issue === 'cap' ? 'cap' : o.dv?.issue === 'over' ? 'over' : 'ok'})"></span>${esc(o.name)} <span class="num">${f1(distKm(b.lon, b.lat, o.lon, o.lat))} กม.</span></button>`).join('')}</div><div class="hint">เส้นแบ่งกับสาขาข้างเคียงอยู่กึ่งกลางระหว่างร้าน พื้นที่จึงชิดกันได้แต่ไม่ทับกัน</div></div>` : ''}
+    ${b.adj?.length ? `<div class="dsec2"><div class="h">พื้นที่ติดกับ ${b.adj.length} สาขา</div><div class="adjl">${b.adj.slice().sort((x, y) => distKm(b.lon, b.lat, x.lon, x.lat) - distKm(b.lon, b.lat, y.lon, y.lat)).map(o => `<button class="adjb" data-go="${o.code}"><span class="dot" style="background:var(--${o.dv?.issue === 'sla' ? 'short' : o.dv?.issue === 'cap' ? 'cap' : o.dv?.issue === 'over' ? 'over' : 'ok'})"></span>${esc(o.name)} <span class="num">${f1(distKm(b.lon, b.lat, o.lon, o.lat))} กม.</span></button>`).join('')}</div><div class="hint">นับเป็นพื้นที่ติดกันเมื่อขอบห่างกันไม่เกิน 50 ม.</div></div>` : ''}
     ${d.cnt ? `<div class="dsec2"><div class="h">ออเดอร์และเวลาส่งตามระยะทาง (กม.)</div>${bandChart(b)}</div>` : ''}
     <div class="dsec2"><div class="h">คำแนะนำ</div>
       ${c && c.recN ? `<div class="cutsum">แนะนำตัด <b>${c.recN} ส่วน</b> เรียงจากส่วนที่ไกลและลูกค้าซื้อนานๆ ที ก่อน · ลูกค้าในส่วนที่ตัดเป็นกลุ่มนานๆ ที <b>${pct(c.occShare)}</b>
@@ -1890,7 +1910,7 @@ function renderDTable(list) {
   dLast = list;
   document.querySelector('#dT tbody').innerHTML = list.slice(0, dTShow).map(b => { const d = b.dv; return `<tr data-code="${b.code}" tabindex="0" class="${dSel === b ? 'selrow' : ''}">
     <td class="num">${b.code}</td><td><b>${esc(b.name)}</b></td><td>${esc(provByCode[b.prov]?.n || '')}</td>
-    <td class="n ${d.flags.over ? 'diff-pos' : ''}">${f1(d.rMax)}</td><td class="n">${d.lim}</td><td class="n">${f1(d.area)}</td><td class="n">${fmt(d.cnt)}</td><td class="n">${fmt(d.tiers[2])}</td>
+    <td class="n ${d.flags.over ? 'diff-pos' : ''}">${b.rad ? f1(d.rMax) : '–'}</td><td class="n">${d.lim}</td><td class="n">${b.rad ? f1(d.area) : '–'}</td><td class="n">${fmt(d.cnt)}</td><td class="n">${fmt(d.tiers[2])}</td>
     <td class="n">${fmt(Math.round(d.ordersDay))}</td><td class="n ${d.avgT > DSET.sla ? 'diff-neg' : ''}">${d.avgT ? d.avgT.toFixed(1) : '–'}</td><td class="n ${d.lateP >= .25 ? 'diff-neg' : ''}">${pct(d.lateP)}</td>
     <td class="n ${d.load > 1 ? 'diff-neg' : ''}">${pct(d.load)}</td><td>${issuePills(b)}</td></tr>`; }).join('') || `<tr><td colspan="13" class="empty">ไม่พบสาขาตามเงื่อนไข</td></tr>`;
   document.getElementById('dTNote').textContent = `${fmt(list.length)} สาขา`;
@@ -1958,10 +1978,9 @@ const SPEC = {
       {k: 'lng', t: 'ลองจิจูด', req: 1, syn: ['lng', 'lon', 'long', 'longitude', 'ลองจิจูด', 'ลองติจูด', 'x']},
       {k: 'province', t: 'จังหวัด', syn: ['province', 'province_name', 'prov', 'จังหวัด']},
       {k: 'area', t: 'พื้นที่ (1–13)', syn: ['area', 'area_id', 'zone', 'พื้นที่', 'เขตพื้นที่', 'region']},
-      {k: 'req', t: 'ไรเดอร์ที่ต้องการ', syn: ['required', 'rider_required', 'required_riders', 'req', 'target_rider', 'ไรเดอร์ที่ต้องการ', 'จำนวนไรเดอร์ที่ต้องการ']},
-      {k: 'radius', t: 'รัศมีส่ง (กม.)', syn: ['service_radius_km', 'radius_km', 'radius', 'รัศมี', 'รัศมีส่ง', 'รัศมีกม']}],
-    ex: 'branch_code,branch_name,lat,lng,province,area,required,service_radius_km\n10234,สีลม 2,13.7270,100.5240,กรุงเทพมหานคร,1,6,1.0\n20871,เมืองเชียงใหม่ 3,18.7883,98.9853,เชียงใหม่,8,4,2.0'},
-  trade: {n: 2, t: 'ขนาดเทรดแอเรีย', d: 'ขอบเขตพื้นที่ให้บริการของแต่ละสาขา เป็น polygon (GeoJSON, KML, WKT) หรือรัศมีเป็นกิโลเมตร', acc: '.geojson,.json,.kml,.csv,.txt,.xlsx,.xls', dep: 'branches',
+      {k: 'req', t: 'ไรเดอร์ที่ต้องการ', syn: ['required', 'rider_required', 'required_riders', 'req', 'target_rider', 'ไรเดอร์ที่ต้องการ', 'จำนวนไรเดอร์ที่ต้องการ']}],
+    ex: 'branch_code,branch_name,lat,lng,province,area,required\n10234,สีลม 2,13.7270,100.5240,กรุงเทพมหานคร,1,6\n20871,เมืองเชียงใหม่ 3,18.7883,98.9853,เชียงใหม่,8,4'},
+  trade: {n: 2, t: 'ขนาดเทรดแอเรีย', d: 'ขอบเขตพื้นที่ให้บริการของแต่ละสาขา เป็น polygon (GeoJSON, KML, WKT) หรือรัศมีเป็นกิโลเมตร', acc: '.geojson,.json,.kml,.csv,.txt,.xlsx,.xls',
     fields: [
       {k: 'code', t: 'store_code', req: 1, syn: COL_CODE},
       {k: 'wkt', t: 'geometry', req: 1, syn: ['geometry', 'geom', 'geojson', 'polygon', 'wkt', 'polygon_wkt', 'shape', 'the_geom']},
@@ -1969,8 +1988,8 @@ const SPEC = {
       {k: 'radius', t: 'radius_km', syn: ['radius_km', 'radius', 'service_radius_km', 'รัศมี', 'รัศมีกม']}],
     ex: 'store_code,geometry,created_at\n7,"{""type"":""Polygon"",""coordinates"":[[[100.6506,13.7964],[100.6406,13.7922],[100.6416,13.7905],[100.6519,13.7937],[100.6506,13.7964]]]}",15/10/2026 0:17\n10234,"{""type"":""Polygon"",""coordinates"":[[[100.519,13.731],[100.531,13.731],[100.531,13.722],[100.519,13.722],[100.519,13.731]]]}",15/10/2026 0:17',
     std: 'store_code, geometry, created_at',
-    note: 'geometry เป็นข้อความ GeoJSON (Polygon หรือ MultiPolygon) ใส่ WKT ได้เช่นกัน · ถ้าสาขาเดียวมีหลายแถว ระบบใช้แถวที่ created_at ล่าสุด · ยังรับไฟล์ GeoJSON/KML ทั้งไฟล์ และคอลัมน์ radius_km แทน geometry ได้'},
-  customers: {n: 3, t: 'หมุดลูกค้า', d: 'ตำแหน่งบ้านลูกค้าและจำนวนครั้งที่สั่งใน 30 วัน ใช้แบ่งระดับลูกค้าและคำนวณพื้นที่จัดส่ง', acc: '.csv,.txt,.xlsx,.xls', dep: 'branches',
+    note: 'อัปโหลดได้ทันทีโดยไม่ต้องมีไฟล์สาขา ระบบจะวางร้านไว้กลาง polygon และแสดงในหน้าพื้นที่จัดส่ง · geometry เป็นข้อความ GeoJSON (Polygon หรือ MultiPolygon) ใส่ WKT ได้เช่นกัน · ถ้าสาขาเดียวมีหลายแถว ระบบใช้แถวที่ created_at ล่าสุด · ยังรับไฟล์ GeoJSON/KML ทั้งไฟล์ และคอลัมน์ radius_km แทน geometry ได้'},
+  customers: {n: 3, t: 'หมุดลูกค้า', d: 'ตำแหน่งบ้านลูกค้าและจำนวนครั้งที่สั่งใน 30 วัน ใช้แบ่งระดับลูกค้าและคำนวณพื้นที่จัดส่ง', acc: '.csv,.txt,.xlsx,.xls', dep: 'stores',
     fields: [
       {k: 'id', t: 'รหัสลูกค้า', syn: ['customer_id', 'cust_id', 'customerid', 'member_id', 'รหัสลูกค้า', 'id']},
       {k: 'code', t: 'รหัสสาขา', syn: COL_CODE},
@@ -1980,7 +1999,7 @@ const SPEC = {
       {k: 'time', t: 'เวลาส่งเฉลี่ย (นาที)', syn: ['avg_delivery_min', 'delivery_min', 'avg_time', 'avgtime', 'lead_time', 'เวลาส่ง', 'เวลาส่งเฉลี่ย']}],
     ex: 'customer_id,branch_code,lat,lng,orders_30d,avg_delivery_min\nC-000981,10234,13.7301,100.5292,9,24\nC-000982,,13.7244,100.5188,1,31',
     note: 'ไม่ใส่รหัสสาขาได้ ระบบจะผูกกับสาขาที่ใกล้ที่สุด'},
-  riders: {n: 4, t: 'สถานะไรเดอร์', d: 'สถานะล่าสุดของไรเดอร์แต่ละคน ใช้ในหน้าภาพรวมไรเดอร์', acc: '.csv,.txt,.xlsx,.xls', dep: 'branches',
+  riders: {n: 4, t: 'สถานะไรเดอร์', d: 'สถานะล่าสุดของไรเดอร์แต่ละคน ใช้ในหน้าภาพรวมไรเดอร์', acc: '.csv,.txt,.xlsx,.xls', dep: 'stores',
     fields: [
       {k: 'id', t: 'รหัสไรเดอร์', req: 1, syn: ['rider_id', 'riderid', 'rider', 'driver_id', 'รหัสไรเดอร์', 'รหัสพนักงาน', 'id']},
       {k: 'code', t: 'รหัสสาขา', req: 1, syn: COL_CODE},
@@ -2124,8 +2143,29 @@ function issueBag() {
   return {add(sev, msg, row) { let x = g.get(msg); if (!x) g.set(msg, x = {sev, msg, n: 0, rows: []}); x.n++; if (x.rows.length < 6 && row != null) x.rows.push(row); },
     list() { return [...g.values()].sort((a, b) => (a.sev === 'err' ? 0 : 1) - (b.sev === 'err' ? 0 : 1) || b.n - a.n); }};
 }
+function interiorPoint(rings) {
+  const ring = rings.reduce((a, r) => Math.abs(ringArea(r)) > Math.abs(ringArea(a)) ? r : a, rings[0]);
+  let cx = 0, cy = 0, A = 0;
+  for (let i = 0; i < ring.length - 1; i++) { const [x0, y0] = ring[i], [x1, y1] = ring[i + 1], f = x0 * y1 - x1 * y0; A += f; cx += (x0 + x1) * f; cy += (y0 + y1) * f; }
+  if (A) { cx /= 3 * A; cy /= 3 * A; } else { cx = ring.reduce((s, p) => s + p[0], 0) / ring.length; cy = ring.reduce((s, p) => s + p[1], 0) / ring.length; }
+  if (pipRing(cx, cy, ring)) return [cx, cy];
+  let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9; for (const [x, y] of ring) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
+  let best = null, bd = Infinity;
+  for (let i = 1; i < 24; i++) for (let j = 1; j < 24; j++) { const x = x0 + (x1 - x0) * i / 24, y = y0 + (y1 - y0) * j / 24; if (!pipRing(x, y, ring)) continue; const d = (x - cx) ** 2 + (y - cy) ** 2; if (d < bd) { bd = d; best = [x, y]; } }
+  return best || ring[0];
+}
+const ringArea = r => { let a = 0; for (let i = 0; i < r.length - 1; i++) a += r[i][0] * r[i + 1][1] - r[i + 1][0] * r[i][1]; return a / 2; };
+let TS_CACHE = null;
+function tradeStores() {
+  if (!DS.trade) return [];
+  if (TS_CACHE && TS_CACHE.at === DS.trade.at && TS_CACHE.n === DS.trade.rows.length) return TS_CACHE.rows;
+  const rows = DS.trade.rows.filter(t => t.rings).map(t => { const [lng, lat] = interiorPoint(t.rings), prov = provAt(lng, lat);
+    return {code: t.code, name: 'ร้าน ' + t.code, lat, lng, prov, area: null, req: 3}; });
+  TS_CACHE = {at: DS.trade.at, n: DS.trade.rows.length, rows}; return rows;
+}
+const hasStores = () => !!(DS.branches || DS.trade);
 function branchIndex() {
-  const rows = DS.branches?.rows || [], byCode = new Map(rows.map(r => [codeKey(r.code), r])), grid = new Map();
+  const rows = DS.branches?.rows || tradeStores(), byCode = new Map(rows.map(r => [codeKey(r.code), r])), grid = new Map();
   for (const r of rows) { const k = Math.floor(r.lng / .05) + ':' + Math.floor(r.lat / .05); if (!grid.has(k)) grid.set(k, []); grid.get(k).push(r); }
   const nearest = (lon, lat, maxKm) => { let best = null, bd = maxKm; const gx = Math.floor(lon / .05), gy = Math.floor(lat / .05), sp = Math.ceil(maxKm / 5) + 1;
     for (let x = gx - sp; x <= gx + sp; x++) for (let y = gy - sp; y <= gy + sp; y++) for (const r of grid.get(x + ':' + y) || []) { const d = distKm(lon, lat, r.lng, r.lat); if (d < bd) { bd = d; best = r; } }
@@ -2137,7 +2177,7 @@ function validate(key, src, map) {
   const miss = src.kind === 'geo' ? (src.propKey ? [] : [S.fields[0]]) : S.fields.filter(f => f.req && map[f.k] == null && !(key === 'trade' && f.k === 'wkt' && map.radius != null));
   if (miss.length) return {rows: [], issues: [{sev: 'err', msg: `ยังไม่ได้เลือกคอลัมน์ ${miss.map(f => f.t).join(', ')}`, n: 0, rows: []}], fatal: true};
   const rows = src.kind === 'geo' ? src.feats : src.rows, base = src.kind === 'geo' ? 1 : 2;
-  const BI = S.dep ? branchIndex() : null;
+  const BI = S.dep || (key === 'trade' && DS.branches) ? branchIndex() : null;
   
   const seen = new Map();
   rows.forEach((row, i) => {
@@ -2195,16 +2235,18 @@ function validate(key, src, map) {
         if (cell) { const r = parseGeomCell(cell); rings = r.rings; if (!rings) { if (!(radius > 0)) return bag.add('err', r.msg, ln); bag.add('warn', r.msg + ' ใช้ radius_km แทน', ln); } }
       }
       if (!String(raw ?? '').trim()) return bag.add('err', 'ไม่มี store_code', ln);
-      const b = BI.byCode.get(codeKey(raw)); if (!b) return bag.add('err', 'ไม่พบ store_code นี้ในไฟล์สาขา', ln);
-      if (String(raw).trim() !== b.code) bag.add('warn', `store_code เขียนไม่ตรงกับไฟล์สาขา (เช่น ${String(raw).trim()} = ${b.code}) จับคู่ให้แล้ว`, ln);
+      const b = BI ? BI.byCode.get(codeKey(raw)) : null; if (BI && !b) return bag.add('err', 'ไม่พบ store_code นี้ในไฟล์สาขา', ln);
+      if (!BI && !rings && !(map.wkt != null && String(g(row, 'wkt')).trim())) { if (radius > 0) return bag.add('err', 'มีแค่ radius_km ต้องอัปโหลดไฟล์สาขาก่อน ระบบจึงจะรู้ตำแหน่งร้าน', ln); }
+      if (b && String(raw).trim() !== b.code) bag.add('warn', `store_code เขียนไม่ตรงกับไฟล์สาขา (เช่น ${String(raw).trim()} = ${b.code}) จับคู่ให้แล้ว`, ln);
       if (rings) {
         const p0 = rings[0][0]; if (!inTH(p0[1], p0[0]) && inTH(p0[0], p0[1])) { rings = rings.map(r => r.map(p => [p[1], p[0]])); bag.add('warn', 'สลับลำดับพิกัดใน polygon ให้อัตโนมัติ', ln); }
         if (!inTH(rings[0][0][1], rings[0][0][0])) return bag.add('err', 'polygon อยู่นอกประเทศไทย (ต้องเป็นพิกัด WGS84 ลองจิจูดก่อนละติจูด)', ln);
-        if (!rings.some(r => pipRing(b.lng, b.lat, r))) bag.add('warn', 'ร้านอยู่นอก polygon ของตัวเอง ตรวจว่าพิกัดร้านหรือ store_code ถูก', ln);
-        const far = Math.max(...rings.flat().map(p => distKm(b.lng, b.lat, p[0], p[1])));
+        if (b && !rings.some(r => pipRing(b.lng, b.lat, r))) bag.add('warn', 'ร้านอยู่นอก polygon ของตัวเอง ตรวจว่าพิกัดร้านหรือ store_code ถูก', ln);
+        const far = b ? Math.max(...rings.flat().map(p => distKm(b.lng, b.lat, p[0], p[1]))) : 0;
         if (far > 25) return bag.add('err', 'polygon อยู่ห่างจากร้านเกิน 25 กม.', ln);
       } else if (!(radius > 0 && radius < 30)) return bag.add('err', map.radius != null ? 'ไม่มี geometry และ radius_km ไม่ถูกต้อง' : 'ไม่มี geometry', ln);
-      out.push(Object.assign(rings ? {code: b.code, rings} : {code: b.code, radius}, {t: isFinite(t) ? t : null, ln}));
+      const code = b ? b.code : String(raw).trim();
+      out.push(Object.assign(rings ? {code, rings} : {code, radius}, {t: isFinite(t) ? t : null, ln}));
     } else if (key === 'areas') {
       const prov = provCodeOf(g(row, 'province')); if (!prov) return bag.add('err', 'ไม่รู้จักชื่อจังหวัด', ln);
       const area = parseArea(g(row, 'area')); if (area == null) return bag.add('err', 'ไม่มีรหัสพื้นที่', ln);
@@ -2268,29 +2310,52 @@ function castReach(b, rings) {
   return res;
 }
 /* a trade area from the file is kept exactly unless it overlaps a neighbour's area; overlapping ones get split at the midline */
+/* Trade areas from the file are drawn exactly as given and never reshaped. This pass only reports real problems:
+   two areas overlap when a boundary point of one lies more than OVL_TOL inside the other; they count as neighbours
+   when their boundaries come within ADJ_TOL of each other. Shared or near-shared edges are therefore not overlaps. */
+const OVL_TOL = .03, ADJ_TOL = .05;
+function tradeGeom(b) {
+  if (b._tg && b._tgSrc === b.tradeRings) return b._tg;
+  let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9, rmax = 0; const kx = kmLon(b.lat);
+  const rings = b.tradeRings.map(r => { const n = r.length - (r.length > 1 && r[0][0] === r[r.length - 1][0] && r[0][1] === r[r.length - 1][1] ? 1 : 0), a = new Float64Array(n * 2);
+    for (let i = 0; i < n; i++) { const [x, y] = r[i]; a[2 * i] = x; a[2 * i + 1] = y; x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y);
+      const d = Math.hypot((x - b.lon) * kx, (y - b.lat) * KM_LAT); if (d > rmax) rmax = d; }
+    return a; });
+  return b._tg = {rings, bb: [x0, y0, x1, y1], rmax}, b._tgSrc = b.tradeRings, b._tg;
+}
+function tgInside(g, x, y) { let c = false; for (const a of g.rings) { const n = a.length / 2; for (let i = 0, j = n - 1; i < n; j = i++) { const xi = a[2 * i], yi = a[2 * i + 1], xj = a[2 * j], yj = a[2 * j + 1];
+  if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) c = !c; } } return c; }
+function tgDist(g, x, y, kx) { let best = Infinity; for (const a of g.rings) { const n = a.length / 2; for (let i = 0, j = n - 1; i < n; j = i++) {
+  const ax = (a[2 * j] - x) * kx, ay = (a[2 * j + 1] - y) * KM_LAT, bx = (a[2 * i] - x) * kx, by = (a[2 * i + 1] - y) * KM_LAT, ex = bx - ax, ey = by - ay, L = ex * ex + ey * ey;
+  let t = L ? -(ax * ex + ay * ey) / L : 0; t = t < 0 ? 0 : t > 1 ? 1 : t; const dx = ax + t * ex, dy = ay + t * ey, d = dx * dx + dy * dy; if (d < best) best = d; } } return Math.sqrt(best); }
+function pairCheck(a, o) {
+  const ga = tradeGeom(a), go = tradeGeom(o), pad = ADJ_TOL / KM_LAT * 1.6;
+  if (ga.bb[0] > go.bb[2] + pad || go.bb[0] > ga.bb[2] + pad || ga.bb[1] > go.bb[3] + pad || go.bb[1] > ga.bb[3] + pad) return 0;
+  const kx = kmLon((a.lat + o.lat) / 2); let touch = false, deep = 0;
+  const scan = (src, dst) => { const bb = dst.bb; for (const r of src.rings) for (let i = 0; i < r.length; i += 2) { const x = r[i], y = r[i + 1];
+    if (x < bb[0] - pad || x > bb[2] + pad || y < bb[1] - pad || y > bb[3] + pad) continue;
+    const ins = x >= bb[0] && x <= bb[2] && y >= bb[1] && y <= bb[3] && tgInside(dst, x, y);
+    if (!ins && touch) continue;
+    const d = tgDist(dst, x, y, kx); if (d <= ADJ_TOL) touch = true;
+    if (ins && d > OVL_TOL) { deep = d; return true; } } return false; };
+  scan(ga, go) || scan(go, ga);
+  return deep ? 2 + deep : touch ? 1 : 0;
+}
 function detectTradeOverlaps() {
   TRADE_OVL = [];
-  const all = BR.filter(b => b.reach);
-  for (const b of all) { b.ovl = false; b._rmax = Math.max(...b.reach); b._rmin = Math.min(...b.reach); }
-  if (!all.some(b => b.radSrc === 'trade')) return;
-  const RM = Math.min(25, Math.max(0, ...all.map(b => b._rmax)));
-  const ptsOf = o => { if (o._pts) return o._pts; const n = o.reach.length * 2, p = new Float64Array(n * 2);
-    for (let k = 0; k < n; k++) { const brg = k * 180 / o.reach.length, th = brg * Math.PI / 180, r = radAt(o.reach, brg) * .995; p[2 * k] = Math.sin(th) * r; p[2 * k + 1] = Math.cos(th) * r; }
-    return o._pts = p; };
-  // is a point (km, relative to o) inside o's star polygon?
-  const insideRel = (o, x, y) => { const d2 = x * x + y * y; if (d2 >= o._rmax * o._rmax) return false; if (d2 < o._rmin * o._rmin * .98) return true;
-    const brg = (Math.atan2(x, y) * 180 / Math.PI + 360) % 360, R = radAt(o.reach, brg) - .01; return d2 < R * R; };
-  const anyInside = (src, dst, ox, oy) => { const p = ptsOf(src); for (let k = 0; k < p.length; k += 2) if (insideRel(dst, p[k] + ox, p[k + 1] + oy)) return true; return false; };
-  for (const a of all) {
-    if (a.radSrc !== 'trade') continue;
-    for (const {b: o, d} of nearBranches(a.lon, a.lat, a._rmax + RM)) {
-      if (o === a || !o.reach || (o.radSrc === 'trade' && o.code < a.code) || d >= a._rmax + o._rmax) continue;
-      const kx = kmLon((a.lat + o.lat) / 2), dx = (a.lon - o.lon) * kx, dy = (a.lat - o.lat) * KM_LAT;   // a's centre seen from o
-      const hit = d < a._rmin + o._rmin - .02 || anyInside(a, o, dx, dy) || anyInside(o, a, -dx, -dy);
-      if (hit) { a.ovl = true; if (o.radSrc === 'trade') o.ovl = true; TRADE_OVL.push([a, o]); }
+  const T = BR.filter(b => b.radSrc === 'trade' && b.tradeRings);
+  for (const b of BR) { b.ovl = false; b.adjT = []; }
+  if (!T.length) return;
+  const RM = Math.min(25, Math.max(...T.map(b => tradeGeom(b).rmax)));
+  for (const a of T) {
+    for (const {b: o} of nearBranches(a.lon, a.lat, tradeGeom(a).rmax + RM + ADJ_TOL)) {
+      if (o === a || !o.tradeRings || o.radSrc !== 'trade' || o.code <= a.code) continue;
+      const r = pairCheck(a, o); if (!r) continue;
+      a.adjT.push(o); o.adjT.push(a);
+      if (r >= 2) { a.ovl = o.ovl = true; TRADE_OVL.push([a, o, r - 2]); }
     }
   }
-  for (const b of all) delete b._pts;
+  TRADE_OVL.sort((p, q) => q[2] - p[2]);
 }
 
 /* ---- compose the working data set from whatever has been uploaded ---- */
@@ -2311,7 +2376,7 @@ function applyAreaMap() {
 const areaFor = (prov, lon, lat) => prov === '10' ? bkkArea({lon, lat}) : (AREA_OF_PROV_EN[provByCode[prov]?.e] ?? 'ไม่ระบุ');
 let BUILD_NOTE = [];
 function rebuildRiders() {
-  const byCode = new Map(BR.map(b => (b.riders = [], [b.code, b]))); RD = []; let lost = 0;
+  const byKey = new Map(BR.map(b => (b.riders = [], [codeKey(b.code), b]))), byCode = {get: c => byKey.get(codeKey(c))}; RD = []; let lost = 0;
   for (const r of DS.riders?.rows || []) { const b = byCode.get(r.code); if (!b) { lost++; continue; } const rd = {id: r.id, b, st: r.st, since: r.t, jobs: 0}; b.riders.push(rd); RD.push(rd); }
   BUILD_NOTE = BUILD_NOTE.filter(n => !n.startsWith('ไรเดอร์')); if (lost) BUILD_NOTE.push(`ไรเดอร์ ${fmt(lost)} คนอ้างถึงสาขาที่ไม่มีในไฟล์สาขา`);
   computeAllDelivery(); openBranch = null; render();
@@ -2321,11 +2386,11 @@ function rebuildAll(changed) {
   if (changed === 'riders' && DS.branches && MODE === 'import') return rebuildRiders();
   applyAreaMap();
   BUILD_NOTE = [];
-  if (!DS.branches) { buildSim(); running = true; }
+  if (!hasStores()) { buildSim(); running = true; }
   else {
-    BR = DS.branches.rows.map(x => ({code: x.code, name: x.name, prov: x.prov, lat: x.lat, lon: x.lng, area: x.area != null && (typeof x.area !== 'number' || AREAS.some(a => a.id === x.area)) ? x.area : areaFor(x.prov, x.lng, x.lat),
-      reqFixed: x.req, reqPeak: x.req, riders: [], bias: 1, svcR: x.radius || 0}));
-    const byCode = new Map(BR.map(b => [b.code, b]));
+    BR = (DS.branches ? DS.branches.rows : tradeStores()).map(x => ({code: x.code, name: x.name, prov: x.prov, lat: x.lat, lon: x.lng, area: x.area != null && (typeof x.area !== 'number' || AREAS.some(a => a.id === x.area)) ? x.area : areaFor(x.prov, x.lng, x.lat),
+      reqFixed: x.req, reqPeak: x.req, riders: [], bias: 1, svcR: 0}));
+    const byKey = new Map(BR.map(b => [codeKey(b.code), b])), byCode = {get: c => byKey.get(codeKey(c))};
     RD = []; let lostR = 0;
     for (const r of DS.riders?.rows || []) { const b = byCode.get(r.code); if (!b) { lostR++; continue; } const rd = {id: r.id, b, st: r.st, since: r.t, jobs: 0}; b.riders.push(rd); RD.push(rd); }
     let lostT = 0;
@@ -2382,24 +2447,23 @@ function persist() { if (!remember) return; clearTimeout(persistT); persistT = s
 /* ---- page rendering ---- */
 const ago2 = t => { const m = Math.round((Date.now() - t) / 60000); return m < 1 ? 'เมื่อสักครู่' : m < 60 ? `${m} นาทีที่แล้ว` : m < 1440 ? `${Math.floor(m / 60)} ชม.ที่แล้ว` : new Date(t).toLocaleDateString('th-TH', {day: 'numeric', month: 'short', year: '2-digit'}); };
 const UNIT = {branches: 'สาขา', trade: 'สาขา', customers: 'ราย', riders: 'คน', areas: 'จังหวัด'};
-const SRC_TH = {sim: 'จำลอง', trade: 'เทรดแอเรียจากไฟล์', cust: 'คำนวณจากหมุดลูกค้า', cfg: 'รัศมีจากไฟล์สาขา', std: 'รัศมีมาตรฐาน (ยังไม่มีข้อมูล)'};
+const SRC_TH = {trade: 'เทรดแอเรียจากไฟล์', none: 'ยังไม่มีเทรดแอเรีย'};
 const armed = {};
 function dsStatus(key) {
   const e = DS[key];
   if (e) return {pill: 'p-ok', t: 'ใช้ข้อมูลจริง'};
-  if (SPEC[key].dep && !DS.branches) return {pill: 'p-sim', t: 'ข้อมูลจำลอง'};
   if (key === 'areas') return {pill: 'p-sim', t: 'ใช้การจัดกลุ่มเดิม'};
-  if (key === 'trade') return {pill: 'p-auto', t: DS.customers ? 'คำนวณจากหมุดลูกค้า' : 'ใช้รัศมีมาตรฐาน'};
-  if (key === 'branches') return {pill: 'p-sim', t: 'ข้อมูลจำลอง'};
+  if (key === 'branches') return DS.trade ? {pill: 'p-auto', t: 'ใช้ร้านจากเทรดแอเรีย'} : {pill: 'p-sim', t: 'ข้อมูลจำลอง'};
+  if (key === 'riders' && !hasStores()) return {pill: 'p-sim', t: 'ข้อมูลจำลอง'};
   return {pill: 'p-none', t: 'ยังไม่มีข้อมูล'};
 }
 function renderData() {
   const $ = id => document.getElementById(id);
-  const real = !!DS.branches;
-  $('dmMode').innerHTML = real ? `<span class="pill p-ok">ข้อมูลจริง</span> ระบบใช้ข้อมูลจากไฟล์ที่อัปโหลด ${fmt(BR.length)} สาขา`
+  const real = hasStores();
+  $('dmMode').innerHTML = real ? `<span class="pill p-ok">ข้อมูลจริง</span> ระบบใช้ข้อมูลจากไฟล์ที่อัปโหลด ${fmt(BR.length)} สาขา${DS.branches ? '' : ' (ตำแหน่งร้านจากกลาง polygon เทรดแอเรีย อัปโหลดไฟล์สาขาเพื่อใส่ชื่อและพิกัดจริง)'}`
     : `<span class="pill p-sim">ข้อมูลจำลอง</span> ยังไม่มีไฟล์สาขา ทุกหน้าใช้ข้อมูลตัวอย่าง เริ่มจากอัปโหลดไฟล์สาขาก่อน`;
   const card = key => {
-    const S = SPEC[key], e = DS[key], st = dsStatus(key), locked = S.dep && !DS.branches;
+    const S = SPEC[key], e = DS[key], st = dsStatus(key), locked = S.dep && !hasStores();
     return `<article class="dmc ${locked ? 'locked' : ''}" data-k="${key}">
       <div class="dmh"><span class="dmn">${S.opt ? '–' : S.n}</span><div style="min-width:0"><h3>${S.t}${S.opt ? ' <small>ไม่บังคับ</small>' : ''}</h3><p>${S.d}</p></div><span class="pill ${st.pill}">${st.t}</span></div>
       <div class="dmmeta">${e ? `<b>${esc(e.file)}</b><span>${fmt(e.rows.length)} ${UNIT[key]}</span><span>อัปเดต ${ago2(e.at)}</span>` : `<span>ยังไม่ได้อัปโหลด</span>`}</div>
@@ -2408,7 +2472,7 @@ function renderData() {
       <label class="drop" ${locked ? 'aria-disabled="true"' : ''}>
         <input type="file" accept="${S.acc}" data-k="${key}" ${locked ? 'disabled' : ''}>
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m0 0-4 4m4-4 4 4M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>
-        <span>${locked ? 'อัปโหลดไฟล์สาขาก่อน' : `ลากไฟล์มาวาง หรือ <u>เลือกไฟล์</u>`}</span>
+        <span>${locked ? 'อัปโหลดไฟล์สาขาหรือเทรดแอเรียก่อน' : `ลากไฟล์มาวาง หรือ <u>เลือกไฟล์</u>`}</span>
         <small>${S.acc.replace(/\./g, '').toUpperCase().split(',').filter((x, i, a) => a.indexOf(x) === i && x !== 'TXT').join(' · ')}</small>
       </label>
       <div class="dmact">
@@ -2422,10 +2486,11 @@ function renderData() {
   const H = [];
   if (real) {
     const src = {}; for (const b of BR) src[b.radSrc] = (src[b.radSrc] || 0) + 1;
-    H.push(['พื้นที่จัดส่ง', Object.entries(src).map(([k, v]) => `${SRC_TH[k] || k} ${fmt(v)} สาขา`).join(' · '), src.std ? 'warn' : 'ok']);
-    H.push(['เทรดแอเรียทับซ้อน', TRADE_OVL.length ? `${fmt(TRADE_OVL.length)} คู่ แบ่งที่กึ่งกลางระหว่างร้านให้แล้ว เช่น ${TRADE_OVL.slice(0, 3).map(([a, b]) => `${esc(a.name)} กับ ${esc(b.name)}`).join(', ')}` : DS.trade ? 'ไม่พบพื้นที่ทับกัน' : 'ยังไม่มีไฟล์เทรดแอเรีย', TRADE_OVL.length ? 'warn' : DS.trade ? 'ok' : 'none']);
+    H.push(['พื้นที่จัดส่ง', Object.entries(src).map(([k, v]) => `${SRC_TH[k] || k} ${fmt(v)} สาขา`).join(' · '), src.none ? 'warn' : 'ok']);
+    H.push(['เทรดแอเรียทับซ้อน', TRADE_OVL.length ? `${fmt(TRADE_OVL.length)} คู่ในไฟล์ทับกันลึกเกิน ${OVL_TOL * 1000} ม. (แสดงขอบสีส้มบนแผนที่ ระบบไม่แก้รูปทรงให้) เช่น ${TRADE_OVL.slice(0, 3).map(([a, b, d]) => `${esc(a.name)} กับ ${esc(b.name)} ${Math.round(d * 1000)} ม.`).join(', ')}` : DS.trade ? `ไม่พบพื้นที่ทับกัน ขอบที่ชิดกันไม่เกิน ${ADJ_TOL * 1000} ม. นับเป็นพื้นที่ติดกัน` : 'ยังไม่มีไฟล์เทรดแอเรีย', TRADE_OVL.length ? 'warn' : DS.trade ? 'ok' : 'none']);
+    if (DS.trade) { const tot = BR.reduce((s, b) => s + (b.tradeRings ? b.dv.area : 0), 0); H.push(['ครบถ้วน', `เทรดแอเรีย ${fmt(BR.filter(b => b.tradeRings).length)} จาก ${fmt(DS.trade.rows.length)} แถวที่นำเข้า · พื้นที่รวม ${f1(tot)} ตร.กม.${BR.filter(b => !b.tradeRings).length ? ` · สาขาที่ยังไม่มีเทรดแอเรีย ${fmt(BR.filter(b => !b.tradeRings).length)}` : ''}`, BR.some(b => !b.tradeRings) ? 'warn' : 'ok']); }
     const noCust = BR.filter(b => b.c1 <= b.c0).length;
-    H.push(['หมุดลูกค้า', DS.customers ? `${fmt(CUST.n)} ราย${noCust ? ` · ${fmt(noCust)} สาขายังไม่มีลูกค้า` : ''}` : 'ยังไม่มี หน้าพื้นที่จัดส่งจะไม่มีคำแนะนำตัดพื้นที่', DS.customers ? (noCust ? 'warn' : 'ok') : 'none']);
+    H.push(['หมุดลูกค้า', DS.customers ? `${fmt(CUST.n)} ราย${noCust ? ` · ${fmt(noCust)} สาขายังไม่มีลูกค้า` : ''}` : 'ยังไม่มี หน้าพื้นที่จัดส่งแสดงเทรดแอเรียได้ แต่ยังไม่มีคำแนะนำตัดพื้นที่', DS.customers ? (noCust ? 'warn' : 'ok') : 'none']);
     const noR = BR.filter(b => !b.riders.length).length;
     H.push(['ไรเดอร์', DS.riders ? `${fmt(RD.length)} คน${noR ? ` · ${fmt(noR)} สาขาไม่มีไรเดอร์` : ''}` : 'ยังไม่มี หน้าภาพรวมจะแสดงทุกสาขาเป็นขาด', DS.riders ? (noR ? 'warn' : 'ok') : 'none']);
     for (const n of BUILD_NOTE) H.push(['ข้อมูลที่ไม่ได้ใช้', n, 'warn']);
@@ -2444,7 +2509,7 @@ const fmtStamp = t => { const d = new Date(t + 7 * 3600e3); return `${d.getUTCDa
 const csvCell = v => { const s = String(v ?? ''); return /[",\n\t]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
 function exportText(key) {
   const rows = [];
-  if (key === 'branches') { rows.push(['branch_code', 'branch_name', 'lat', 'lng', 'province', 'area', 'required', 'service_radius_km']); for (const b of BR) rows.push([b.code, b.name, b.lat.toFixed(6), b.lon.toFixed(6), provByCode[b.prov]?.n || '', b.area, b.reqFixed ?? b.reqPeak, b.svcR || '']); }
+  if (key === 'branches') { rows.push(['branch_code', 'branch_name', 'lat', 'lng', 'province', 'area', 'required']); for (const b of BR) rows.push([b.code, b.name, b.lat.toFixed(6), b.lon.toFixed(6), provByCode[b.prov]?.n || '', b.area, b.reqFixed ?? b.reqPeak]); }
   else if (key === 'riders') { rows.push(['rider_id', 'branch_code', 'status', 'last_update']); const S = {deliver: 'delivering', pickup: 'pickup', idle: 'idle', break: 'break', offline: 'offline'};
     for (const r of RD) rows.push([r.id, r.b.code, S[r.st], new Date(r.since + 7 * 3600e3).toISOString().slice(0, 16).replace('T', ' ')]); }
   else if (key === 'customers') { rows.push(['customer_id', 'branch_code', 'lat', 'lng', 'orders_30d', 'avg_delivery_min']); for (let i = 0; i < CUST.n; i++) rows.push(['C-' + String(i + 1).padStart(7, '0'), BR[CUST.br[i]].code, CUST.lat[i].toFixed(6), CUST.lon[i].toFixed(6), CUST.orders[i], CUST.time[i].toFixed(1)]); }
@@ -2547,6 +2612,7 @@ async function applyRev() {
   logAdd(key, `${file} · ${mode === 'merge' ? 'เพิ่ม/อัปเดต' : 'แทนที่'} ${fmt(res.rows.length)} ${UNIT[key]} (รวม ${fmt(rows.length)})`);
   rebuildAll(key); rev.hidden = true; REV = null; persist();
   toast(`ใช้ข้อมูล${SPEC[key].t}แล้ว ${fmt(rows.length)} ${UNIT[key]}${BUILD_NOTE.length ? ' · ' + BUILD_NOTE[0] : ''}`);
+  if (key === 'trade') { go('delivery'); scrollTo(0, 0); requestAnimationFrame(() => DMAP.fitScope()); }
 }
 
 /* ---- events on the data page ---- */
@@ -2573,6 +2639,7 @@ document.getElementById('dmReset').onclick = () => {
   rebuildAll(); persist(); toast('กลับไปใช้ข้อมูลจำลองแล้ว');
 };
 document.getElementById('overN2').onchange = e => { overN = Math.max(1, Math.min(20, +e.target.value || 2)); e.target.value = overN; render(); toast(`สาขาที่ออนไลน์เกินที่ต้องการตั้งแต่ ${overN} คน นับเป็น "เกิน"`); };
+document.getElementById('dEmptyGo').onclick = () => { go('data'); scrollTo(0, 0); };
 document.getElementById('importBtn').onclick = () => { go('data'); scrollTo(0, 0); };
 function bootSavedData() {
   if (!remember) return;
