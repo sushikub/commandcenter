@@ -337,6 +337,12 @@ header h1#pgTitle{margin:0;font:700 19px/1.15 var(--f-display);letter-spacing:.0
 #dEmpty b{font:600 16px var(--f-display)}
 #dEmpty span{color:var(--muted)}
 
+.akpis{grid-template-columns:1.4fr 1fr 1.4fr 1.6fr}
+.akpis .xl{display:flex;justify-content:space-between;gap:10px;font-size:12.5px;color:var(--muted);border-top:1px solid var(--line);padding-top:4px}
+.akpis .xl b{color:var(--fg);font-size:14px}
+@media (max-width:1250px){.akpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:620px){.akpis{grid-template-columns:minmax(0,1fr)}}
+
 /* ---- sub menu ---- */
 .nav a.sub{padding:7px 10px 7px 22px;font-size:13.5px;position:relative;margin-left:16px;border-left:1.5px solid var(--line);border-radius:0 8px 8px 0}
 .nav a.sub svg{width:16px;height:16px}
@@ -440,6 +446,8 @@ header h1#pgTitle{margin:0;font:700 19px/1.15 var(--f-display);letter-spacing:.0
     <div class="grp">วางแผนพื้นที่</div>
     <a href="#delivery" data-go="delivery"><svg viewBox="0 0 24 24"><circle cx="12" cy="11" r="8"/><circle cx="12" cy="11" r="2.5"/><path d="M12 19v3"/></svg>พื้นที่จัดส่ง</a>
     <a href="#data" data-go="data" class="sub"><svg viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="7" ry="2.5"/><path d="M5 6v6c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5V6M5 12v6c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5v-6"/></svg>จัดการข้อมูล</a>
+    <div class="grp">วิเคราะห์</div>
+    <a href="#anomaly" data-go="anomaly"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.5"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>ชี้เป้าสาขาผิดปกติ</a>
   </div>
   <div class="foot">
     <span class="badge" id="srcBadge">ข้อมูลตัวอย่าง (จำลอง)</span>
@@ -551,7 +559,25 @@ header h1#pgTitle{margin:0;font:700 19px/1.15 var(--f-display);letter-spacing:.0
   </section>
 </div>
 <div class="wrap" data-page="delivery" hidden>
-  <section class="dkpis" aria-label="ภาพรวมพื้นที่จัดส่ง">
+  <section class="dkpis akpis" data-only="anomaly" hidden aria-label="ภาพรวมสาขาผิดปกติ">
+    <div class="tile t-short wide2"><div class="l">สาขาผิดปกติ</div><div class="v" id="akN">–</div><div class="s" id="akNS"></div></div>
+    <div class="tile"><div class="l">SLA เฉลี่ยกลุ่มนี้</div><div class="v" id="akSla">–</div><div class="s" id="akSlaS"></div></div>
+    <div class="tile wide2"><div class="l">ออเดอร์ที่ได้รับผลกระทบ</div><div class="v" id="akOrd">–</div><div class="s" id="akOrdS"></div></div>
+    <div class="tile"><div class="l">ไม่นำมาแสดง</div>
+      <div class="xl"><span>SLA เกิน แต่พื้นที่ปกติ</span><b class="num" id="akSlaOnly">–</b></div>
+      <div class="xl"><span>พื้นที่เกิน แต่ SLA ผ่าน (ยอมรับได้)</span><b class="num" id="akAreaOnly">–</b></div>
+      <div class="xl"><span>ข้อมูลไม่ครบ (ไม่มี SLA หรือเทรดแอเรีย)</span><b class="num" id="akNoData">–</b></div></div>
+  </section>
+  <div class="crit" id="acrit" data-only="anomaly" hidden>
+    <b style="color:var(--fg)">เกณฑ์ผิดปกติ</b>
+    <label>SLA มากกว่า <input type="number" id="aSla" data-k="sla" value="45" min="5" max="180" step="1"> นาที</label>
+    <span>และรัศมีจากร้านเกิน</span>
+    <label>กทม. <input type="number" id="aBkk" data-k="rBkk" value="0.6" min="0.1" max="10" step="0.1"> กม.</label>
+    <label>ปริมณฑล <input type="number" id="aVic" data-k="rVic" value="4" min="0.1" max="20" step="0.1"> กม.</label>
+    <label>ต่างจังหวัด <input type="number" id="aUp" data-k="rUp" value="4" min="0.1" max="20" step="0.1"> กม.</label>
+    <span>ต้องเข้าทั้งสองเงื่อนไขจึงแสดงในหน้านี้</span>
+  </div>
+  <section class="dkpis" data-only="delivery" aria-label="ภาพรวมพื้นที่จัดส่ง">
     <div class="tile"><div class="l">ร้าน 7-Eleven</div><div class="v" id="dkStores">–</div><div class="s" id="dkStoresS"></div></div>
     <div class="tile wide"><div class="l">บ้านลูกค้า</div><div class="v" id="dkCust">–</div><div class="stack" id="dkCustStack"></div><div class="legend" id="dkCustLeg"></div></div>
     <div class="tile"><div class="l">SLA เฉลี่ย (ถ่วงตามออเดอร์)</div><div class="v" id="dkTime">–</div><div class="s" id="dkTimeS"></div></div>
@@ -560,7 +586,7 @@ header h1#pgTitle{margin:0;font:700 19px/1.15 var(--f-display);letter-spacing:.0
     <button class="tile st t-cap" data-iss="cap" aria-pressed="false"><div class="l">เกินกำลังไรเดอร์</div><div class="v" id="dkCap">–</div><div class="s" id="dkCapS"></div></button>
   </section>
 
-  <div class="crit" id="crit">
+  <div class="crit" id="crit" data-only="delivery">
     <b style="color:var(--fg)">เกณฑ์</b>
     <label>รัศมี กทม. ไม่เกิน <input type="number" id="cBkk" data-k="rBkk" value="1" min="0.3" max="10" step="0.1"> กม.</label>
     <label>ต่างจังหวัด ไม่เกิน <input type="number" id="cUp" data-k="rUp" value="2" min="0.3" max="20" step="0.1"> กม.</label>
@@ -597,14 +623,14 @@ header h1#pgTitle{margin:0;font:700 19px/1.15 var(--f-display);letter-spacing:.0
         <div class="dctl"><button id="dzin" aria-label="ซูมเข้า">+</button><button id="dzout" aria-label="ซูมออก">−</button><button id="dzhome" aria-label="พอดีกับขอบเขต">⌂</button></div>
         <div id="bmAttr"></div>
         <div id="bmNote" hidden><b>โหลดแผนที่ OpenStreetMap ไม่ได้ในหน้านี้</b> หน้าที่เปิดผ่าน Claude ไม่อนุญาตให้โหลดรูปแผนที่จากเว็บภายนอก จึงแสดงเส้นเขตแทน เปิดไฟล์ HTML นี้จากเซิร์ฟเวอร์ภายในของบริษัทเพื่อดูแผนที่ถนน <button class="linkbtn" id="bmNoteX">ปิด</button></div>
-        <div id="dEmpty" hidden><b id="dEmptyT">ยังไม่มีข้อมูลเทรดแอเรีย</b><span>หน้านี้แสดงเฉพาะเทรดแอเรียจากไฟล์ที่อัปโหลด รูปแบบ store_code, geometry, created_at</span><button class="btn primary" id="dEmptyGo">อัปโหลดไฟล์เทรดแอเรีย</button></div>
+        <div id="dEmpty" hidden><b id="dEmptyT">ยังไม่มีข้อมูลเทรดแอเรีย</b><span id="dEmptyD">หน้านี้แสดงเฉพาะเทรดแอเรียจากไฟล์ที่อัปโหลด รูปแบบ store_code, geometry, created_at</span><button class="btn primary" id="dEmptyGo">อัปโหลดไฟล์เทรดแอเรีย</button></div>
         <div id="dZoomHint">ซูมเข้าระดับเมืองเพื่อดูพื้นที่จัดส่งและบ้านลูกค้า</div>
       </div>
     </div>
     <div class="panel" id="dSide">
       <div id="dRecs">
-        <div class="ph"><h2>สาขาที่ควรทบทวน</h2></div>
-        <div id="dtabs" role="tablist">
+        <div class="ph"><h2 data-only="delivery">สาขาที่ควรทบทวน</h2><h2 data-only="anomaly" hidden>สาขาผิดปกติ</h2><span class="note" data-only="anomaly" hidden>เรียงจาก SLA และรัศมีที่เกินมากที่สุด</span></div>
+        <div id="dtabs" role="tablist" data-only="delivery">
           <button role="tab" data-tab="sla" id="dtabSla" aria-selected="true">SLA สูง</button>
           <button role="tab" data-tab="over" id="dtabOver" aria-selected="false">เกินรัศมี</button>
           <button role="tab" data-tab="cap" id="dtabCap" aria-selected="false">เกินกำลัง</button>
@@ -956,7 +982,7 @@ mapEl.addEventListener('click', e => {
 });
 document.getElementById('mapReset').onclick = () => { filt.prov = ''; filt.area = 0; syncFilterUI(); zoomForFilter(); render(); };
 function zoomForFilter() {
-  if (page === 'delivery') { dShowN = 40; dTShow = 50; DMAP.fitScope(); return; }
+  if (page === 'delivery' || page === 'anomaly') { dShowN = 40; dTShow = 50; DMAP.fitScope(); return; }
   if (filt.prov) zoomToProvs([filt.prov]);
   else if (filt.area) zoomToProvs([...new Set(BR.filter(b => b.area === filt.area).map(b => b.prov))]);
   else zoomToProvs([]);
@@ -1223,6 +1249,16 @@ document.getElementById('pauseBtn').onclick = () => { running = !running; setSou
 let CUST = {n: 0};
 const DSET = {sla: 30, rBkk: 1, rUp: 2, tBkk: null, tUp: 10};
 // one-way ride time limit (minutes) and the road distance it allows
+// "ชี้เป้าสาขาผิดปกติ": SLA over the limit AND trade area reaching past the radius standard
+const ASET = {sla: 45, rBkk: .6, rVic: 4, rUp: 4};
+const VICINITY = new Set(['11', '12', '13', '73', '74']);   // สมุทรปราการ นนทบุรี ปทุมธานี นครปฐม สมุทรสาคร
+const zoneOf = b => isBkk(b) ? 'bkk' : VICINITY.has(b.prov) ? 'vic' : 'up';
+const ZONE_TH = {bkk: 'กทม.', vic: 'ปริมณฑล', up: 'ต่างจังหวัด'};
+const anomalyLim = b => ({bkk: ASET.rBkk, vic: ASET.rVic, up: ASET.rUp})[zoneOf(b)];
+const anomSla = b => !!(b.dv && b.dv.avgT > ASET.sla);
+const anomArea = b => !!(b.rad && b.dv && b.dv.rMax > anomalyLim(b) + 1e-9);
+const isAnomaly = b => anomSla(b) && anomArea(b);
+const anomScore = b => (b.dv.avgT / ASET.sla) * (b.dv.rMax / anomalyLim(b));
 const travelLimitOf = b => isBkk(b) ? DSET.tBkk : DSET.tUp;
 const travelDistOf = b => { const t = travelLimitOf(b); return t ? t * speedOf(b) / 60 / 1.35 : Infinity; };
 const isBkk = b => b.prov === '10';
@@ -1621,7 +1657,7 @@ const DMAP = (() => {
     }
     if (detail && L.std) {
       ctx.setLineDash([5, 4]);
-      for (const b of visible) { if (k < 25 && b !== sel) continue; ctx.beginPath(); ctx.arc(sx(b.lon), sy(b.my), limitOf(b) * k, 0, 6.283); ctx.strokeStyle = col.fg; ctx.globalAlpha = b === sel ? .8 : .35; ctx.lineWidth = 1.2; ctx.stroke(); }
+      for (const b of visible) { if (k < 25 && b !== sel) continue; ctx.beginPath(); ctx.arc(sx(b.lon), sy(b.my), (page === 'anomaly' ? anomalyLim(b) : limitOf(b)) * k, 0, 6.283); ctx.strokeStyle = col.fg; ctx.globalAlpha = b === sel ? .8 : .35; ctx.lineWidth = 1.2; ctx.stroke(); }
       if (sel && visible.includes(sel) && isFinite(travelDistOf(sel))) { ctx.setLineDash([2, 4]); ctx.beginPath(); ctx.arc(sx(sel.lon), sy(sel.my), travelDistOf(sel) * k, 0, 6.283); ctx.strokeStyle = col.sla; ctx.globalAlpha = .9; ctx.lineWidth = 1.6; ctx.stroke(); }
       ctx.setLineDash([]); ctx.globalAlpha = 1;
     }
@@ -1782,15 +1818,34 @@ const DMAP = (() => {
 
 /* ================= delivery area: UI ================= */
 let dSel = null, whatR = null, dTab = 'sla', dShowN = 40, dSortK = 'avgT', dSortDir = -1, dTShow = 50, dFirst = true;
-const dScope = b => MODE !== 'sim' && inScope(b, true) && (filt.iss === 'all' || (b.dv && b.dv.flags[filt.iss]));
+const dScope = b => MODE !== 'sim' && inScope(b, true) && (page === 'anomaly' ? isAnomaly(b) : (filt.iss === 'all' || (b.dv && b.dv.flags[filt.iss])));
 const ISSUE = {sla: {t: 'SLA สูง', c: 'p-short'}, over: {t: 'เกินรัศมี', c: 'p-over'}, cap: {t: 'เกินกำลังไรเดอร์', c: 'p-cap'}};
 function issuePills(b) { if (!b.rad && !b.dv?.cnt) return '<span class="pill p-none">ยังไม่มีเทรดแอเรีย</span>'; const f = b.dv?.flags || {}; const p = ['sla', 'cap'].filter(k => f[k]).map(k => `<span class="pill ${ISSUE[k].c}">${ISSUE[k].t}</span>`); if (f.radius) p.push(`<span class="pill p-over">เกินรัศมี</span>`); if (f.far) p.push(`<span class="pill p-short">เดินทางเกิน ${travelLimitOf(b)} นาที/ขา</span>`); return p.join(' ') || '<span class="pill p-ok">ปกติ</span>'; }
 const f1 = v => (Math.round(v * 10) / 10).toLocaleString('th-TH', {minimumFractionDigits: 1, maximumFractionDigits: 1});
 const pct = v => Math.round(v * 100) + '%';
 
+function renderAnomalyKPI(base) {
+  const $ = id => document.getElementById(id), A = base.filter(isAnomaly), withSla = base.filter(b => b.dv?.avgT);
+  const by = {bkk: 0, vic: 0, up: 0}; for (const b of A) by[zoneOf(b)]++;
+  $('akN').innerHTML = `${fmt(A.length)}<small>สาขา</small>`;
+  $('akNS').textContent = `จาก ${fmt(withSla.length)} สาขาที่มี SLA · ${['bkk', 'vic', 'up'].map(z => `${ZONE_TH[z]} ${fmt(by[z])}`).join(' · ')}`;
+  const w = A.reduce((s, b) => s + (b.dv.ordersDay || 1), 0), t = A.reduce((s, b) => s + b.dv.avgT * (b.dv.ordersDay || 1), 0);
+  $('akSla').innerHTML = A.length ? `${(t / w).toFixed(1)}<small>นาที</small>` : '–';
+  $('akSlaS').textContent = A.length ? `สูงสุด ${Math.max(...A.map(b => b.dv.avgT)).toFixed(1)} นาที · เกณฑ์ ${ASET.sla} นาที` : `เกณฑ์ ${ASET.sla} นาที`;
+  const od = A.reduce((s, b) => s + (b.dv.ordersDay || 0), 0);
+  $('akOrd').innerHTML = `${fmt(Math.round(od))}<small>ออเดอร์/วัน</small>`;
+  const worst = A.slice().sort((a, b) => b.dv.rMax / anomalyLim(b) - a.dv.rMax / anomalyLim(a))[0];
+  $('akOrdS').textContent = worst ? `รัศมีเกินมากสุด ${esc(worst.name)} ${f1(worst.dv.rMax)} กม. (เกณฑ์ ${f1(anomalyLim(worst))})` : 'ไม่มีสาขาผิดปกติ';
+  $('akSlaOnly').textContent = fmt(base.filter(b => anomSla(b) && b.rad && !anomArea(b)).length);
+  $('akAreaOnly').textContent = fmt(base.filter(b => anomArea(b) && b.dv?.avgT && !anomSla(b)).length);
+  $('akNoData').textContent = fmt(base.filter(b => !b.rad || !b.dv?.avgT).length);
+}
 function renderDelivery() {
-  const scoped = MODE === 'sim' ? [] : BR.filter(b => inScope(b, true));
+  const base = MODE === 'sim' ? [] : BR.filter(b => inScope(b, true)), anom = page === 'anomaly';
+  const scoped = anom ? base.filter(isAnomaly) : base;
   const $ = id => document.getElementById(id);
+  document.querySelectorAll('[data-only]').forEach(el => el.hidden = el.dataset.only !== (anom ? 'anomaly' : 'delivery'));
+  if (anom) renderAnomalyKPI(base);
   // KPIs
   let cust = 0, tiers = [0, 0, 0], ord = 0, tSum = 0, nSla = 0, nOver = 0, nCap = 0, outC = 0;
   for (const b of scoped) { const d = b.dv; if (!d) continue; cust += d.cnt; d.tiers.forEach((v, i) => tiers[i] += v); if (d.avgT) { const w = d.ordersDay || 1; ord += w; tSum += d.avgT * w; } outC += d.outC;
@@ -1799,7 +1854,9 @@ function renderDelivery() {
   const nArea = scoped.filter(b => b.rad).length;
   $('dkStoresS').textContent = MODE === 'sim' ? 'ยังไม่มีข้อมูลจากไฟล์' : `มีเทรดแอเรีย ${fmt(nArea)} สาขา${scoped.length - nArea ? ` · ยังไม่มี ${fmt(scoped.length - nArea)}` : ''}`;
   document.getElementById('dEmpty').hidden = MODE !== 'sim' && nArea > 0;
-  document.getElementById('dEmptyT').textContent = MODE === 'sim' ? 'ยังไม่มีข้อมูลเทรดแอเรีย' : 'สาขาในขอบเขตนี้ยังไม่มีเทรดแอเรีย';
+  document.getElementById('dEmptyT').textContent = MODE === 'sim' ? 'ยังไม่มีข้อมูลเทรดแอเรีย' : anom ? 'ไม่พบสาขาผิดปกติตามเกณฑ์' : 'สาขาในขอบเขตนี้ยังไม่มีเทรดแอเรีย';
+  document.getElementById('dEmptyD').textContent = anom && MODE !== 'sim' ? `ไม่มีสาขาที่ SLA เกิน ${ASET.sla} นาที และเทรดแอเรียเกินมาตรฐานพร้อมกัน ในขอบเขตที่เลือก` : 'หน้านี้แสดงเฉพาะเทรดแอเรียจากไฟล์ที่อัปโหลด รูปแบบ store_code, geometry, created_at';
+  document.getElementById('dEmptyGo').hidden = anom && MODE !== 'sim';
   $('dkCust').innerHTML = `${fmt(cust)}<small>ราย</small>`;
   $('dkCustStack').innerHTML = [2, 1, 0].map(t => `<i style="width:${cust ? tiers[t] / cust * 100 : 0}%;background:var(${TIER[t].v})"></i>`).join('');
   $('dkCustLeg').innerHTML = [2, 1, 0].map(t => `<span><span class="dot" style="background:var(${TIER[t].v})"></span>${TIER[t].t} <b>${fmt(tiers[t])}</b></span>`).join('');
@@ -1816,7 +1873,7 @@ function renderDelivery() {
   if (dSel && !BR.includes(dSel)) dSel = null;
   $('dRecs').hidden = !!dSel; $('dDetail').hidden = !dSel;
   if (dSel) renderDDetail(); else renderRecs(scoped);
-  renderDTable(scoped.filter(b => filt.iss === 'all' || b.dv?.flags[filt.iss]));
+  renderDTable(anom ? scoped.slice() : scoped.filter(b => filt.iss === 'all' || b.dv?.flags[filt.iss]));
   if (dFirst) { const cnt = {sla: nSla, over: nOver, cap: nCap}; if (!cnt[dTab]) { const k = ['sla', 'over', 'cap'].find(x => cnt[x]); if (k) { dTab = k; if (!dSel) renderRecs(scoped); } } }
   if (dFirst && DMAP.isFresh()) { dFirst = false; DMAP.fitScope(); }
   DMAP.redraw();
@@ -1828,7 +1885,20 @@ function recLine(b) {
   const dirs = [...new Set(c.steps.slice(0, c.recN).map(z => z.dir))];
   return `${c.nTravel ? `ขับรถเกิน ${c.tLim} นาที/ขา ${c.nTravel} ทิศ · ` : ''}ตัด ${c.recN} ส่วน (ทิศ${dirs.slice(0, 2).join(', ')}${dirs.length > 2 ? ` +${dirs.length - 2}` : ''}) ลูกค้านานๆ ที ${pct(c.occShare)} · เวลา ${c.before.avgT.toFixed(0)}→${c.after.avgT.toFixed(0)} นาที · ออเดอร์หาย ${pct(c.cutOrd / Math.max(1, c.before.ord))}`;
 }
+function renderAnomRecs(list) {
+  list = list.slice().sort((a, b) => anomScore(b) - anomScore(a));
+  const el = document.getElementById('dRecList');
+  el.innerHTML = list.slice(0, dShowN).map(b => { const d = b.dv, lim = anomalyLim(b);
+    return `<div class="rec" data-code="${b.code}" tabindex="0"><span class="sv" style="background:var(--short)"></span>
+      <div style="min-width:0"><div class="rt"><b>${esc(b.name)}</b><span class="rm">${esc(provByCode[b.prov]?.n || '')} · ${ZONE_TH[zoneOf(b)]} · ${b.code}</span></div>
+      <div class="rl">รัศมีไกลสุด ${f1(d.rMax)} กม. เกินเกณฑ์ ${f1(lim)} กม. อยู่ ${f1(d.rMax - lim)} กม. · ${d.ordSrc ? fmt(Math.round(d.ordersDay)) + ' ออเดอร์/วัน' : ''}${d.cut?.recN ? ` · แนะนำตัด ${d.cut.recN} ส่วน` : ''}</div></div>
+      <div class="rv">SLA <b class="num">${d.avgT.toFixed(0)}</b> นาที<br><span class="num">${f1(d.rMax)}</span> / ${f1(lim)} กม.</div></div>`; }).join('') || `<div class="empty">ไม่พบสาขาที่ SLA เกิน ${ASET.sla} นาที และเทรดแอเรียเกินมาตรฐาน</div>`;
+  const more = document.getElementById('dRecMore');
+  more.innerHTML = list.length > dShowN ? `แสดง ${dShowN} จาก ${fmt(list.length)} <button class="btn" id="dRecMoreBtn">แสดงเพิ่ม</button>` : '';
+  const mb = document.getElementById('dRecMoreBtn'); if (mb) mb.onclick = () => { dShowN += 40; renderAnomRecs(list); };
+}
 function renderRecs(scoped) {
+  if (page === 'anomaly') return renderAnomRecs(scoped);
   const key = dTab, list = scoped.filter(b => b.dv?.flags[key]);
   list.sort(key === 'sla' ? (a, b) => b.dv.avgT - a.dv.avgT : key === 'over' ? (a, b) => b.dv.rMax / b.dv.lim - a.dv.rMax / a.dv.lim : (a, b) => b.dv.load - a.dv.load);
   document.querySelectorAll('#dtabs button').forEach(bt => bt.setAttribute('aria-selected', bt.dataset.tab === key));
@@ -1848,7 +1918,7 @@ document.querySelectorAll('#dtabs button').forEach(bt => bt.onclick = () => { dT
 
 function selectDBranch(b) {
   if (!b) return; dSel = b; whatR = null;
-  if (page !== 'delivery') go('delivery');
+  if (page !== 'delivery' && page !== 'anomaly') go('delivery');
   renderDelivery(); DMAP.fitBranch(b);
   if (innerWidth < 1100) document.getElementById('dmapPanel').scrollIntoView({behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start'});
 }
@@ -1889,9 +1959,9 @@ function renderDDetail() {
       <div class="m">สาขา ${b.code} · ${esc(provByCode[b.prov]?.n || '')} · ${isBkk(b) ? 'กทม.' : 'ต่างจังหวัด'} · ที่มาพื้นที่: ${SRC_TH[b.radSrc] || '–'}</div>${b.ovl ? `<div class="m" style="color:var(--over)">เทรดแอเรียในไฟล์ทับกับ ${TRADE_OVL.filter(p => p[0] === b || p[1] === b).map(p => esc((p[0] === b ? p[1] : p[0]).name) + ' ' + Math.round(p[2] * 1000) + ' ม.').join(', ')} ควรแก้ในระบบวาดเทรดแอเรีย</div>` : ''}
       <h3>${esc(b.name)}</h3><div class="pills">${issuePills(b)}</div></div>
     <div class="dgrid">
-      <div><div class="l">รัศมีไกลสุด</div><div class="v ${d.flags.over ? 'bad' : ''}">${f1(d.rMax)} <small>/ ${d.lim} กม.</small></div></div>
+      <div><div class="l">รัศมีไกลสุด${page === 'anomaly' ? ` · เกณฑ์${ZONE_TH[zoneOf(b)]}` : ''}</div><div class="v ${(page === 'anomaly' ? anomArea(b) : d.flags.over) ? 'bad' : ''}">${f1(d.rMax)} <small>/ ${page === 'anomaly' ? f1(anomalyLim(b)) : d.lim} กม.</small></div></div>
       <div><div class="l">พื้นที่จัดส่ง</div><div class="v">${f1(d.area)} <small>/ ${f1(d.stdArea)} ตร.กม.</small></div></div>
-      <div><div class="l">SLA เวลาส่งเฉลี่ย · ${d.slaSrc === 'file' ? 'จากไฟล์สาขา' : d.slaSrc ? 'จากหมุดลูกค้า' : 'ไม่มีข้อมูล'}</div><div class="v ${d.avgT > DSET.sla ? 'bad' : ''}">${d.avgT ? d.avgT.toFixed(1) : '–'} <small>/ ${DSET.sla} นาที</small></div></div>
+      <div><div class="l">SLA เวลาส่งเฉลี่ย · ${d.slaSrc === 'file' ? 'จากไฟล์สาขา' : d.slaSrc ? 'จากหมุดลูกค้า' : 'ไม่มีข้อมูล'}</div><div class="v ${d.avgT > (page === 'anomaly' ? ASET.sla : DSET.sla) ? 'bad' : ''}">${d.avgT ? d.avgT.toFixed(1) : '–'} <small>/ ${page === 'anomaly' ? ASET.sla : DSET.sla} นาที</small></div></div>
       <div><div class="l">ส่งช้ากว่า ${DSET.sla} นาที</div><div class="v ${d.lateKnown && d.lateP >= .25 ? 'bad' : ''}">${d.lateKnown ? pct(d.lateP) : '–'}</div></div>
       <div><div class="l">ออเดอร์/วัน · ${d.ordSrc === 'file' ? 'จากไฟล์สาขา' : d.ordSrc ? 'จากหมุดลูกค้า' : 'ไม่มีข้อมูล'}</div><div class="v">${d.ordSrc ? fmt(Math.round(d.ordersDay)) : '–'}</div></div>
       <div><div class="l">ภาระไรเดอร์ช่วงพีค</div><div class="v ${d.load > 1 ? 'bad' : ''}">${pct(d.load)} <small>${d.ridersPeak} คน</small></div></div>
@@ -1943,8 +2013,8 @@ function renderDTable(list) {
   dLast = list;
   document.querySelector('#dT tbody').innerHTML = list.slice(0, dTShow).map(b => { const d = b.dv; return `<tr data-code="${b.code}" tabindex="0" class="${dSel === b ? 'selrow' : ''}">
     <td class="num">${b.code}</td><td><b>${esc(b.name)}</b></td><td>${esc(provByCode[b.prov]?.n || '')}</td>
-    <td class="n ${d.flags.over ? 'diff-pos' : ''}">${b.rad ? f1(d.rMax) : '–'}</td><td class="n">${d.lim}</td><td class="n">${b.rad ? f1(d.area) : '–'}</td><td class="n">${fmt(d.cnt)}</td><td class="n">${fmt(d.tiers[2])}</td>
-    <td class="n" title="${d.ordSrc === 'file' ? 'จากไฟล์สาขา' : 'จากหมุดลูกค้า'}">${d.ordSrc ? fmt(Math.round(d.ordersDay)) : '–'}</td><td class="n ${d.avgT > DSET.sla ? 'diff-neg' : ''}" title="${d.slaSrc === 'file' ? 'จากไฟล์สาขา' : 'จากหมุดลูกค้า'}">${d.avgT ? d.avgT.toFixed(1) : '–'}</td><td class="n ${d.lateKnown && d.lateP >= .25 ? 'diff-neg' : ''}">${d.lateKnown ? pct(d.lateP) : '–'}</td>
+    <td class="n ${(page === 'anomaly' ? anomArea(b) : d.flags.over) ? 'diff-pos' : ''}">${b.rad ? f1(d.rMax) : '–'}</td><td class="n">${page === 'anomaly' ? f1(anomalyLim(b)) : d.lim}</td><td class="n">${b.rad ? f1(d.area) : '–'}</td><td class="n">${fmt(d.cnt)}</td><td class="n">${fmt(d.tiers[2])}</td>
+    <td class="n" title="${d.ordSrc === 'file' ? 'จากไฟล์สาขา' : 'จากหมุดลูกค้า'}">${d.ordSrc ? fmt(Math.round(d.ordersDay)) : '–'}</td><td class="n ${d.avgT > (page === 'anomaly' ? ASET.sla : DSET.sla) ? 'diff-neg' : ''}" title="${d.slaSrc === 'file' ? 'จากไฟล์สาขา' : 'จากหมุดลูกค้า'}">${d.avgT ? d.avgT.toFixed(1) : '–'}</td><td class="n ${d.lateKnown && d.lateP >= .25 ? 'diff-neg' : ''}">${d.lateKnown ? pct(d.lateP) : '–'}</td>
     <td class="n ${d.load > 1 ? 'diff-neg' : ''}">${pct(d.load)}</td><td>${issuePills(b)}</td></tr>`; }).join('') || `<tr><td colspan="13" class="empty">ไม่พบสาขาตามเงื่อนไข</td></tr>`;
   document.getElementById('dTNote').textContent = `${fmt(list.length)} สาขา`;
   const more = document.getElementById('dTMore');
@@ -1967,16 +2037,25 @@ document.querySelectorAll('#crit input').forEach(inp => inp.onchange = () => {
   if (!isFinite(v) || v <= 0) { inp.value = DSET[k] ?? ''; return; }
   DSET[inp.dataset.k] = v; computeAllDelivery(); renderDelivery();
 });
+document.querySelectorAll('#acrit input').forEach(inp => inp.onchange = () => {
+  const k = inp.dataset.k, v = parseFloat(inp.value);
+  if (!isFinite(v) || v <= 0) { inp.value = ASET[k]; return; }
+  ASET[k] = v; dFirst = true; renderDelivery();
+});
 document.querySelectorAll('.tile[data-iss]').forEach(t => t.onclick = () => { filt.iss = filt.iss === t.dataset.iss ? 'all' : t.dataset.iss; dTab = filt.iss === 'all' ? dTab : filt.iss; syncFilterUI(); render(); DMAP.redraw(); });
 
 /* ================= router ================= */
 let page = 'overview';
 const PAGES = {overview: {t: 'ภาพรวมไรเดอร์', s: 'ไรเดอร์ออนไลน์ ออฟไลน์ และสาขาที่ขาด ครบ เกิน'}, delivery: {t: 'พื้นที่จัดส่ง', s: 'ร้าน 7-Eleven ขนาดพื้นที่จัดส่ง บ้านลูกค้า และคำแนะนำปรับรัศมี'},
+  anomaly: {t: 'ชี้เป้าสาขาผิดปกติ', s: 'สาขาที่ SLA เกินเกณฑ์ และเทรดแอเรียเกินมาตรฐานพร้อมกัน'},
   data: {t: 'จัดการข้อมูล', s: 'พื้นที่จัดส่ง › อัปโหลดไฟล์สาขา เทรดแอเรีย หมุดลูกค้า และสถานะไรเดอร์'}};
 function go(p) {
   if (!PAGES[p]) p = 'overview';
+  const prevPage = page;
+  const view = p === 'anomaly' ? 'delivery' : p;
   page = p;
-  document.querySelectorAll('[data-page]').forEach(s => s.hidden = s.dataset.page !== p);
+  if ((prevPage === 'anomaly') !== (p === 'anomaly')) { dSel = null; whatR = null; dFirst = true; dShowN = 40; }
+  document.querySelectorAll('[data-page]').forEach(s => s.hidden = s.dataset.page !== view);
   document.querySelectorAll('.nav a').forEach(a => a.toggleAttribute('aria-current', a.dataset.go === p));
   document.getElementById('pgTitle').textContent = PAGES[p].t; document.getElementById('pgSub').textContent = PAGES[p].s;
   document.getElementById('stChips').hidden = p !== 'overview'; document.getElementById('issChips').hidden = p !== 'delivery';
@@ -1984,7 +2063,7 @@ function go(p) {
   document.querySelector('.nav a[data-go="delivery"]').classList.toggle('parent-on', p === 'data');
   if (location.hash !== '#' + p) history.replaceState(null, '', '#' + p);
   closeSide();
-  if (p === 'delivery') { DMAP.resize(); }
+  if (view === 'delivery') { DMAP.resize(); }
   render();
   if (p === 'overview') zoomForFilter();
 }
@@ -2723,7 +2802,7 @@ function render() {
     const list = scoped.filter(b => filt.st === 'all' || b.status === filt.st);
     renderKPI(scoped);
     renderMap(); renderAreas(); renderBranches(list.slice()); renderAlerts(list); renderMoves(list); renderChart(scoped);
-  } else if (page === 'delivery') renderDelivery(); else renderData();
+  } else if (page === 'delivery' || page === 'anomaly') renderDelivery(); else renderData();
   const parts = [];
   if (filt.area) parts.push(`พื้นที่ <b>${esc(areaName(filt.area))}</b>`);
   if (filt.prov) parts.push(`<b>${provByCode[filt.prov].n}</b>`);
