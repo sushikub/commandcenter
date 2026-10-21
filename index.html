@@ -605,7 +605,7 @@ header h1#pgTitle{margin:0;font:700 19px/1.15 var(--f-display);letter-spacing:.0
           <details open><summary>ชั้นข้อมูล</summary>
             <div style="display:flex;flex-direction:column;gap:5px">
               <label class="bmrow">แผนที่พื้นหลัง <select id="bmSel" aria-label="แผนที่พื้นหลัง">
-                <option value="osm">OpenStreetMap</option><option value="cartoL">OSM สว่าง (CARTO)</option><option value="cartoD">OSM มืด (CARTO)</option><option value="none">ไม่มี (เส้นเขตอย่างเดียว)</option></select></label>
+                <option value="osm">OpenStreetMap</option><option value="osmGray">OSM สีเทา</option><option value="cartoLN">สีเทาเรียบ ไม่มีชื่อถนน (CARTO)</option><option value="cartoL">OSM สว่าง (CARTO)</option><option value="cartoD">OSM มืด (CARTO)</option><option value="none">ไม่มี (เส้นเขตอย่างเดียว)</option></select></label>
               <label><input type="checkbox" data-l="stores" checked>ร้าน 7-Eleven (สีตามประเด็น)</label>
               <label><input type="checkbox" data-l="area" checked><span class="sw" style="background:color-mix(in srgb,var(--svc) 25%,transparent);border:1.5px solid var(--svc)"></span>เทรดแอเรียจากไฟล์</label>
               <label><input type="checkbox" data-l="std" checked><span class="sw" style="border:1.5px dashed var(--fg)"></span>รัศมีมาตรฐาน</label>
@@ -1724,6 +1724,8 @@ const DMAP = (() => {
   /* ---- OpenStreetMap raster basemap (web-mercator tiles; our y axis is already mercator degrees) ---- */
   const BASEMAPS = {
     osm: {url: (z, x, y) => `https://tile.openstreetmap.org/${z}/${x}/${y}.png`, max: 19, attr: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors'},
+    osmGray: {src: 'osm', url: (z, x, y) => `https://tile.openstreetmap.org/${z}/${x}/${y}.png`, max: 19, filter: 'grayscale(1) contrast(.9) brightness(1.06)', filterDark: 'grayscale(1) invert(.9) brightness(.85) contrast(.9)', attr: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors'},
+    cartoLN: {url: (z, x, y) => `https://${'abcd'[(x + y) % 4]}.basemaps.cartocdn.com/light_nolabels/${z}/${x}/${y}${dpr > 1 ? '@2x' : ''}.png`, max: 20, filterDark: 'invert(.92) brightness(.9) contrast(.9)', attr: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors © <a href="https://carto.com/attributions" target="_blank" rel="noopener">CARTO</a>'},
     cartoL: {url: (z, x, y) => `https://${'abcd'[(x + y) % 4]}.basemaps.cartocdn.com/light_all/${z}/${x}/${y}${dpr > 1 ? '@2x' : ''}.png`, max: 20, attr: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors © <a href="https://carto.com/attributions" target="_blank" rel="noopener">CARTO</a>'},
     cartoD: {url: (z, x, y) => `https://${'abcd'[(x + y) % 4]}.basemaps.cartocdn.com/dark_all/${z}/${x}/${y}${dpr > 1 ? '@2x' : ''}.png`, max: 20, attr: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors © <a href="https://carto.com/attributions" target="_blank" rel="noopener">CARTO</a>'}
   };
@@ -1731,7 +1733,7 @@ const DMAP = (() => {
   const tileCache = new Map(), bmStat = {}, bmFailed = new Set();
   const bmSel = document.getElementById('bmSel'), bmAttr = document.getElementById('bmAttr'), bmNote = document.getElementById('bmNote');
   function setBasemap(id, auto) {
-    bm = id; bmSel.value = id;
+    bm = id; bmSel.value = id; if (!auto) try { localStorage.setItem('rcc-basemap', id); } catch {}
     bmAttr.innerHTML = id === 'none' ? '' : BASEMAPS[id].attr; bmAttr.hidden = id === 'none';
     if (!auto) bmNote.hidden = true;
     dirty = true;
@@ -1739,12 +1741,12 @@ const DMAP = (() => {
   function tileFailed() {
     const st = bmStat[bm]; if (!st || st.ok || st.err < 4) return;
     bmFailed.add(bm);
-    const next = ['osm', 'cartoL'].find(id => !bmFailed.has(id));
+    const next = (bm === 'osmGray' ? ['cartoLN', 'cartoL'] : ['osm', 'cartoL']).find(id => !bmFailed.has(id));
     if (next) setBasemap(next, true);
     else { setBasemap('none', true); bmNote.hidden = false; }
   }
   function getTile(z, x, y, load) {
-    const key = bm + '/' + z + '/' + x + '/' + y; let t = tileCache.get(key);
+    const key = (BASEMAPS[bm].src || bm) + '/' + z + '/' + x + '/' + y; let t = tileCache.get(key);
     if (t) { tileCache.delete(key); tileCache.set(key, t); return t; }
     if (!load) return null;
     const img = new Image(), id = bm; t = {img, ok: false};
@@ -1762,7 +1764,7 @@ const DMAP = (() => {
     const tx0 = Math.floor((v.x0 + 180) / 360 * n), tx1 = Math.floor((v.x1 + 180) / 360 * n);
     const ty0 = Math.max(0, Math.floor((180 - v.y1) / 360 * n)), ty1 = Math.min(n - 1, Math.floor((180 - v.y0) / 360 * n));
     if ((tx1 - tx0 + 1) * (ty1 - ty0 + 1) > 400) return;
-    if (bm === 'osm' && col.dark) ctx.filter = 'brightness(.72) contrast(1.08) saturate(.8)';
+    if (col.dark && B.filterDark) ctx.filter = B.filterDark; else if (B.filter) ctx.filter = B.filter; else if (bm === 'osm' && col.dark) ctx.filter = 'brightness(.72) contrast(1.08) saturate(.8)';
     for (let ty = ty0; ty <= ty1; ty++) for (let tx = tx0; tx <= tx1; tx++) {
       const X = sx(tx / n * 360 - 180), Y = sy(180 - ty / n * 360), x = ((tx % n) + n) % n;
       const t = getTile(z, x, ty, true);
@@ -1833,7 +1835,8 @@ const DMAP = (() => {
   document.getElementById('dzout').onclick = () => { anim = null; zoomAt(W / 2, H / 2, 1 / 1.6); };
   document.getElementById('dzhome').onclick = () => dSel ? fitBranch(dSel) : fitScope();
   document.querySelectorAll('#layers input').forEach(inp => inp.onchange = () => { const k = inp.dataset.l; if (k.startsWith('t')) L.t[+k[1]] = inp.checked; else L[k] = inp.checked; dirty = true; });
-  readCol(); setBasemap('osm'); requestAnimationFrame(loop);
+  let bm0 = 'osm'; try { const v = localStorage.getItem('rcc-basemap'); if (v && (BASEMAPS[v] || v === 'none')) bm0 = v; } catch {}
+  readCol(); setBasemap(bm0, true); requestAnimationFrame(loop);
   if (innerWidth < 700) document.querySelector('#layers details').open = false;
   return {redraw: () => dirty = true, flyTo, fitBranch, fitScope, resize, readCol, isFresh: () => !!W};
 })();
