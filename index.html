@@ -2008,7 +2008,7 @@ const SPEC = {
       {k: 'code', t: 'รหัสสาขา', syn: COL_CODE},
       {k: 'lat', t: 'ละติจูด', req: 1, syn: ['lat', 'latitude', 'ละติจูด', 'y']},
       {k: 'lng', t: 'ลองจิจูด', req: 1, syn: ['lng', 'lon', 'long', 'longitude', 'ลองจิจูด', 'ลองติจูด', 'x']},
-      {k: 'orders', t: 'ครั้งที่สั่ง/30 วัน', syn: ['orders_30d', 'orders30d', 'orders', 'order_count', 'ordercount', 'frequency', 'freq', 'จำนวนครั้ง', 'จำนวนออเดอร์', 'ความถี่', 'ครั้งต่อเดือน']},
+      {k: 'orders', t: 'ครั้งที่สั่ง/30 วัน', syn: ['orders_30d', 'orders30d', 'orders', 'order_count', 'ordercount', 'frequency', 'freq', 'จำนวนครั้ง', 'จำนวนออเดอร์', 'ความถี่', 'ครั้งต่อเดือน', 'ครั้งที่สั่ง', 'จำนวนครั้งที่สั่ง', 'ครั้งที่ซื้อ', 'จำนวนครั้งที่ซื้อ', 'order_30d', 'orders_30_days', 'frequency_30d', 'freq_30d']},
       {k: 'time', t: 'เวลาส่งเฉลี่ย (นาที)', syn: ['avg_delivery_min', 'delivery_min', 'avg_time', 'avgtime', 'lead_time', 'เวลาส่ง', 'เวลาส่งเฉลี่ย']}],
     ex: 'customer_id,branch_code,lat,lng,orders_30d,avg_delivery_min\nC-000981,10234,13.7301,100.5292,9,24\nC-000982,,13.7244,100.5188,1,31',
     note: 'ไม่ใส่รหัสสาขาได้ ระบบจะผูกกับสาขาที่ใกล้ที่สุด'},
@@ -2144,8 +2144,8 @@ async function readAny(file) {
 /* ---- column auto-mapping ---- */
 function autoMap(spec, head) {
   const H = head.map(nk), used = new Set(), map = {};
-  for (const f of spec.fields) { const s = f.syn.map(nk); let i = H.findIndex((h, j) => !used.has(j) && s.includes(h)); if (i >= 0) { map[f.k] = i; used.add(i); } }
-  for (const f of spec.fields) { if (map[f.k] != null) continue; const s = f.syn.map(nk).filter(x => x.length >= 3);
+  for (const f of spec.fields) { const s = [f.t, ...f.syn].map(nk); let i = H.findIndex((h, j) => !used.has(j) && s.includes(h)); if (i >= 0) { map[f.k] = i; used.add(i); } }
+  for (const f of spec.fields) { if (map[f.k] != null) continue; const s = [f.t, ...f.syn].map(nk).filter(x => x.length >= 3);
     const i = H.findIndex((h, j) => !used.has(j) && s.some(x => h.includes(x))); if (i >= 0) { map[f.k] = i; used.add(i); } }
   return map;
 }
@@ -2288,8 +2288,14 @@ function validate(key, src, map) {
     rowsOut.forEach(r => delete r.ln);
   }
   else if (['branches', 'riders', 'areas'].includes(key)) { const keyOf = r => key === 'riders' ? r.id : key === 'areas' ? r.prov : r.code; const last = new Map(); out.forEach(r => last.set(keyOf(r), r)); rowsOut = [...last.values()]; }
+  if (key === 'customers') {
+    const tc = [0, 0, 0]; for (const r of rowsOut) tc[tierOf(r.o)]++;
+    var tierSplit = tc;
+  }
   if (key === 'areas') { const missing = PROV.filter(p => !rowsOut.some(r => r.prov === p.c)); if (missing.length) bag.add('warn', `ไม่มี ${missing.length} จังหวัดในตาราง จะใช้การจัดกลุ่มเดิม (${missing.slice(0, 4).map(p => p.n).join(', ')}${missing.length > 4 ? ' …' : ''})`, null); }
-  return {rows: rowsOut, issues: bag.list(), total: rows.length};
+  const issues = bag.list();
+  if (key === 'customers' && map.orders == null) issues.unshift({sev: 'err', msg: 'ยังไม่ได้เลือกคอลัมน์ "ครั้งที่สั่ง/30 วัน" ลูกค้าทุกรายจะถูกนับเป็นนานๆ ที เลือกคอลัมน์ในข้อ 1 ก่อนนำเข้า', n: 0, rows: []});
+  return {rows: rowsOut, issues, total: rows.length, tierSplit: key === 'customers' ? tierSplit : null};
 }
 function parseGeomCell(s) {
   if (/^[{[]/.test(s)) {
@@ -2613,6 +2619,7 @@ function renderRev() {
         S.fields.map(f => `<div class="mf"><b>${f.t}${f.req ? ' *' : ''}</b></div><select data-f="${f.k}"><option value="">— ไม่มี —</option>${REV.head.map((h, i) => `<option value="${i}" ${REV.map[f.k] === i ? 'selected' : ''}>${esc(h || 'คอลัมน์ ' + (i + 1))}</option>`).join('')}</select>
           <div class="smp">${REV.map[f.k] != null ? esc(sample(REV.map[f.k])) : ''}</div>`).join('')}</div></section>
     <section><h4>2. ตรวจสอบข้อมูล</h4>
+      ${res.tierSplit ? `<div class="vsum">ระดับลูกค้าที่จะได้: ${[2, 1, 0].map(t => `<span class="pill" style="background:color-mix(in srgb,var(${TIER[t].v}) 16%,transparent);color:var(${TIER[t].v})">${TIER[t].t} ${fmt(res.tierSplit[t])}</span>`).join('')}</div>` : ''}
       <div class="vsum"><span class="pill p-ok">ใช้ได้ ${fmt(res.rows.length)} ${UNIT[REV.key]}</span>${warnN ? `<span class="pill p-over">เตือน ${fmt(warnN)} แถว</span>` : ''}${errN ? `<span class="pill p-short">ข้าม ${fmt(errN)} แถว</span>` : ''}</div>
       ${res.issues.length ? `<div class="iss">${res.issues.map(x => `<div class="${x.sev}"><span class="dot"></span><span>${esc(x.msg)}${x.n ? ` <b>${fmt(x.n)} แถว</b>` : ''}${x.rows.length ? ` <span class="rws">แถว ${x.rows.join(', ')}${x.n > x.rows.length ? ' …' : ''}</span>` : ''}</span></div>`).join('')}</div>` : '<div class="hint">ไม่พบปัญหา</div>'}
       ${res.rows.length ? `<div class="tscroll pv"><table><thead><tr>${PREV_HEAD[REV.key].map(h => `<th>${h}</th>`).join('')}</tr></thead><tbody>${res.rows.slice(0, 6).map(r => `<tr>${previewCells(REV.key, r).map(c => `<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>` : ''}</section>
