@@ -14,7 +14,7 @@
 ข้อมูลที่อัปโหลดอ่านในเบราว์เซอร์เท่านั้น ไม่ถูกส่งออกไปที่ใด
 
 ## รูปแบบไฟล์สาขา
-`branch_code, branch_name, lat, lng, province, area, required, sla, orders_per_day` – `sla` คือเวลาส่งเฉลี่ยของสาขา (นาที) และ `orders_per_day` คือออเดอร์เฉลี่ยต่อวัน ถ้ามีจะใช้แทนค่าที่คำนวณจากหมุดลูกค้า
+`branch_code, branch_name, lat, lng, province, area, required, sla, orders_per_day` – `sla` คือเวลาส่งเฉลี่ยของสาขา (นาที) และ `orders_per_day` คือออเดอร์เฉลี่ยต่อวัน SLA ของสาขาใช้จากไฟล์นี้เท่านั้น
 
 ## รูปแบบไฟล์เทรดแอเรีย
 `store_code, geometry, created_at` – geometry เป็นข้อความ GeoJSON (Polygon/MultiPolygon) ดูตัวอย่างใน `samples/`

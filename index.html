@@ -593,7 +593,7 @@ header h1#pgTitle{margin:0;font:700 19px/1.15 var(--f-display);letter-spacing:.0
     <label>ขับรถต่อขา ต่างจังหวัดไม่เกิน <input type="number" id="cTUp" data-k="tUp" value="10" min="1" max="60" step="1"> นาที</label>
     <label>กทม. ไม่เกิน <input type="number" id="cTBkk" data-k="tBkk" value="" placeholder="ไม่ใช้" min="1" max="60" step="1"> นาที</label>
     <label>เป้า SLA ส่งถึงภายใน <input type="number" id="cSla" data-k="sla" value="30" min="5" max="120" step="1"> นาที</label>
-    <span>สาขา "SLA สูง" คือเวลาเฉลี่ยเกินเป้า หรือส่งช้าตั้งแต่ 25% ของออเดอร์</span>
+    <span>สาขา "SLA สูง" คือ SLA ในไฟล์สาขาเกินเป้า</span>
   </div>
 
   <section class="dgrid2">
@@ -647,7 +647,7 @@ header h1#pgTitle{margin:0;font:700 19px/1.15 var(--f-display);letter-spacing:.0
     <div class="tscroll" id="dTScroll"><table id="dT">
       <thead><tr><th class="sort" data-k="code">รหัส</th><th class="sort" data-k="name">สาขา</th><th class="sort" data-k="prov">จังหวัด</th>
         <th class="sort n" data-k="rMax">รัศมีไกลสุด กม.</th><th class="n">มาตรฐาน</th><th class="sort n" data-k="area">พื้นที่ ตร.กม.</th><th class="sort n" data-k="cnt">ลูกค้า</th><th class="sort n" data-k="reg">ประจำ</th>
-        <th class="sort n" data-k="ordersDay">ออเดอร์/วัน</th><th class="sort n" data-k="avgT">SLA นาที</th><th class="sort n" data-k="lateP">ส่งช้า</th><th class="sort n" data-k="load">ภาระพีค</th><th class="sort" data-k="issue">ประเด็น</th></tr></thead>
+        <th class="sort n" data-k="ordersDay">ออเดอร์/วัน</th><th class="sort n" data-k="avgT">SLA นาที</th><th class="sort n" data-k="rideMax">ขับรถไกลสุด นาที</th><th class="sort n" data-k="load">ภาระพีค</th><th class="sort" data-k="issue">ประเด็น</th></tr></thead>
       <tbody></tbody>
     </table></div>
     <div class="more" id="dTMore"></div>
@@ -1396,7 +1396,7 @@ function importDelivery(rows) {
     for (const c of by.get(b.code)) {
       const d = distKm(b.lon, b.lat, c.lon, c.lat);
       CUST.lon[i] = c.lon; CUST.lat[i] = c.lat; CUST.my[i] = MERC(c.lat); CUST.dist[i] = d; CUST.brg[i] = bearingOf(b.lon, b.lat, c.lon, c.lat);
-      CUST.orders[i] = c.o; CUST.tier[i] = tierOf(c.o); CUST.time[i] = isFinite(c.t) && c.t > 0 ? c.t : 14 + rideMin(b, d); CUST.br[i] = bi; i++;
+      CUST.orders[i] = c.o; CUST.tier[i] = tierOf(c.o); CUST.time[i] = 0; CUST.br[i] = bi; i++;
     }
     b.c1 = i; deriveRad(b);
   });
@@ -1441,24 +1441,27 @@ function deriveRad(b) {
 }
 
 /* ================= delivery area: per-branch analysis ================= */
-function statsFor(b, keep, adj = 0) {
-  let ord = 0, tSum = 0, late = 0, trip = 0, cnt = 0; const tiers = [0, 0, 0], tierOrd = [0, 0, 0];
+/* SLA (avgT) is the branch file's figure. For a reduced area it is estimated as the file SLA minus the drop in the
+   average one-way ride to the customers that remain; customers themselves carry no delivery time. */
+function statsFor(b, keep) {
+  let ord = 0, ride = 0, trip = 0, cnt = 0; const tiers = [0, 0, 0], tierOrd = [0, 0, 0];
   for (let i = b.c0; i < b.c1; i++) {
     if (keep && !keep(i)) continue;
-    const o = CUST.orders[i], t = Math.max(5, CUST.time[i] + adj);
-    cnt++; ord += o; tSum += o * t; if (t > DSET.sla) late += o; trip += o * (2 * rideMin(b, CUST.dist[i]) + 5);
+    const o = CUST.orders[i], r = rideMin(b, CUST.dist[i]);
+    cnt++; ord += o; ride += o * r; trip += o * (2 * r + 5);
     tiers[CUST.tier[i]]++; tierOrd[CUST.tier[i]] += o;
   }
-  const ordersDay = ord / 30 * (b.ordScale || 1), tripAvg = ord ? trip / ord : 0, peak = ordersDay * PEAK_SHARE;
+  const ordersDay = ord / 30 * (b.ordScale || 1), tripAvg = ord ? trip / ord : 0, peak = ordersDay * PEAK_SHARE, rideAvg = ord ? ride / ord : 0;
   const rp = ridersAtPeak(b), cap = tripAvg ? rp * 60 / tripAvg : 0;
-  return {cnt, ord, ordersDay, avgT: ord ? tSum / ord : 0, lateP: ord ? late / ord : 0, tiers, tierOrd, tripAvg, peak, ridersPeak: rp, cap, load: cap ? peak / cap : 0};
+  const avgT = !b.slaFile ? 0 : keep && b._rideAvg != null && ord ? Math.max(5, b.slaFile - (b._rideAvg - rideAvg)) : b.slaFile;
+  return {cnt, ord, ordersDay, avgT, rideAvg, tiers, tierOrd, tripAvg, peak, ridersPeak: rp, cap, load: cap ? peak / cap : 0};
 }
 function computeDeliveryStats(b) {
   const lim = limitOf(b);
-  const s = statsFor(b);
-  // branch-file figures win: SLA (minutes) and orders/day
-  s.slaSrc = b.slaFile ? 'file' : s.ord ? 'cust' : null; s.ordSrc = b.ordFile != null ? 'file' : s.ord ? 'cust' : null; s.lateKnown = s.ord > 0;
-  if (b.slaFile && !s.ord) s.avgT = b.slaFile;
+  b._rideAvg = null;
+  const s = statsFor(b); b._rideAvg = s.rideAvg;
+  // SLA only from the branch file; orders/day from the file, else counted from customer pins
+  s.slaSrc = b.slaFile ? 'file' : null; s.ordSrc = b.ordFile != null ? 'file' : s.ord ? 'cust' : null;
   if (b.ordFile != null && !s.ord) {
     s.ordersDay = b.ordFile; s.peak = b.ordFile * PEAK_SHARE;
     const rr = b.tradeRings ? tradeGeom(b).rmax : b.rad ? Math.max(...b.rad) : limitOf(b);
@@ -1467,7 +1470,7 @@ function computeDeliveryStats(b) {
   const tg = b.tradeRings ? tradeGeom(b) : null, rMax = tg ? tg.rmax : b.rad ? Math.max(...b.rad) : 0, area = b.tradeRings ? ringsAreaKm(b.tradeRings) : b.rad ? polyArea(b.rad) : 0;
   const has = s.ord > 0;
   const far = rMax > travelDistOf(b) + .02;
-  const flags = {far, radius: rMax > lim + .05, over: rMax > lim + .05 || far, sla: (has || !!b.slaFile) && (s.avgT > DSET.sla || (has && s.lateP >= .25)), cap: (has || b.ordFile != null) && s.load > 1};
+  const flags = {far, radius: rMax > lim + .05, over: rMax > lim + .05 || far, sla: !!b.slaFile && b.slaFile > DSET.sla, cap: (has || b.ordFile != null) && s.load > 1};
   let outC = 0, outOrd = 0;
   for (let i = b.c0; i < b.c1; i++) if (CUST.dist[i] > lim) { outC++; outOrd += CUST.orders[i]; }
   b.dv = Object.assign(s, {lim, rMax, rideMax: rideMin(b, rMax), dT: travelDistOf(b), area, stdArea: Math.PI * lim * lim, flags, outC, outOrd, outShare: s.ord ? outOrd / s.ord : 0,
@@ -1492,7 +1495,7 @@ function computeCut(b) {
   const cell = Array.from({length: 8}, () => Array.from({length: nb}, blank));
   for (let i = b.c0; i < b.c1; i++) {
     const x = cell[sec8(CUST.brg[i])][Math.min(nb - 1, Math.floor(CUST.dist[i] / w))], o = CUST.orders[i], t = CUST.tier[i];
-    x.c++; x.ord += o; x.tSum += o * CUST.time[i]; x.dSum += CUST.dist[i]; if (CUST.time[i] > DSET.sla) x.late += o;
+    x.c++; x.ord += o; x.dSum += CUST.dist[i];
     if (t === 0) x.occ++; else if (t === 1) x.mod++; else x.reg++;
   }
   const rOut = Array.from({length: 8}, (_, k) => { let m = 0; for (let a = -22.5; a <= 22.5; a += 2.5) m = Math.max(m, radAt(b.rad, (k * 45 + a + 360) % 360)); return m; });
@@ -1503,7 +1506,7 @@ function computeCut(b) {
     if (rOut[k] <= dT + .02) continue;
     const acc = blank();
     for (let i = b.c0; i < b.c1; i++) if (sec8(CUST.brg[i]) === k && CUST.dist[i] > dT) {
-      const o = CUST.orders[i], t = CUST.tier[i]; acc.c++; acc.ord += o; acc.tSum += o * CUST.time[i]; acc.dSum += CUST.dist[i]; if (CUST.time[i] > DSET.sla) acc.late += o;
+      const o = CUST.orders[i], t = CUST.tier[i]; acc.c++; acc.ord += o; acc.dSum += CUST.dist[i];
       if (t === 0) acc.occ++; else if (t === 1) acc.mod++; else acc.reg++;
     }
     const sc = acc.c ? cutScore(acc, lim) : {far: dT / lim, occS: 0, modS: 0, regS: 0, lateS: 0, score: 9};
@@ -1538,14 +1541,14 @@ function computeCut(b) {
     cutR[st.k] = Math.min(cutR[st.k], st.r0);
     const cr = cutR.slice(), keep = i => CUST.dist[i] < cr[sec8(CUST.brg[i])];
     const nr = b.rad.map((r, i) => Math.min(r, cr[sec8(i * 360 / b.rad.length)]));
-    st.cum = statsFor(b, keep, areaAdj(b, polyArea(nr))); st.cumRMax = Math.max(...nr); st.cumArea = polyArea(nr);
-    const a = st.acc; Object.assign(st, {c: a.c, ord: a.ord, reg: a.reg, occ: a.occ, mod: a.mod, avg: a.ord ? a.tSum / a.ord : 0, lateP: a.ord ? a.late / a.ord : 0});
+    st.cum = statsFor(b, keep); st.cumRMax = Math.max(...nr); st.cumArea = polyArea(nr);
+    const a = st.acc; Object.assign(st, {c: a.c, ord: a.ord, reg: a.reg, occ: a.occ, mod: a.mod});
     const mid = offsetLL(b.lon, b.lat, st.k * 45, (st.r0 + Math.min(st.r1, rOut[st.k])) / 2);
     st.takeover = nearBranches(mid[0], mid[1], 3).find(x => x.b !== b && x.d <= limitOf(x.b)) || null;
   }
   let recN = 0;
   for (let i = 0; i < steps.length; i++) {
-    const prev = i ? steps[i - 1].cum : before, slaMet = prev.avgT <= DSET.sla && prev.lateP < .25;
+    const prev = i ? steps[i - 1].cum : before, slaMet = !b.slaFile || prev.avgT <= DSET.sla;
     if (steps[i].grp <= 1 || (b.dv.flags.sla && !slaMet)) recN = i + 1; else break;
   }
   const rec = steps.slice(0, recN), after = recN ? steps[recN - 1].cum : before;
@@ -1561,7 +1564,7 @@ function computeCapRec(b) {
   return {need, add, fitR};
 }
 function areaAdj(b, newArea) { return b.areaPen != null ? areaPenOf(newArea, limitOf(b)) - b.areaPen : 0; }
-function whatIf(b, R) { return statsFor(b, i => CUST.dist[i] <= R, b.rad ? areaAdj(b, polyArea(b.rad.map(r => Math.min(r, R)))) : 0); }
+function whatIf(b, R) { return statsFor(b, i => CUST.dist[i] <= R); }
 
 /* ================= delivery area: map ================= */
 const DMAP = (() => {
@@ -1904,7 +1907,7 @@ function renderRecs(scoped) {
   document.querySelectorAll('#dtabs button').forEach(bt => bt.setAttribute('aria-selected', bt.dataset.tab === key));
   const el = document.getElementById('dRecList');
   el.innerHTML = list.slice(0, dShowN).map(b => { const d = b.dv;
-    const metric = key === 'sla' ? `SLA <b class="num">${d.avgT.toFixed(0)}</b> นาที${d.lateKnown ? ` · ช้า ${pct(d.lateP)}` : ''}` : key === 'over' ? `<b class="num">${f1(d.rMax)}</b> / ${d.lim} กม.` : `ภาระ <b class="num">${pct(d.load)}</b>`;
+    const metric = key === 'sla' ? `SLA <b class="num">${d.avgT.toFixed(0)}</b> นาที` : key === 'over' ? `<b class="num">${f1(d.rMax)}</b> / ${d.lim} กม.` : `ภาระ <b class="num">${pct(d.load)}</b>`;
     return `<div class="rec" data-code="${b.code}" tabindex="0"><span class="sv" style="background:var(${key === 'sla' ? '--short' : key === 'over' ? '--over' : '--cap'})"></span>
       <div style="min-width:0"><div class="rt"><b>${esc(b.name)}</b><span class="rm">${esc(provByCode[b.prov]?.n || '')} · ${b.code}</span></div><div class="rl">${esc(recLine(b))}</div></div>
       <div class="rv">${metric}</div></div>`; }).join('') || `<div class="empty">ไม่มีสาขาในหมวดนี้ตามตัวกรองที่เลือก</div>`;
@@ -1923,31 +1926,28 @@ function selectDBranch(b) {
   if (innerWidth < 1100) document.getElementById('dmapPanel').scrollIntoView({behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start'});
 }
 function bandChart(b) {
-  const d = b.dv, step = isBkk(b) ? .25 : .5, span = d.rMax || Math.max(d.lim, ...Array.from({length: b.c1 - b.c0}, (_, k) => CUST.dist[b.c0 + k])), nB = Math.max(2, Math.ceil(span / step)), bands = Array.from({length: nB}, () => ({o: 0, t: 0}));
-  for (let i = b.c0; i < b.c1; i++) { const k = Math.min(nB - 1, Math.floor(CUST.dist[i] / step)); bands[k].o += CUST.orders[i]; bands[k].t += CUST.orders[i] * CUST.time[i]; }
-  const W = 360, H = 170, pl = 32, pr = 48, pt = 12, pb = 26, bw = (W - pl - pr) / nB;
-  const oMax = Math.max(1, ...bands.map(x => x.o)), tMax = Math.max(DSET.sla * 1.25, ...bands.map(x => x.o ? x.t / x.o : 0)) * 1.08;
-  const yO = v => pt + (H - pt - pb) * (1 - v / oMax), yT = v => pt + (H - pt - pb) * (1 - v / tMax);
-  let g = `<rect x="${pl + d.lim / step * bw}" y="${pt}" width="${Math.max(0, W - pr - (pl + d.lim / step * bw))}" height="${H - pt - pb}" fill="var(--short-soft)"/>`;
-  g += `<line x1="${pl}" x2="${W - pr}" y1="${yT(DSET.sla)}" y2="${yT(DSET.sla)}" stroke="var(--short)" stroke-dasharray="4 3"/>`;
-  g += `<text x="${W - pr + 3}" y="${yT(DSET.sla) + 4}" fill="var(--short)">SLA ${DSET.sla}</text>`;
+  const d = b.dv, step = isBkk(b) ? .25 : .5, span = d.rMax || Math.max(d.lim, ...Array.from({length: b.c1 - b.c0}, (_, k) => CUST.dist[b.c0 + k])), nB = Math.max(2, Math.ceil(span / step)), bands = Array.from({length: nB}, () => ({o: 0}));
+  for (let i = b.c0; i < b.c1; i++) bands[Math.min(nB - 1, Math.floor(CUST.dist[i] / step))].o += CUST.orders[i];
+  const W = 360, H = 170, pl = 32, pr = 52, pt = 12, pb = 26, bw = (W - pl - pr) / nB, tl = travelLimitOf(b);
+  const oMax = Math.max(1, ...bands.map(x => x.o)), tMax = Math.max(tl || 0, rideMin(b, nB * step)) * 1.1;
+  const yO = v => pt + (H - pt - pb) * (1 - v / oMax), yT = v => pt + (H - pt - pb) * (1 - v / tMax), xD = km => pl + km / step * bw;
+  let g = `<rect x="${xD(d.lim)}" y="${pt}" width="${Math.max(0, W - pr - xD(d.lim))}" height="${H - pt - pb}" fill="var(--short-soft)"/>`;
   bands.forEach((x, i) => { g += `<rect x="${pl + i * bw + bw * .14}" y="${yO(x.o)}" width="${bw * .72}" height="${H - pb - yO(x.o)}" rx="2" fill="var(--svc)" opacity=".55"/>`; });
-  const pts = bands.map((x, i) => x.o ? `${pl + i * bw + bw / 2},${yT(x.t / x.o)}` : null).filter(Boolean);
-  g += `<polyline points="${pts.join(' ')}" fill="none" stroke="var(--fg)" stroke-width="2" stroke-linejoin="round"/>`;
-  bands.forEach((x, i) => { if (x.o) g += `<circle cx="${pl + i * bw + bw / 2}" cy="${yT(x.t / x.o)}" r="3" fill="${x.t / x.o > DSET.sla ? 'var(--short)' : 'var(--fg)'}" stroke="var(--surface)" stroke-width="1.5"/>`; });
+  g += `<line x1="${pl}" y1="${yT(0)}" x2="${xD(nB * step)}" y2="${yT(rideMin(b, nB * step))}" stroke="var(--fg)" stroke-width="2"/>`;
+  if (tl) g += `<line x1="${pl}" x2="${W - pr}" y1="${yT(tl)}" y2="${yT(tl)}" stroke="var(--short)" stroke-dasharray="4 3"/><text x="${W - pr + 3}" y="${yT(tl) + 4}" fill="var(--short)">${tl} นาที</text>`;
   const lblEvery = Math.ceil(nB / 8);
   for (let i = 0; i <= nB; i += lblEvery) g += `<text x="${pl + i * bw}" y="${H - 8}" text-anchor="middle">${f1(i * step)}</text>`;
-  g += `<text x="${pl - 4}" y="${pt + 8}" text-anchor="end">${fmt(Math.round(oMax / 30))}</text><text x="${pl - 4}" y="${H - pb}" text-anchor="end">0</text>`;
+  g += `<text x="${pl - 4}" y="${pt + 8}" text-anchor="end">${fmt(Math.round(oMax / 30 * (b.ordScale || 1)))}</text><text x="${pl - 4}" y="${H - pb}" text-anchor="end">0</text>`;
   g += `<text x="${W - pr + 3}" y="${pt + 8}">${Math.round(tMax)}</text>`;
-  g += `<line x1="${pl + d.lim / step * bw}" x2="${pl + d.lim / step * bw}" y1="${pt}" y2="${H - pb}" stroke="var(--short)"/>`;
-  return `<svg viewBox="0 0 ${W} ${H}" class="band" role="img" aria-label="ออเดอร์และเวลาส่งตามระยะทาง">${g}</svg>
-    <div class="legend" style="padding:0 2px"><span><span class="dot" style="background:var(--svc)"></span>ออเดอร์/วัน (แกนซ้าย)</span><span><span class="dot" style="background:var(--fg)"></span>เวลาส่งเฉลี่ย นาที (แกนขวา)</span><span><span class="dot" style="background:var(--short-soft);border:1px solid var(--short)"></span>นอกรัศมีมาตรฐาน</span></div>`;
+  g += `<line x1="${xD(d.lim)}" x2="${xD(d.lim)}" y1="${pt}" y2="${H - pb}" stroke="var(--short)"/>`;
+  return `<svg viewBox="0 0 ${W} ${H}" class="band" role="img" aria-label="ออเดอร์และเวลาขับรถตามระยะทาง">${g}</svg>
+    <div class="legend" style="padding:0 2px"><span><span class="dot" style="background:var(--svc)"></span>ออเดอร์/วัน (แกนซ้าย)</span><span><span class="dot" style="background:var(--fg)"></span>เวลาขับรถต่อขา นาที (แกนขวา)</span><span><span class="dot" style="background:var(--short-soft);border:1px solid var(--short)"></span>นอกรัศมีมาตรฐาน</span></div>`;
 }
 function recText(b) {
   const d = b.dv, c = d.cut, L = [`สาขา ${b.name} (${b.code}) ${provByCode[b.prov]?.n || ''}`,
-    `รัศมีไกลสุด ${f1(d.rMax)} กม. (มาตรฐาน ${d.lim} กม.) พื้นที่ ${f1(d.area)} ตร.กม. ลูกค้า ${fmt(d.cnt)} ราย SLA ${d.avgT ? d.avgT.toFixed(0) : '–'} นาที ออเดอร์ ${d.ordSrc ? fmt(Math.round(d.ordersDay)) : '–'}/วัน${d.lateKnown ? ` ส่งช้า ${pct(d.lateP)}` : ''}`];
-  if (c && c.recN) { L.push(`แนะนำตัดพื้นที่ตามลำดับ (${c.nTravel ? `ส่วนที่ขับรถเกิน ${c.tLim} นาที/ขา ก่อน แล้ว` : ''}ส่วนที่ไกลและลูกค้าซื้อนานๆ ที):`); c.steps.slice(0, c.recN).forEach((z, i) => L.push(`${i + 1}. ทิศ${z.dir} ช่วง ${f1(z.r0)}–${f1(Math.min(z.r1, d.rMax))} กม. (ขับรถ ${Math.round(rideMin(b, z.r0))}–${Math.round(rideMin(b, Math.min(z.r1, d.rMax)))} นาที/ขา)${z.travel ? ' เดินทางเกินเกณฑ์' : ''}: ลูกค้า ${z.c} ราย (นานๆ ที ${pct(z.occS)}, ประจำ ${z.reg} ราย) ${fmt(Math.round(z.ord / 30 * (b.ordScale || 1)))} ออเดอร์/วัน ส่งช้า ${pct(z.lateP)}${z.takeover ? ` → สาขา ${z.takeover.b.name} (${z.takeover.b.code}) รับแทนได้` : ' → ไม่มีสาขาใกล้เคียงรับแทน'}`));
-    L.push(`ผลหลังตัด: เวลาเฉลี่ย ${c.before.avgT.toFixed(0)}→${c.after.avgT.toFixed(0)} นาที ส่งช้า ${pct(c.before.lateP)}→${pct(c.after.lateP)} ออเดอร์หาย ${pct(c.cutOrd / Math.max(1, c.before.ord))} ลูกค้าประจำกระทบ ${c.regLost} ราย`); }
+    `รัศมีไกลสุด ${f1(d.rMax)} กม. (มาตรฐาน ${d.lim} กม.) พื้นที่ ${f1(d.area)} ตร.กม. ลูกค้า ${fmt(d.cnt)} ราย SLA ${d.avgT ? d.avgT.toFixed(0) : '–'} นาที ออเดอร์ ${d.ordSrc ? fmt(Math.round(d.ordersDay)) : '–'}/วัน`];
+  if (c && c.recN) { L.push(`แนะนำตัดพื้นที่ตามลำดับ (${c.nTravel ? `ส่วนที่ขับรถเกิน ${c.tLim} นาที/ขา ก่อน แล้ว` : ''}ส่วนที่ไกลและลูกค้าซื้อนานๆ ที):`); c.steps.slice(0, c.recN).forEach((z, i) => L.push(`${i + 1}. ทิศ${z.dir} ช่วง ${f1(z.r0)}–${f1(Math.min(z.r1, d.rMax))} กม. (ขับรถ ${Math.round(rideMin(b, z.r0))}–${Math.round(rideMin(b, Math.min(z.r1, d.rMax)))} นาที/ขา)${z.travel ? ' เดินทางเกินเกณฑ์' : ''}: ลูกค้า ${z.c} ราย (นานๆ ที ${pct(z.occS)}, ประจำ ${z.reg} ราย) ${fmt(Math.round(z.ord / 30 * (b.ordScale || 1)))} ออเดอร์/วัน${z.takeover ? ` → สาขา ${z.takeover.b.name} (${z.takeover.b.code}) รับแทนได้` : ' → ไม่มีสาขาใกล้เคียงรับแทน'}`));
+    L.push(`ผลหลังตัด: ${b.slaFile ? `SLA ประมาณ ${c.before.avgT.toFixed(0)}→${c.after.avgT.toFixed(0)} นาที ` : ''}ขับรถเฉลี่ย ${c.before.rideAvg.toFixed(1)}→${c.after.rideAvg.toFixed(1)} นาที/ขา ออเดอร์หาย ${pct(c.cutOrd / Math.max(1, c.before.ord))} ลูกค้าประจำกระทบ ${c.regLost} ราย`); }
   if (d.capRec) L.push(`กำลังไรเดอร์: ต้องการช่วงพีค ${d.capRec.need} คน มี ${d.ridersPeak} คน → เพิ่ม ${d.capRec.add} คน${d.capRec.fitR ? ` หรือลดรัศมีเหลือ ${f1(d.capRec.fitR)} กม.` : ''}`);
   return L.join('\n');
 }
@@ -1961,8 +1961,8 @@ function renderDDetail() {
     <div class="dgrid">
       <div><div class="l">รัศมีไกลสุด${page === 'anomaly' ? ` · เกณฑ์${ZONE_TH[zoneOf(b)]}` : ''}</div><div class="v ${(page === 'anomaly' ? anomArea(b) : d.flags.over) ? 'bad' : ''}">${f1(d.rMax)} <small>/ ${page === 'anomaly' ? f1(anomalyLim(b)) : d.lim} กม.</small></div></div>
       <div><div class="l">พื้นที่จัดส่ง</div><div class="v">${f1(d.area)} <small>/ ${f1(d.stdArea)} ตร.กม.</small></div></div>
-      <div><div class="l">SLA เวลาส่งเฉลี่ย · ${d.slaSrc === 'file' ? 'จากไฟล์สาขา' : d.slaSrc ? 'จากหมุดลูกค้า' : 'ไม่มีข้อมูล'}</div><div class="v ${d.avgT > (page === 'anomaly' ? ASET.sla : DSET.sla) ? 'bad' : ''}">${d.avgT ? d.avgT.toFixed(1) : '–'} <small>/ ${page === 'anomaly' ? ASET.sla : DSET.sla} นาที</small></div></div>
-      <div><div class="l">ส่งช้ากว่า ${DSET.sla} นาที</div><div class="v ${d.lateKnown && d.lateP >= .25 ? 'bad' : ''}">${d.lateKnown ? pct(d.lateP) : '–'}</div></div>
+      <div><div class="l">SLA เวลาส่งเฉลี่ย · ${d.slaSrc ? 'จากไฟล์สาขา' : 'ไม่มีในไฟล์สาขา'}</div><div class="v ${d.avgT > (page === 'anomaly' ? ASET.sla : DSET.sla) ? 'bad' : ''}">${d.avgT ? d.avgT.toFixed(1) : '–'} <small>/ ${page === 'anomaly' ? ASET.sla : DSET.sla} นาที</small></div></div>
+      <div><div class="l">ขับรถไกลสุด · เกณฑ์ ${travelLimitOf(b) ?? '–'} นาที</div><div class="v ${d.flags.far ? 'bad' : ''}">${b.rad ? d.rideMax.toFixed(0) : '–'} <small>นาที/ขา</small></div></div>
       <div><div class="l">ออเดอร์/วัน · ${d.ordSrc === 'file' ? 'จากไฟล์สาขา' : d.ordSrc ? 'จากหมุดลูกค้า' : 'ไม่มีข้อมูล'}</div><div class="v">${d.ordSrc ? fmt(Math.round(d.ordersDay)) : '–'}</div></div>
       <div><div class="l">ภาระไรเดอร์ช่วงพีค</div><div class="v ${d.load > 1 ? 'bad' : ''}">${pct(d.load)} <small>${d.ridersPeak} คน</small></div></div>
     </div>
@@ -1973,18 +1973,18 @@ function renderDDetail() {
     ${d.cnt ? `<div class="dsec2"><div class="h">ออเดอร์และเวลาส่งตามระยะทาง (กม.)</div>${bandChart(b)}</div>` : ''}
     <div class="dsec2"><div class="h">คำแนะนำ</div>
       ${c && c.recN ? `<div class="cutsum">แนะนำตัด <b>${c.recN} ส่วน</b> ${c.nTravel ? `เริ่มจาก <b>${c.nTravel} ส่วนที่ขับรถเกิน ${c.tLim} นาที/ขา</b> (เกิน ${f1(c.dT)} กม. ตามถนน วงประสีแดงบนแผนที่) แล้วตามด้วย` : 'เรียงจาก'}ส่วนที่ไกลและลูกค้าซื้อนานๆ ที · ลูกค้าในส่วนที่ตัดเป็นกลุ่มนานๆ ที <b>${pct(c.occShare)}</b>
-          <div class="imp"><div><span>เวลาเฉลี่ย</span><b>${c.before.avgT.toFixed(0)} → ${c.after.avgT.toFixed(0)} นาที</b></div><div><span>ส่งช้า</span><b>${pct(c.before.lateP)} → ${pct(c.after.lateP)}</b></div>
+          <div class="imp"><div><span>SLA ประมาณ</span><b>${b.slaFile ? `${c.before.avgT.toFixed(0)} → ${c.after.avgT.toFixed(0)} นาที` : 'ไม่มี SLA ในไฟล์สาขา'}</b></div><div><span>ขับรถเฉลี่ยต่อขา</span><b>${c.before.rideAvg.toFixed(1)} → ${c.after.rideAvg.toFixed(1)} นาที</b></div>
           <div><span>ออเดอร์ที่หายไป</span><b>${pct(c.cutOrd / Math.max(1, c.before.ord))}</b></div><div><span>ลูกค้าประจำที่กระทบ</span><b>${fmt(c.regLost)} จาก ${fmt(d.tiers[2])} ราย</b></div>
           <div><span>รัศมีไกลสุด</span><b>${f1(d.rMax)} → ${f1(c.newRMax)} กม.</b></div><div><span>สาขาข้างเคียงรับแทนได้</span><b>${pct(c.movedOrd / Math.max(1, c.cutOrd))}</b></div></div></div>` :
-        `<div class="empty" style="padding:4px 0">${c ? 'ส่วนที่อยู่ไกลส่วนใหญ่เป็นลูกค้าประจำหรือปานกลาง จึงไม่แนะนำให้ตัด ' : ''}${d.flags.sla ? 'เวลาส่งที่สูงน่าจะมาจากกำลังไรเดอร์หรือเวลาเตรียมของ' : c ? '' : 'ไม่มีส่วนที่ไกลและซื้อน้อยพอจะแนะนำให้ตัด'}</div>`}
+        `<div class="empty" style="padding:4px 0">${c ? 'ส่วนที่อยู่ไกลส่วนใหญ่เป็นลูกค้าประจำหรือปานกลาง จึงไม่แนะนำให้ตัด ' : ''}${d.flags.sla ? 'SLA ในไฟล์สาขาสูง แต่พื้นที่ไม่ไกล น่าจะมาจากกำลังไรเดอร์หรือเวลาเตรียมของ' : c ? '' : 'ไม่มีส่วนที่ไกลและซื้อน้อยพอจะแนะนำให้ตัด'}</div>`}
       ${c ? `<div class="zones">${c.steps.map((z, i) => { const rec = i < c.recN, prev = i ? c.steps[i - 1].cum : c.before;
           return `${i === c.recN ? '<div class="zsep">ตัดเพิ่มได้ถ้าจำเป็น (ลำดับถัดไป)</div>' : ''}<div class="zone ${rec ? (z.grp <= 1 ? 'g1' : 'g2') : 'opt'}">
           <div class="zh"><span class="zn ${z.grp <= 1 ? 'g1' : 'g2'}">${i + 1}</span><b>ทิศ${z.dir}</b><span class="num">${f1(z.r0)}–${f1(Math.min(z.r1, d.rMax))} กม.</span>${z.travel ? `<span class="pill p-short">เดินทางเกิน ${c.tLim} นาที/ขา</span>` : z.grp === 1 ? '<span class="pill p-short">ไกล + ซื้อนานๆ ที</span>' : '<span class="pill p-over">ไกล ซื้อปะปน</span>'}</div>
           <div class="zm">ขับรถจากร้าน ${Math.round(rideMin(b, z.r0))}–${Math.round(rideMin(b, Math.min(z.r1, d.rMax)))} นาที/ขา</div>
           <div class="tiers"><i style="width:${z.occS * 100}%;background:var(--t0)"></i><i style="width:${z.modS * 100}%;background:var(--t1)"></i><i style="width:${z.regS * 100}%;background:var(--t2)"></i></div>
-          ${z.c ? `<div class="zm">ลูกค้า ${z.c} ราย · นานๆ ที ${pct(z.occS)} · ประจำ ${z.reg} ราย · ${fmt(Math.round(z.ord / 30 * (b.ordScale || 1) * 10) / 10)} ออเดอร์/วัน · เฉลี่ย ${z.avg.toFixed(0)} นาที · ช้า ${pct(z.lateP)}</div>` : '<div class="zm">ไม่มีหมุดลูกค้าในส่วนนี้</div>'}
+          ${z.c ? `<div class="zm">ลูกค้า ${z.c} ราย · นานๆ ที ${pct(z.occS)} · ประจำ ${z.reg} ราย · ${fmt(Math.round(z.ord / 30 * (b.ordScale || 1) * 10) / 10)} ออเดอร์/วัน</div>` : '<div class="zm">ไม่มีหมุดลูกค้าในส่วนนี้</div>'}
           <div class="zm">${z.takeover ? `ย้ายให้ <button class="linkbtn" data-go="${z.takeover.b.code}">${esc(z.takeover.b.name)}</button> ห่าง ${f1(z.takeover.d)} กม.` : 'ไม่มีสาขาใกล้เคียงรับแทน ควรคิดค่าส่งเพิ่มหรือนัดจุดรับ'}</div>
-          <div class="zm cum">ตัดถึงลำดับนี้: เวลา ${prev.avgT.toFixed(0)}→${z.cum.avgT.toFixed(0)} นาที · ช้า ${pct(z.cum.lateP)} · ออเดอร์เหลือ ${pct(z.cum.ord / Math.max(1, c.before.ord))}</div>
+          <div class="zm cum">ตัดถึงลำดับนี้: ${b.slaFile ? `SLA ประมาณ ${prev.avgT.toFixed(0)}→${z.cum.avgT.toFixed(0)} นาที · ` : ''}ขับรถเฉลี่ย ${z.cum.rideAvg.toFixed(1)} นาที/ขา · ออเดอร์เหลือ ${pct(z.cum.ord / Math.max(1, c.before.ord))}</div>
           ${z.reg >= 5 ? `<div class="zm warn">มีลูกค้าประจำ ${z.reg} ราย ควรแจ้งล่วงหน้าหรือให้สาขาข้างเคียงรับต่อ</div>` : ''}</div>`; }).join('')}</div>` : ''}
       ${d.capRec ? `<div class="caprec">กำลังไรเดอร์ช่วงพีคไม่พอ: ต้องการ <b>${d.capRec.need} คน</b> มีประมาณ ${d.ridersPeak} คน ควรเพิ่ม <b>${d.capRec.add} คน</b>${d.capRec.fitR ? ` หรือลดรัศมีเหลือ <b>${f1(d.capRec.fitR)} กม.</b>` : ''}</div>` : ''}
     </div>
@@ -1992,7 +1992,7 @@ function renderDDetail() {
       <div class="field"><input type="range" id="whatR" min="0.3" max="${Math.max(d.rMax, .5).toFixed(1)}" step="0.1" value="${(whatR ?? d.rMax).toFixed(1)}" aria-label="รัศมีทดลอง"><b class="num" id="whatRv">${f1(whatR ?? d.rMax)} กม.</b>
         ${whatR != null ? '<button class="linkbtn" id="whatClear">ล้าง</button>' : ''}</div>
       <div class="imp">${wi ? `<div><span>ลูกค้าที่ยังอยู่</span><b>${fmt(wi.cnt)} / ${fmt(d.cnt)}</b></div><div><span>ออเดอร์ที่ยังอยู่</span><b>${pct(wi.ord / Math.max(1, d.ord))}</b></div>
-        <div><span>เวลาเฉลี่ย</span><b>${d.avgT.toFixed(0)} → ${wi.avgT.toFixed(0)} นาที</b></div><div><span>ส่งช้า</span><b>${pct(d.lateP)} → ${pct(wi.lateP)}</b></div>
+        <div><span>SLA ประมาณ</span><b>${b.slaFile ? `${d.avgT.toFixed(0)} → ${wi.avgT.toFixed(0)} นาที` : '–'}</b></div><div><span>ขับรถเฉลี่ยต่อขา</span><b>${d.rideAvg.toFixed(1)} → ${wi.rideAvg.toFixed(1)} นาที</b></div>
         <div><span>ภาระพีค</span><b>${pct(d.load)} → ${pct(wi.load)}</b></div><div><span>ลูกค้าประจำที่หลุด</span><b>${fmt(d.tiers[2] - wi.tiers[2])} ราย</b></div>` : '<div class="hint" style="grid-column:1/-1">เลื่อนแถบเพื่อดูผลถ้าตัดทุกทิศที่ไกลกว่ารัศมีนี้ วงสีน้ำเงินบนแผนที่คือรัศมีทดลอง</div>'}</div></div>` : ''}
     <div class="dsec2 row2"><button class="btn" id="dCopy">คัดลอกคำแนะนำ</button><a class="btn" href="${gm}" target="_blank" rel="noopener">เปิดใน Google Maps</a></div>`;
   el.scrollTop = sc;
@@ -2014,7 +2014,7 @@ function renderDTable(list) {
   document.querySelector('#dT tbody').innerHTML = list.slice(0, dTShow).map(b => { const d = b.dv; return `<tr data-code="${b.code}" tabindex="0" class="${dSel === b ? 'selrow' : ''}">
     <td class="num">${b.code}</td><td><b>${esc(b.name)}</b></td><td>${esc(provByCode[b.prov]?.n || '')}</td>
     <td class="n ${(page === 'anomaly' ? anomArea(b) : d.flags.over) ? 'diff-pos' : ''}">${b.rad ? f1(d.rMax) : '–'}</td><td class="n">${page === 'anomaly' ? f1(anomalyLim(b)) : d.lim}</td><td class="n">${b.rad ? f1(d.area) : '–'}</td><td class="n">${fmt(d.cnt)}</td><td class="n">${fmt(d.tiers[2])}</td>
-    <td class="n" title="${d.ordSrc === 'file' ? 'จากไฟล์สาขา' : 'จากหมุดลูกค้า'}">${d.ordSrc ? fmt(Math.round(d.ordersDay)) : '–'}</td><td class="n ${d.avgT > (page === 'anomaly' ? ASET.sla : DSET.sla) ? 'diff-neg' : ''}" title="${d.slaSrc === 'file' ? 'จากไฟล์สาขา' : 'จากหมุดลูกค้า'}">${d.avgT ? d.avgT.toFixed(1) : '–'}</td><td class="n ${d.lateKnown && d.lateP >= .25 ? 'diff-neg' : ''}">${d.lateKnown ? pct(d.lateP) : '–'}</td>
+    <td class="n" title="${d.ordSrc === 'file' ? 'จากไฟล์สาขา' : 'จากหมุดลูกค้า'}">${d.ordSrc ? fmt(Math.round(d.ordersDay)) : '–'}</td><td class="n ${d.avgT > (page === 'anomaly' ? ASET.sla : DSET.sla) ? 'diff-neg' : ''}">${d.avgT ? d.avgT.toFixed(1) : '–'}</td><td class="n ${d.flags.far ? 'diff-neg' : ''}">${b.rad ? d.rideMax.toFixed(0) : '–'}</td>
     <td class="n ${d.load > 1 ? 'diff-neg' : ''}">${pct(d.load)}</td><td>${issuePills(b)}</td></tr>`; }).join('') || `<tr><td colspan="13" class="empty">ไม่พบสาขาตามเงื่อนไข</td></tr>`;
   document.getElementById('dTNote').textContent = `${fmt(list.length)} สาขา`;
   const more = document.getElementById('dTMore');
@@ -2026,8 +2026,8 @@ document.querySelectorAll('#dT th.sort').forEach(th => th.onclick = () => { cons
 document.querySelector('#dT tbody').addEventListener('click', e => { const tr = e.target.closest('tr[data-code]'); if (tr) selectDBranch(BR.find(b => b.code === tr.dataset.code)); });
 document.querySelector('#dT tbody').addEventListener('keydown', e => { if (e.key === 'Enter') { const tr = e.target.closest('tr[data-code]'); if (tr) selectDBranch(BR.find(b => b.code === tr.dataset.code)); } });
 document.getElementById('dCopyT').onclick = () => {
-  const rows = [['รหัส', 'สาขา', 'จังหวัด', 'รัศมีไกลสุด กม.', 'มาตรฐาน กม.', 'พื้นที่ ตร.กม.', 'ลูกค้า', 'ลูกค้าประจำ', 'ออเดอร์/วัน', 'เวลาเฉลี่ย นาที', 'ส่งช้า %', 'ภาระพีค %', 'ประเด็น', 'คำแนะนำ']]
-    .concat(dLast.map(b => { const d = b.dv; return [b.code, b.name, provByCode[b.prov]?.n || '', d.rMax.toFixed(2), d.lim, d.area.toFixed(2), d.cnt, d.tiers[2], Math.round(d.ordersDay), d.avgT.toFixed(1), Math.round(d.lateP * 100), Math.round(d.load * 100),
+  const rows = [['รหัส', 'สาขา', 'จังหวัด', 'รัศมีไกลสุด กม.', 'มาตรฐาน กม.', 'พื้นที่ ตร.กม.', 'ลูกค้า', 'ลูกค้าประจำ', 'ออเดอร์/วัน', 'SLA นาที (ไฟล์สาขา)', 'ขับรถไกลสุด นาที/ขา', 'ภาระพีค %', 'ประเด็น', 'คำแนะนำ']]
+    .concat(dLast.map(b => { const d = b.dv; return [b.code, b.name, provByCode[b.prov]?.n || '', d.rMax.toFixed(2), d.lim, d.area.toFixed(2), d.cnt, d.tiers[2], Math.round(d.ordersDay), d.avgT ? d.avgT.toFixed(1) : '', b.rad ? Math.round(d.rideMax) : '', Math.round(d.load * 100),
       ['sla', 'cap', 'over'].filter(k => d.flags[k]).map(k => ISSUE[k].t).join(' / ') || 'ปกติ', recText(b).split('\n').slice(2).join(' | ')]; }));
   navigator.clipboard.writeText(rows.map(r => r.join('\t')).join('\n')).then(() => toast(`คัดลอก ${fmt(dLast.length)} สาขาแล้ว วางใน Excel ได้เลย`), () => toast('คัดลอกไม่สำเร็จ'));
 };
@@ -2096,7 +2096,7 @@ const SPEC = {
       {k: 'sla', t: 'SLA (นาที)', syn: ['sla', 'sla_min', 'sla_minute', 'slaนาที', 'avg_delivery_min', 'delivery_min', 'lead_time', 'เวลาส่งเฉลี่ย', 'เวลาส่ง']},
       {k: 'orders', t: 'ออเดอร์/วัน', syn: ['orders_per_day', 'order_per_day', 'orders_day', 'orderperday', 'ออเดอร์ต่อวัน', 'ออเดอร์/วัน', 'จำนวนออเดอร์ต่อวัน', 'avg_orders', 'orders', 'order', 'จำนวนออเดอร์', 'ออเดอร์']}],
     ex: 'branch_code,branch_name,lat,lng,province,area,required,sla,orders_per_day\n10234,สีลม 2,13.7270,100.5240,กรุงเทพมหานคร,1,6,27.5,120\n20871,เมืองเชียงใหม่ 3,18.7883,98.9853,เชียงใหม่,8,4,34.0,65',
-    note: 'SLA = เวลาส่งเฉลี่ยของสาขาเป็นนาที · ออเดอร์/วัน = จำนวนออเดอร์เฉลี่ยต่อวัน ถ้ามีสองคอลัมน์นี้ ระบบใช้แทนค่าที่คำนวณจากหมุดลูกค้า'},
+    note: 'SLA = เวลาส่งเฉลี่ยของสาขาเป็นนาที · ออเดอร์/วัน = จำนวนออเดอร์เฉลี่ยต่อวัน ถ้ามีสองคอลัมน์นี้ SLA ของสาขาใช้จากไฟล์นี้เท่านั้น ส่วนออเดอร์/วัน ถ้าไม่มีจะนับจากหมุดลูกค้า'},
   trade: {n: 2, t: 'ขนาดเทรดแอเรีย', d: 'ขอบเขตพื้นที่ให้บริการของแต่ละสาขา เป็น polygon (GeoJSON, KML, WKT) หรือรัศมีเป็นกิโลเมตร', acc: '.geojson,.json,.kml,.csv,.txt,.xlsx,.xls',
     fields: [
       {k: 'code', t: 'store_code', req: 1, syn: COL_CODE},
@@ -2112,9 +2112,8 @@ const SPEC = {
       {k: 'code', t: 'รหัสสาขา', syn: COL_CODE},
       {k: 'lat', t: 'ละติจูด', req: 1, syn: ['lat', 'latitude', 'ละติจูด', 'y']},
       {k: 'lng', t: 'ลองจิจูด', req: 1, syn: ['lng', 'lon', 'long', 'longitude', 'ลองจิจูด', 'ลองติจูด', 'x']},
-      {k: 'orders', t: 'ครั้งที่สั่ง/30 วัน', syn: ['orders_30d', 'orders30d', 'orders', 'order_count', 'ordercount', 'frequency', 'freq', 'จำนวนครั้ง', 'จำนวนออเดอร์', 'ความถี่', 'ครั้งต่อเดือน', 'ครั้งที่สั่ง', 'จำนวนครั้งที่สั่ง', 'ครั้งที่ซื้อ', 'จำนวนครั้งที่ซื้อ', 'order_30d', 'orders_30_days', 'frequency_30d', 'freq_30d']},
-      {k: 'time', t: 'เวลาส่งเฉลี่ย (นาที)', syn: ['avg_delivery_min', 'delivery_min', 'avg_time', 'avgtime', 'lead_time', 'เวลาส่ง', 'เวลาส่งเฉลี่ย']}],
-    ex: 'customer_id,branch_code,lat,lng,orders_30d,avg_delivery_min\nC-000981,10234,13.7301,100.5292,9,24\nC-000982,,13.7244,100.5188,1,31',
+      {k: 'orders', t: 'ครั้งที่สั่ง/30 วัน', syn: ['orders_30d', 'orders30d', 'orders', 'order_count', 'ordercount', 'frequency', 'freq', 'จำนวนครั้ง', 'จำนวนออเดอร์', 'ความถี่', 'ครั้งต่อเดือน', 'ครั้งที่สั่ง', 'จำนวนครั้งที่สั่ง', 'ครั้งที่ซื้อ', 'จำนวนครั้งที่ซื้อ', 'order_30d', 'orders_30_days', 'frequency_30d', 'freq_30d']}],
+    ex: 'customer_id,branch_code,lat,lng,orders_30d\nC-000981,10234,13.7301,100.5292,9\nC-000982,,13.7244,100.5188,1',
     note: 'ไม่ใส่รหัสสาขาได้ ระบบจะผูกกับสาขาที่ใกล้ที่สุด'},
   riders: {n: 4, t: 'สถานะไรเดอร์', d: 'สถานะล่าสุดของไรเดอร์แต่ละคน ใช้ในหน้าภาพรวมไรเดอร์', acc: '.csv,.txt,.xlsx,.xls', dep: 'stores',
     fields: [
@@ -2344,8 +2343,7 @@ function validate(key, src, map) {
       }
       let o = parseInt(numOf(g(row, 'orders')), 10);
       if (!(o >= 1)) { o = 1; if (map.orders != null) bag.add('warn', 'จำนวนครั้งที่สั่งว่างหรือเป็น 0 นับเป็น 1 ครั้ง', ln); }
-      const t = numOf(g(row, 'time'));
-      out.push({id: String(g(row, 'id')).trim(), code, lat, lng, o: Math.min(255, o), t: t > 0 && t < 600 ? t : null});
+      out.push({id: String(g(row, 'id')).trim(), code, lat, lng, o: Math.min(255, o)});
     } else if (key === 'trade') {
       let raw, rings = null, radius = 0, t = NaN;
       if (src.kind === 'geo') { raw = row.props[src.propKey]; rings = row.rings.map(r => r.map(p => [p[0], p[1]])); }
@@ -2509,8 +2507,7 @@ function calibrateToBranchFile() {
   for (const b of BR) {
     b.ordScale = 1;
     if (b.c1 <= b.c0) continue;
-    let o = 0, t = 0; for (let i = b.c0; i < b.c1; i++) { o += CUST.orders[i]; t += CUST.orders[i] * CUST.time[i]; }
-    if (b.slaFile && o && t) { const f = b.slaFile / (t / o); for (let i = b.c0; i < b.c1; i++) CUST.time[i] *= f; changed = true; }
+    let o = 0; for (let i = b.c0; i < b.c1; i++) o += CUST.orders[i];
     if (b.ordFile != null && o) { b.ordScale = b.ordFile / (o / 30); changed = true; }
   }
   return changed;
@@ -2535,7 +2532,7 @@ function rebuildAll(changed) {
     for (const r of DS.riders?.rows || []) { const b = byCode.get(r.code); if (!b) { lostR++; continue; } const rd = {id: r.id, b, st: r.st, since: r.t, jobs: 0}; b.riders.push(rd); RD.push(rd); }
     let lostT = 0;
     for (const t of DS.trade?.rows || []) { const b = byCode.get(t.code); if (!b) { lostT++; continue; } b.trade = t.rings ? castReach(b, t.rings) : Array(NV).fill(t.radius); b.tradeRings = t.rings || null; }
-    const cust = (DS.customers?.rows || []).map(c => ({branch_code: c.code, lat: c.lat, lng: c.lng, orders_30d: c.o, avg_delivery_min: c.t ?? NaN}));
+    const cust = (DS.customers?.rows || []).map(c => ({branch_code: c.code, lat: c.lat, lng: c.lng, orders_30d: c.o}));
     MODE = 'import'; running = false;
     const ci = importDelivery(cust);
     if (calibrateToBranchFile()) computeAllDelivery();
@@ -2633,7 +2630,7 @@ function renderData() {
     const noCust = BR.filter(b => b.c1 <= b.c0).length;
     H.push(['หมุดลูกค้า', DS.customers ? `${fmt(CUST.n)} ราย${noCust ? ` · ${fmt(noCust)} สาขายังไม่มีลูกค้า` : ''}` : 'ยังไม่มี หน้าพื้นที่จัดส่งแสดงเทรดแอเรียได้ แต่ยังไม่มีคำแนะนำตัดพื้นที่', DS.customers ? (noCust ? 'warn' : 'ok') : 'none']);
     if (DS.branches) { const nS = BR.filter(b => b.slaFile).length, nO = BR.filter(b => b.ordFile != null).length;
-      H.push(['SLA และออเดอร์/วัน', `มี SLA จากไฟล์ ${fmt(nS)} สาขา · ออเดอร์/วัน ${fmt(nO)} สาขา จาก ${fmt(BR.length)}${nS < BR.length ? ' · สาขาที่ไม่มีใช้ค่าจากหมุดลูกค้า (ถ้ามี)' : ''}`, nS === BR.length && nO === BR.length ? 'ok' : nS || nO ? 'warn' : 'none']); }
+      H.push(['SLA และออเดอร์/วัน', `มี SLA จากไฟล์ ${fmt(nS)} สาขา · ออเดอร์/วัน ${fmt(nO)} สาขา จาก ${fmt(BR.length)}${nS < BR.length ? ` · ${fmt(BR.length - nS)} สาขาไม่มี SLA จึงไม่ถูกประเมินเรื่อง SLA` : ''}`, nS === BR.length && nO === BR.length ? 'ok' : nS || nO ? 'warn' : 'none']); }
     const noR = BR.filter(b => !b.riders.length).length;
     H.push(['ไรเดอร์', DS.riders ? `${fmt(RD.length)} คน${noR ? ` · ${fmt(noR)} สาขาไม่มีไรเดอร์` : ''}` : 'ยังไม่มี หน้าภาพรวมจะแสดงทุกสาขาเป็นขาด', DS.riders ? (noR ? 'warn' : 'ok') : 'none']);
     for (const n of BUILD_NOTE) H.push(['ข้อมูลที่ไม่ได้ใช้', n, 'warn']);
@@ -2655,7 +2652,7 @@ function exportText(key) {
   if (key === 'branches') { rows.push(['branch_code', 'branch_name', 'lat', 'lng', 'province', 'area', 'required', 'sla', 'orders_per_day']); for (const b of BR) rows.push([b.code, b.name, b.lat.toFixed(6), b.lon.toFixed(6), provByCode[b.prov]?.n || '', b.area, b.reqFixed ?? b.reqPeak, b.dv?.avgT ? b.dv.avgT.toFixed(1) : '', b.dv?.ordersDay ? Math.round(b.dv.ordersDay) : '']); }
   else if (key === 'riders') { rows.push(['rider_id', 'branch_code', 'status', 'last_update']); const S = {deliver: 'delivering', pickup: 'pickup', idle: 'idle', break: 'break', offline: 'offline'};
     for (const r of RD) rows.push([r.id, r.b.code, S[r.st], new Date(r.since + 7 * 3600e3).toISOString().slice(0, 16).replace('T', ' ')]); }
-  else if (key === 'customers') { rows.push(['customer_id', 'branch_code', 'lat', 'lng', 'orders_30d', 'avg_delivery_min']); for (let i = 0; i < CUST.n; i++) rows.push(['C-' + String(i + 1).padStart(7, '0'), BR[CUST.br[i]].code, CUST.lat[i].toFixed(6), CUST.lon[i].toFixed(6), CUST.orders[i], CUST.time[i].toFixed(1)]); }
+  else if (key === 'customers') { rows.push(['customer_id', 'branch_code', 'lat', 'lng', 'orders_30d']); for (let i = 0; i < CUST.n; i++) rows.push(['C-' + String(i + 1).padStart(7, '0'), BR[CUST.br[i]].code, CUST.lat[i].toFixed(6), CUST.lon[i].toFixed(6), CUST.orders[i]]); }
   else if (key === 'areas') { rows.push(['province', 'area_id', 'area_name']); for (const p of PROV) { const id = p.c === '10' ? (BKK_FIXED ?? '1-3') : AREA_OF_PROV_EN[p.e]; rows.push([p.n, id, p.c === '10' && BKK_FIXED == null ? 'กทม. (แบ่ง 3 พื้นที่ตามทิศ)' : areaName(id)]); } }
   else if (key === 'trade') {
     const stamp = fmtStamp(Date.now());
@@ -2700,12 +2697,12 @@ function runValidate() {
 function previewCells(key, r) {
   if (key === 'branches') return [r.code, r.name, r.lat.toFixed(5), r.lng.toFixed(5), provByCode[r.prov]?.n || '', r.area ?? '–', r.req, r.sla ?? '–', r.orders ?? '–'];
   if (key === 'riders') return [r.id, r.code, ST[r.st].t, new Date(r.t).toLocaleString('th-TH', {day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'})];
-  if (key === 'customers') return [r.id || '–', r.code, r.lat.toFixed(5), r.lng.toFixed(5), r.o, TIER[tierOf(r.o)].t, r.t ?? '–'];
+  if (key === 'customers') return [r.id || '–', r.code, r.lat.toFixed(5), r.lng.toFixed(5), r.o, TIER[tierOf(r.o)].t];
   if (key === 'trade') { const b = branchIndex().byCode.get(codeKey(r.code)); return [r.code, b?.name || '', r.rings ? `${r.rings.length > 1 ? 'MultiPolygon' : 'Polygon'} ${r.rings.reduce((s, x) => s + x.length, 0)} จุด` : `รัศมี ${r.radius} กม.`, r.rings ? f1(ringsAreaKm(r.rings)) : f1(Math.PI * r.radius ** 2), r.t ? new Date(r.t).toLocaleString('th-TH', {day: 'numeric', month: 'short', year: '2-digit', hour: '2-digit', minute: '2-digit'}) : '–']; }
   return [provByCode[r.prov]?.n, r.area, r.aname || '–'];
 }
 const PREV_HEAD = {branches: ['รหัส', 'ชื่อ', 'lat', 'lng', 'จังหวัด', 'พื้นที่', 'ต้องการ', 'SLA นาที', 'ออเดอร์/วัน'], riders: ['ไรเดอร์', 'สาขา', 'สถานะ', 'อัปเดต'],
-  customers: ['ลูกค้า', 'สาขา', 'lat', 'lng', 'ครั้ง/30 วัน', 'ระดับ', 'เวลาส่ง'], trade: ['store_code', 'สาขา', 'รูปแบบ', 'พื้นที่ ตร.กม.', 'created_at'], areas: ['จังหวัด', 'พื้นที่', 'ชื่อพื้นที่']};
+  customers: ['ลูกค้า', 'สาขา', 'lat', 'lng', 'ครั้ง/30 วัน', 'ระดับ'], trade: ['store_code', 'สาขา', 'รูปแบบ', 'พื้นที่ ตร.กม.', 'created_at'], areas: ['จังหวัด', 'พื้นที่', 'ชื่อพื้นที่']};
 function renderRev() {
   const box = document.getElementById('dmRevBox'); if (!REV) return;
   const S = SPEC[REV.key];
