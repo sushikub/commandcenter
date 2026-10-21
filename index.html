@@ -396,6 +396,20 @@ header h1#pgTitle{margin:0;font:700 19px/1.15 var(--f-display);letter-spacing:.0
 .xbody{padding:16px;overflow:auto;background:#fff;border-radius:0 0 var(--r) var(--r);color:#1d2433}
 @media (max-width:1000px){.xgrid{grid-template-columns:1fr}.xprev{position:static;max-height:none}.xa{grid-template-columns:1fr}}
 
+.xzbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px 14px}
+.xzbar.foot{border-top:1px solid var(--line)}
+.xzbar .right{margin-left:auto;display:flex;gap:8px;align-items:center}
+#xzT td,#xzT th{padding:6px 10px;vertical-align:middle}
+#xzT th{font-size:12px;white-space:normal}
+#xzT input[type=text]{font:inherit;font-size:13px;width:100%;min-width:180px;box-sizing:border-box;color:var(--fg);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:6px 8px}
+#xzT input[type=text]:focus{outline:2px solid var(--accent);outline-offset:-1px}
+#xzT .sub{font-size:11.5px;color:var(--muted)}
+#xzT .xzbad{color:var(--short)}
+#xzT tr.xzempty td{opacity:.55}
+#xzT tr.selrow td{background:color-mix(in srgb,var(--accent) 8%,transparent)}
+.xzst{font-size:12.5px;white-space:nowrap}.xzst.ok{color:var(--ok)}.xzst.err{color:var(--short)}
+.xmodep .ph .seg{margin-left:4px}
+
 /* ---- sub menu ---- */
 .nav a.sub{padding:7px 10px 7px 22px;font-size:13.5px;position:relative;margin-left:16px;border-left:1.5px solid var(--line);border-radius:0 8px 8px 0}
 .nav a.sub svg{width:16px;height:16px}
@@ -765,8 +779,32 @@ header h1#pgTitle{margin:0;font:700 19px/1.15 var(--f-display);letter-spacing:.0
 <div class="wrap" data-page="export" hidden>
   <section class="xtop panel">
     <div class="xstat"><div class="l">สาขาที่จะส่ง</div><div class="v" id="xN">–</div><div class="s" id="xNS"></div></div>
-    <div class="xstat"><div class="l">ขอบเขต</div><div class="v sm" id="xScope">ทั้งประเทศ</div><div class="s">เปลี่ยนได้จากตัวกรองพื้นที่และจังหวัดด้านบน</div></div>
+    <div class="xstat"><div class="l">ขอบเขต</div><div class="v sm" id="xScope">ทั้งประเทศ</div><div class="s" id="xScopeS">เปลี่ยนได้จากตัวกรองพื้นที่และจังหวัดด้านบน</div></div>
     <div class="xstat"><div class="l">เกณฑ์</div><div class="v sm" id="xCrit">–</div><div class="s">ตั้งค่าได้ที่หน้าชี้เป้า</div></div>
+  </section>
+
+  <section class="panel xmodep">
+    <div class="ph"><h2>รูปแบบการส่ง</h2>
+      <div class="seg" id="xMode" role="group" aria-label="รูปแบบการส่ง"><button data-m="all" aria-pressed="true">ส่งรวมฉบับเดียว</button><button data-m="zone" aria-pressed="false">ส่งแยกตามโซน</button></div>
+      <span class="note" data-xm="all">ส่งอีเมลเดียวถึงผู้รับชุดเดียว มีทุกสาขาตามตัวกรองด้านบน</span>
+      <span class="note" data-xm="zone" hidden>แต่ละโซนได้อีเมลของตัวเอง ส่งถึงผู้รับใน Master พร้อมไฟล์ Excel เฉพาะสาขาของโซนนั้น</span>
+    </div>
+    <div data-xm="zone" hidden>
+      <div class="xzbar">
+        <button class="btn" id="xzAll">เลือกโซนที่มีสาขา</button><button class="btn" id="xzNone">ไม่เลือกทั้งหมด</button>
+        <span class="note" id="xzSum"></span>
+        <span class="right"><button class="btn" id="xzIn">นำเข้า Master (CSV)</button><button class="btn" id="xzOut">ดาวน์โหลด Master</button><input type="file" id="xzFile" accept=".csv,text/csv" hidden></span>
+      </div>
+      <div class="tscroll"><table id="xzT">
+        <thead><tr><th style="width:34px"></th><th>โซน</th><th class="n">สาขา SLA สูง<br>Trade ใหญ่เกิน</th><th>ถึง (Group mail ของโซน)</th><th>สำเนา (CC)</th><th></th><th>สถานะ</th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+      <div class="xzbar foot">
+        <button class="btn primary" id="xzSend">ส่งอัตโนมัติทุกโซนที่เลือก</button><button class="btn" id="xzXlsx">ดาวน์โหลด Excel แยกโซน</button>
+        <span class="note" id="xzSendS"></span>
+        <span class="note right">Master ผู้รับบันทึกไว้ในเบราว์เซอร์นี้ ดาวน์โหลดเก็บไว้หรือส่งต่อให้เครื่องอื่นนำเข้าได้</span>
+      </div>
+    </div>
   </section>
 
   <div class="xgrid">
@@ -774,20 +812,21 @@ header h1#pgTitle{margin:0;font:700 19px/1.15 var(--f-display);letter-spacing:.0
       <section class="panel">
         <div class="ph"><h2>1. ผู้รับและข้อความ</h2><span class="note">บันทึกไว้ในเบราว์เซอร์นี้ ครั้งหน้าไม่ต้องกรอกใหม่</span></div>
         <div class="xform">
-          <label>ถึง (Group mail) <input type="text" id="xTo" placeholder="rider-ops@company.co.th; area-mgr@company.co.th" autocomplete="email"></label>
-          <label>สำเนา (CC) <input type="text" id="xCc" placeholder="ไม่บังคับ"></label>
+          <label data-xm="all">ถึง (Group mail) <input type="text" id="xTo" placeholder="rider-ops@company.co.th; area-mgr@company.co.th" autocomplete="email"></label>
+          <label data-xm="all">สำเนา (CC) <input type="text" id="xCc" placeholder="ไม่บังคับ"></label>
           <label>หัวเรื่อง <input type="text" id="xSubj"></label>
+          <div class="hint" data-xm="zone" hidden>ใส่ <code>{zone}</code> ในหัวเรื่องเพื่อวางชื่อโซน ถ้าไม่ใส่ ระบบต่อท้ายชื่อโซนให้ · ผู้รับของแต่ละโซนตั้งในตาราง Master ด้านบน</div>
           <label>ข้อความเปิด <textarea id="xNote" rows="3"></textarea></label>
           <div class="xrow">
             <label>แสดงสาขาในอีเมล <select id="xTop"><option value="10">10 อันดับแรก</option><option value="20" selected>20 อันดับแรก</option><option value="50">50 อันดับแรก</option><option value="0">ทั้งหมด</option></select></label>
-            <label class="xchk"><input type="checkbox" id="xZone" checked> ใส่ตารางสรุปรายโซน</label>
+            <label class="xchk" data-xm="all"><input type="checkbox" id="xZone" checked> ใส่ตารางสรุปรายโซน</label>
           </div>
           <div class="hint">ไฟล์ Excel ที่แนบมีครบทุกสาขาเสมอ ข้อความในอีเมลตัดตามจำนวนที่เลือก</div>
         </div>
       </section>
 
       <section class="panel">
-        <div class="ph"><h2>2. Export และส่งอีเมล</h2></div>
+        <div class="ph"><h2 id="xActH">2. Export และส่งอีเมล</h2></div>
         <div class="xact">
           <div class="xa"><button class="btn primary" id="xXlsx">ดาวน์โหลด Excel</button><span>ไฟล์ .xlsx 4 ชีต: สรุป, สรุปรายโซน, รายสาขา, SLA เกินแต่พื้นที่ในเกณฑ์</span></div>
           <div class="xa"><button class="btn" id="xMail">เปิดโปรแกรมอีเมล</button><span>เปิด Outlook หรือโปรแกรมอีเมลพร้อมผู้รับ หัวเรื่อง และสรุปย่อ แล้วดาวน์โหลด Excel ให้ลากไปแนบ</span></div>
@@ -2998,26 +3037,29 @@ function bootSavedData() {
 
 /* ================= Export + email: branches with high SLA and oversized trade area ================= */
 const XKEY = 'rcc-mail';
-const XDEF = {to: '', cc: '', subj: 'รายงานชี้เป้ารายสาขา SLA สูง ขนาด Trade Area ใหญ่ผิดปกติ {date}', note: 'เรียนทุกท่าน\nสรุปสาขาที่ SLA เกินเกณฑ์และขนาด Trade Area ใหญ่เกินมาตรฐาน รายละเอียดทุกสาขาอยู่ในไฟล์แนบ', top: 20, zone: true, url: ''};
+const XDEF = {mode: 'all', zm: {}, zsel: {}, zprev: null, to: '', cc: '', subj: 'รายงานชี้เป้ารายสาขา SLA สูง ขนาด Trade Area ใหญ่ผิดปกติ {date}', note: 'เรียนทุกท่าน\nสรุปสาขาที่ SLA เกินเกณฑ์และขนาด Trade Area ใหญ่เกินมาตรฐาน รายละเอียดทุกสาขาอยู่ในไฟล์แนบ', top: 20, zone: true, url: ''};
 let XS = Object.assign({}, XDEF);
 try { Object.assign(XS, JSON.parse(localStorage.getItem(XKEY) || '{}')); } catch (e) {}
 const xSave = () => { try { localStorage.setItem(XKEY, JSON.stringify(XS)); } catch (e) {} };
 const bkkNow = () => new Date(Date.now() + 7 * 3600e3);
 const xDate = (sep = '/') => { const d = bkkNow(); return `${d.getUTCDate()}${sep}${d.getUTCMonth() + 1}${sep}${d.getUTCFullYear() + 543}`; };
 const xStamp = () => { const d = bkkNow(); return `${xDate()} ${d.getUTCHours()}:${String(d.getUTCMinutes()).padStart(2, '0')} น.`; };
-const xFileName = () => { const d = bkkNow(); return `ชี้เป้าสาขา_SLA_TradeArea_${d.getUTCFullYear()}${String(d.getUTCMonth() + 1).padStart(2, '0')}${String(d.getUTCDate()).padStart(2, '0')}.xlsx`; };
+const xFileName = X => { const d = bkkNow(); return `ชี้เป้าสาขา_SLA_TradeArea_${X && X.area !== undefined ? `พื้นที่${X.area ?? 'ไม่ระบุ'}_` : ''}${d.getUTCFullYear()}${String(d.getUTCMonth() + 1).padStart(2, '0')}${String(d.getUTCDate()).padStart(2, '0')}.xlsx`; };
 const xScopeText = () => filt.area ? `พื้นที่ ${typeof filt.area === 'number' ? filt.area + ' · ' : ''}${areaName(filt.area)}` : filt.prov ? (provByCode[filt.prov]?.n || filt.prov) : 'ทั้งประเทศ';
 const xCritText = () => `SLA > ${ASET.sla} นาที และรัศมีเกิน กทม. ${ASET.rBkk} กม. · ปริมณฑล ${ASET.rVic} กม. · ตจว. ${ASET.rUp} กม.`;
 const xAreaLbl = b => b.area != null ? `${typeof b.area === 'number' ? b.area + ' · ' : ''}${areaName(b.area)}` : '';
 
-function xCollect() {
-  const base = MODE === 'sim' ? [] : BR.filter(b => inScope(b, true));
+/* area === undefined → whole current scope (filters on top); otherwise one area, ignoring the page filters */
+const xZoneLbl = id => id == null ? 'ไม่ระบุพื้นที่' : `พื้นที่ ${typeof id === 'number' ? id + ' · ' : ''}${areaName(id)}`;
+function xCollect(area) {
+  const one = area !== undefined;
+  const base = MODE === 'sim' ? [] : BR.filter(b => one ? (b.area ?? null) === area : inScope(b, true));
   const A = base.filter(isAnomaly).sort((a, b) => anomScore(b) - anomScore(a));
   const slaOnly = base.filter(b => b.rad && b.dv?.avgT && anomSla(b) && !anomArea(b)).sort((a, b) => b.dv.avgT - a.dv.avgT);
   const zones = azCompute(base, 'area').sort((a, b) => b.n - a.n || String(a.k).localeCompare(String(b.k), 'th', {numeric: true}));
   const w = A.reduce((s, b) => s + (b.dv.ordersDay || 1), 0), t = A.reduce((s, b) => s + b.dv.avgT * (b.dv.ordersDay || 1), 0);
   const withData = base.filter(b => b.rad && b.dv?.avgT).length;
-  return {base, A, slaOnly, zones, withData, sla: w ? t / w : 0, ord: A.reduce((s, b) => s + (b.dv.ordersDay || 0), 0),
+  return {area: one ? area : undefined, scope: one ? xZoneLbl(area) : xScopeText(), base, A, slaOnly, zones, withData, sla: w ? t / w : 0, ord: A.reduce((s, b) => s + (b.dv.ordersDay || 0), 0),
     act: A.reduce((s, b) => s + (b.dv.actual || 0), 0), nAct: A.filter(b => b.dv.actual != null).length};
 }
 const xCut = b => { const c = b.dv.cut; if (!c || !c.recN) return ''; const dirs = [...new Set(c.steps.slice(0, c.recN).map(z => z.dir))];
@@ -3035,13 +3077,13 @@ function xHTML(X) {
   let h = `<div style="font-family:Tahoma,'Leelawadee UI',sans-serif;font-size:14px;color:#1d2433;line-height:1.5">`;
   if (note) h += `<p style="margin:0 0 12px">${note}</p>`;
   h += `<p style="margin:0 0 4px;font-size:16px;font-weight:700">ชี้เป้ารายสาขา SLA สูง ขนาด Trade Area ใหญ่ผิดปกติ</p>
-    <p style="margin:0 0 12px;color:#667085;font-size:12px">ข้อมูล ณ ${xStamp()} · ขอบเขต ${esc(xScopeText())} · เกณฑ์ ${esc(xCritText())}</p>
+    <p style="margin:0 0 12px;color:#667085;font-size:12px">ข้อมูล ณ ${xStamp()} · ขอบเขต ${esc(X.scope)} · เกณฑ์ ${esc(xCritText())}</p>
     <table cellspacing="0" cellpadding="0" style="border-collapse:collapse;margin:0 0 14px"><tr>
       <td style="padding:8px 14px;border:1px solid #d0d5dd;background:#fef3f2"><div style="font-size:12px;color:#667085">สาขาที่พบ</div><div style="font-size:20px;font-weight:700;color:#c4320a">${fmt(X.A.length)} สาขา</div><div style="font-size:12px;color:#667085">จาก ${fmt(X.withData)} สาขาที่มีข้อมูล</div></td>
       <td style="padding:8px 14px;border:1px solid #d0d5dd"><div style="font-size:12px;color:#667085">SLA เฉลี่ย</div><div style="font-size:20px;font-weight:700">${X.A.length ? X.sla.toFixed(1) : '–'} นาที</div><div style="font-size:12px;color:#667085">ถ่วงตามออเดอร์/วัน</div></td>
       <td style="padding:8px 14px;border:1px solid #d0d5dd"><div style="font-size:12px;color:#667085">คาดการณ์กระทบออเดอร์/วัน</div><div style="font-size:20px;font-weight:700">${fmt(Math.round(X.ord))}</div><div style="font-size:12px;color:#667085">${X.nAct ? `ไรเดอร์เกิดจริงรวม ${f1r(X.act)} คน/วัน` : '&nbsp;'}</div></td>
     </tr></table>`;
-  if (XS.zone && X.zones.length) {
+  if (XS.zone && X.area === undefined && X.zones.length > 1) {
     h += `<p style="margin:0 0 6px;font-weight:700">สรุปรายโซน</p><table cellspacing="0" cellpadding="0" style="border-collapse:collapse;margin:0 0 14px;font-size:13px"><tr>
       <th ${th}>โซน</th><th ${thn}>สาขามี Trade</th><th ${thn}>สาขาขนาดพื้นที่ใหญ่เกิน</th><th ${thn}>% สาขาเกินเกณฑ์</th><th ${thn}>SLA เฉลี่ย นาที</th><th ${thn}>รัศมีสูงสุด กม.</th><th ${thn}>คาดการณ์กระทบออเดอร์/วัน</th></tr>`;
     for (const r of X.zones) h += `<tr><td ${td}>${esc(r.name)}</td><td ${tdn}>${fmt(r.data)} / ${fmt(r.all)}</td><td ${r.n ? red : tdn}>${fmt(r.n)}</td><td ${tdn}>${r.data ? pct(r.share) : '–'}</td><td ${tdn}>${r.n ? r.sla.toFixed(1) : '–'}</td><td ${tdn}>${r.n ? f1(r.rMax) : '–'}</td><td ${tdn}>${r.n ? fmt(Math.round(r.ord)) : '–'}</td></tr>`;
@@ -3061,11 +3103,11 @@ function xHTML(X) {
   return h;
 }
 function xPlain(X, max = Infinity) {
-  const must = [XS.note || '', '', `ชี้เป้ารายสาขา SLA สูง ขนาด Trade Area ใหญ่ผิดปกติ (ข้อมูล ณ ${xStamp()})`, `ขอบเขต: ${xScopeText()}`,
+  const must = [XS.note || '', '', `ชี้เป้ารายสาขา SLA สูง ขนาด Trade Area ใหญ่ผิดปกติ (ข้อมูล ณ ${xStamp()})`, `ขอบเขต: ${X.scope}`,
     `พบ ${fmt(X.A.length)} สาขา จาก ${fmt(X.withData)} สาขาที่มีข้อมูล · SLA เฉลี่ย ${X.A.length ? X.sla.toFixed(1) : '–'} นาที · คาดการณ์กระทบ ${fmt(Math.round(X.ord))} ออเดอร์/วัน`];
   const end = ['', 'รายละเอียดทุกสาขาอยู่ในไฟล์ Excel ที่แนบ'];
   const br = X.A.slice(0, 10).map((b, i) => `${i + 1}. ${b.code} ${b.name} · SLA ${b.dv.avgT.toFixed(0)} นาที · รัศมี ${b.dv.rMax.toFixed(2)}/${f1(anomalyLim(b))} กม.`);
-  const zn = XS.zone ? X.zones.filter(r => r.n).map(r => `- ${r.name}: ${fmt(r.n)} สาขา (${pct(r.share)}) SLA ${r.sla.toFixed(1)} นาที`) : [];
+  const zn = XS.zone && X.area === undefined ? X.zones.filter(r => r.n).map(r => `- ${r.name}: ${fmt(r.n)} สาขา (${pct(r.share)}) SLA ${r.sla.toFixed(1)} นาที`) : [];
   const build = (nb, nz) => must.concat(nb ? ['', 'สาขาที่ต้องดูก่อน:'].concat(br.slice(0, nb), nb < br.length ? ['…'] : []) : [], nz ? ['', 'สรุปรายโซน:'].concat(zn.slice(0, nz), nz < zn.length ? ['…'] : []) : [], end).join('\n');
   let nb = br.length, nz = zn.length, t = build(nb, nz);
   while (encodeURIComponent(t).length > max && (nb || nz)) { if (nz > 0 && nz >= nb / 2) nz--; else nb--; t = build(nb, nz); }
@@ -3077,7 +3119,7 @@ function xPlain(X, max = Infinity) {
 async function xWorkbook(X) {
   const sheets = [];
   const add = (name, aoa, widths) => sheets.push({name, aoa, widths});
-  add('สรุป', [['ชี้เป้ารายสาขา SLA สูง ขนาด Trade Area ใหญ่ผิดปกติ'], [], ['ข้อมูล ณ', xStamp()], ['ขอบเขต', xScopeText()], ['เกณฑ์ SLA (นาที) มากกว่า', ASET.sla],
+  add('สรุป', [['ชี้เป้ารายสาขา SLA สูง ขนาด Trade Area ใหญ่ผิดปกติ'], [], ['ข้อมูล ณ', xStamp()], ['ขอบเขต', X.scope], ['เกณฑ์ SLA (นาที) มากกว่า', ASET.sla],
     ['เกณฑ์รัศมี กทม. (กม.)', ASET.rBkk], ['เกณฑ์รัศมี ปริมณฑล (กม.)', ASET.rVic], ['เกณฑ์รัศมี ต่างจังหวัด (กม.)', ASET.rUp], [],
     ['สาขาที่มีข้อมูล SLA และ Trade', X.withData], ['สาขา SLA สูง และ Trade Area ใหญ่เกิน', X.A.length], ['SLA เฉลี่ย (ถ่วงออเดอร์) นาที', X.A.length ? +X.sla.toFixed(1) : ''],
     ['คาดการณ์กระทบออเดอร์/วัน', Math.round(X.ord)], ['ไรเดอร์เกิดจริงรวม/วัน', X.nAct ? +X.act.toFixed(1) : ''], ['สาขา SLA เกินแต่พื้นที่อยู่ในเกณฑ์', X.slaOnly.length]], [36, 44]);
@@ -3094,10 +3136,10 @@ async function xWorkbook(X) {
     [10, 28, 7, 16, 16, 9, 13, 12, 11, 14]);
   let XL = null; try { XL = await loadXLSX(); } catch (e) {}
   if (!XL) { const aoa = sheets[2].aoa, csv = '\ufeff' + aoa.map(r => r.map(v => { const t = String(v ?? ''); return /[",\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t; }).join(',')).join('\r\n');
-    return {csv: true, name: xFileName().replace(/\.xlsx$/, '.csv'), blob: new Blob([csv], {type: 'text/csv;charset=utf-8'}), base64: () => btoa(unescape(encodeURIComponent(csv)))}; }
+    return {csv: true, name: xFileName(X).replace(/\.xlsx$/, '.csv'), blob: new Blob([csv], {type: 'text/csv;charset=utf-8'}), base64: () => btoa(unescape(encodeURIComponent(csv)))}; }
   const wb = XL.utils.book_new();
   for (const s of sheets) { const ws = XL.utils.aoa_to_sheet(s.aoa); ws['!cols'] = s.widths.map(w => ({wch: w})); XL.utils.book_append_sheet(wb, ws, s.name); }
-  return {csv: false, name: xFileName(), blob: new Blob([XL.write(wb, {type: 'array', bookType: 'xlsx', compression: true})], {type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),
+  return {csv: false, name: xFileName(X), blob: new Blob([XL.write(wb, {type: 'array', bookType: 'xlsx', compression: true})], {type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),
     base64: () => XL.write(wb, {type: 'base64', bookType: 'xlsx', compression: true})};
 }
 const xCsvNote = f => f.csv ? ' · โหลดตัวสร้าง Excel ไม่ได้ (ไม่มีอินเทอร์เน็ต) จึงได้ไฟล์ CSV เฉพาะรายสาขาแทน' : '';
@@ -3109,64 +3151,151 @@ async function xDownload(X) {
 const xMsg = (html, kind) => { const el = document.getElementById('xMsg'); el.hidden = !html; el.className = 'xmsg ' + (kind || ''); el.innerHTML = html || ''; };
 const xList = s => String(s || '').split(/[;,\s]+/).map(x => x.trim()).filter(Boolean);
 const xValidMail = s => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(s);
-function xCheckTo() {
-  const to = xList(XS.to), cc = xList(XS.cc), bad = to.concat(cc).filter(x => !xValidMail(x));
-  if (!to.length) { xMsg('ใส่อีเมลผู้รับ (Group mail) ในช่อง "ถึง" ก่อน', 'err'); document.getElementById('xTo').focus(); return null; }
-  if (bad.length) { xMsg(`อีเมลไม่ถูกต้อง: ${bad.map(esc).join(', ')}`, 'err'); return null; }
+const xZKey = id => String(id ?? 'none');
+const xRcpt = area => area === undefined ? {to: XS.to, cc: XS.cc} : (XS.zm[xZKey(area)] || {to: '', cc: ''});
+/* recipients check: returns {to, cc} or an error string */
+function xCheck(area) {
+  const r = xRcpt(area), to = xList(r.to), cc = xList(r.cc), bad = to.concat(cc).filter(x => !xValidMail(x));
+  if (!to.length) return area === undefined ? 'ใส่อีเมลผู้รับ (Group mail) ในช่อง "ถึง" ก่อน' : `${xZoneLbl(area)} ยังไม่มีอีเมลผู้รับใน Master`;
+  if (bad.length) return `อีเมลไม่ถูกต้อง: ${bad.map(esc).join(', ')}`;
   return {to, cc};
 }
-const xSubject = () => (XS.subj || XDEF.subj).replace('{date}', xDate());
+const xSubject = X => { let t = (XS.subj || XDEF.subj).replace('{date}', xDate());
+  if (X && X.area !== undefined) t = t.includes('{zone}') ? t.replace('{zone}', X.scope) : `${t} · ${X.scope}`; else t = t.replace(/\s*\{zone\}/, '');
+  return t; };
+/* the areas that can be sent separately: master list plus any area code found in the data */
+function xAreas() {
+  const ids = AREAS.map(a => a.id), seen = new Set(ids.map(xZKey));
+  for (const b of BR) { const k = xZKey(b.area); if (!seen.has(k)) { seen.add(k); ids.push(b.area ?? null); } }
+  return ids.map(id => ({id, X: xCollect(id)}));
+}
+const xPrevArea = () => { if (XS.mode !== 'zone') return undefined; const L = xAreas(); const p = L.find(z => xZKey(z.id) === XS.zprev);
+  return (p || L.find(z => z.X.A.length) || L[0]).id; };
 
+/* ---------- send actions (one email) ---------- */
+async function xDoHook(X, r) {
+  const f = await xWorkbook(X);
+  const payload = {to: r.to.join(';'), cc: r.cc.join(';'), subject: xSubject(X), html: xHTML(X), fileName: f.name, fileBase64: f.base64(), count: X.A.length, zone: X.area === undefined ? '' : X.scope};
+  // text/plain keeps this a "simple" request: no CORS preflight (OPTIONS), so the flow runs exactly once with the full body
+  let res;
+  try { res = await fetch(XS.url, {method: 'POST', headers: {'Content-Type': 'text/plain;charset=UTF-8'}, body: JSON.stringify(payload)}); }
+  catch (err) { return {ok: true, unsure: true, f}; }
+  if (!res.ok) return {ok: false, err: `flow ตอบกลับ ${res.status}`, f};
+  return {ok: true, f};
+}
+async function xDoMail(X, r) {
+  const f = await xDownload(X);
+  const base = `mailto:${r.to.map(encodeURIComponent).join(';')}?${r.cc.length ? `cc=${r.cc.map(encodeURIComponent).join(';')}&` : ''}subject=${encodeURIComponent(xSubject(X))}&body=`;
+  const m = document.createElement('a'); m.href = window.__lastMailto = base + encodeURIComponent(xPlain(X, 7000 - base.length)); document.body.append(m); m.click(); m.remove();
+  return f;
+}
+async function xDoCopy(X) {
+  const html = xHTML(X), text = xPlain(X);
+  if (window.ClipboardItem) await navigator.clipboard.write([new ClipboardItem({'text/html': new Blob([html], {type: 'text/html'}), 'text/plain': new Blob([text], {type: 'text/plain'})})]);
+  else await navigator.clipboard.writeText(text);
+}
+const xZStat = {};   // per-area send status for this session
+
+function renderExportZones() {
+  const L = xAreas(), prev = xPrevArea(), tb = document.querySelector('#xzT tbody');
+  const act = document.activeElement, keep = act && act.closest && act.closest('#xzT') ? {k: act.dataset.k, f: act.dataset.f, s: act.selectionStart} : null;
+  tb.innerHTML = L.map(({id, X}) => { const k = xZKey(id), m = XS.zm[k] || {}, st = xZStat[k], sel = XS.zsel[k] ?? (X.A.length > 0);
+    return `<tr data-k="${esc(k)}" class="${xZKey(prev) === k ? 'selrow' : ''}${X.base.length ? '' : ' xzempty'}">
+      <td><input type="checkbox" data-k="${esc(k)}" data-f="sel" ${sel ? 'checked' : ''} aria-label="เลือก ${esc(xZoneLbl(id))}"></td>
+      <td><b>${esc(xZoneLbl(id))}</b><div class="sub">${fmt(X.base.length)} สาขา</div></td>
+      <td class="n"><b class="${X.A.length ? 'xzbad' : ''}">${fmt(X.A.length)}</b></td>
+      <td><input type="text" data-k="${esc(k)}" data-f="to" value="${esc(m.to || '')}" placeholder="group-${esc(k)}@company.co.th"></td>
+      <td><input type="text" data-k="${esc(k)}" data-f="cc" value="${esc(m.cc || '')}" placeholder="ไม่บังคับ"></td>
+      <td><button class="btn xzv" data-k="${esc(k)}">ดูตัวอย่าง</button></td>
+      <td class="xzst ${st ? st.c : ''}">${st ? st.t : ''}</td></tr>`; }).join('');
+  if (keep) { const el = tb.querySelector(`input[data-k="${CSS.escape(keep.k)}"][data-f="${keep.f}"]`); if (el) { el.focus(); if (keep.s != null && el.setSelectionRange) el.setSelectionRange(keep.s, keep.s); } }
+  const chosen = L.filter(({id, X}) => XS.zsel[xZKey(id)] ?? (X.A.length > 0));
+  const noTo = chosen.filter(({id}) => typeof xCheck(id) === 'string');
+  document.getElementById('xzSum').textContent = `เลือก ${fmt(chosen.length)} โซน · ${fmt(chosen.reduce((s, z) => s + z.X.A.length, 0))} สาขา${noTo.length ? ` · ${fmt(noTo.length)} โซนยังไม่มีผู้รับ` : ''}`;
+  document.getElementById('xzSend').disabled = !XS.url || !chosen.length;
+  document.getElementById('xzXlsx').disabled = !chosen.length;
+  document.getElementById('xzSendS').textContent = XS.url ? '' : 'ตั้งค่า Power Automate ในข้อ 3 ก่อน';
+}
 function renderExport() {
-  const X = xCollect();
-  document.getElementById('xN').innerHTML = `${fmt(X.A.length)}<small> สาขา</small>`;
-  document.getElementById('xNS').textContent = MODE === 'sim' ? 'ยังไม่มีข้อมูลจริง อัปโหลดไฟล์สาขาและเทรดแอเรียก่อน' : `จาก ${fmt(X.withData)} สาขาที่มีข้อมูล · SLA เกินแต่พื้นที่ในเกณฑ์อีก ${fmt(X.slaOnly.length)}`;
-  document.getElementById('xScope').textContent = xScopeText();
+  const zone = XS.mode === 'zone', area = xPrevArea(), X = xCollect(area);
+  document.querySelectorAll('[data-xm]').forEach(el => el.hidden = el.dataset.xm !== (zone ? 'zone' : 'all'));
+  document.querySelectorAll('#xMode button').forEach(b => b.setAttribute('aria-pressed', b.dataset.m === XS.mode));
+  const all = zone ? null : X;
+  const tot = zone ? xAreas().reduce((s, z) => s + z.X.A.length, 0) : X.A.length;
+  document.getElementById('xN').innerHTML = `${fmt(tot)}<small> สาขา</small>`;
+  document.getElementById('xNS').textContent = MODE === 'sim' ? 'ยังไม่มีข้อมูลจริง อัปโหลดไฟล์สาขาและเทรดแอเรียก่อน' : zone ? 'รวมทุกโซน ส่งแยกอีเมลตามโซนที่เลือก' : `จาก ${fmt(X.withData)} สาขาที่มีข้อมูล · SLA เกินแต่พื้นที่ในเกณฑ์อีก ${fmt(X.slaOnly.length)}`;
+  document.getElementById('xScope').textContent = zone ? 'แยกตาม 13 พื้นที่' : xScopeText();
+  document.getElementById('xScopeS').textContent = zone ? 'แต่ละอีเมลมีเฉพาะสาขาของโซนนั้น ไม่ใช้ตัวกรองด้านบน' : 'เปลี่ยนได้จากตัวกรองพื้นที่และจังหวัดด้านบน';
   document.getElementById('xCrit').textContent = xCritText();
-  const to = xList(XS.to), cc = xList(XS.cc);
-  document.getElementById('xMeta').innerHTML = `<div><span>ถึง</span>${to.length ? to.map(esc).join('; ') : '<i>ยังไม่ได้ใส่</i>'}</div>${cc.length ? `<div><span>สำเนา</span>${cc.map(esc).join('; ')}</div>` : ''}<div><span>เรื่อง</span><b>${esc(xSubject())}</b></div><div><span>แนบ</span>${esc(xFileName())}</div>`;
+  const r = xRcpt(area), to = xList(r.to), cc = xList(r.cc);
+  document.getElementById('xMeta').innerHTML = `${zone ? `<div><span>โซน</span><b>${esc(X.scope)}</b></div>` : ''}<div><span>ถึง</span>${to.length ? to.map(esc).join('; ') : '<i>ยังไม่ได้ใส่</i>'}</div>${cc.length ? `<div><span>สำเนา</span>${cc.map(esc).join('; ')}</div>` : ''}<div><span>เรื่อง</span><b>${esc(xSubject(X))}</b></div><div><span>แนบ</span>${esc(xFileName(X))}</div>`;
   document.getElementById('xBody').innerHTML = xHTML(X);
-  document.getElementById('xPrevNote').textContent = `${fmt(Math.min(X.A.length, +XS.top || X.A.length))} สาขาในเนื้อหา · ไฟล์แนบ ${fmt(X.A.length)} สาขา`;
-  const hb = document.getElementById('xHook'); hb.disabled = !XS.url;
+  document.getElementById('xPrevNote').textContent = `${zone ? X.scope + ' · ' : ''}${fmt(Math.min(X.A.length, +XS.top || X.A.length))} สาขาในเนื้อหา · ไฟล์แนบ ${fmt(X.A.length)} สาขา`;
+  document.getElementById('xActH').textContent = zone ? `2. ส่งทีละโซน · ${X.scope}` : '2. Export และส่งอีเมล';
+  const hb = document.getElementById('xHook'); hb.disabled = !XS.url || !X.A.length;
   document.getElementById('xHookS').textContent = XS.url ? 'ส่งผ่าน Power Automate ทันที พร้อมแนบไฟล์ Excel' : 'ส่งผ่าน Power Automate พร้อมแนบไฟล์ ต้องตั้งค่า URL ก่อน (ข้อ 3)';
   for (const id of ['xXlsx', 'xMail', 'xCopy']) document.getElementById(id).disabled = !X.A.length;
-  if (!X.A.length) hb.disabled = true;
+  if (zone) renderExportZones();
 }
 (function initExport() {
   const $ = id => document.getElementById(id);
   const bind = (id, k, ev = 'input', get = el => el.value) => { const el = $(id); if (el.type === 'checkbox') el.checked = !!XS[k]; else el.value = XS[k] ?? ''; el.addEventListener(ev, () => { XS[k] = get(el); xSave(); if (page === 'export') renderExport(); }); };
   bind('xTo', 'to'); bind('xCc', 'cc'); bind('xSubj', 'subj'); bind('xNote', 'note'); bind('xTop', 'top', 'change'); bind('xZone', 'zone', 'change', el => el.checked); bind('xUrl', 'url', 'change', el => el.value.trim());
-  const schema = {type: 'object', properties: {to: {type: 'string'}, cc: {type: 'string'}, subject: {type: 'string'}, html: {type: 'string'}, fileName: {type: 'string'}, fileBase64: {type: 'string'}, count: {type: 'integer'}}};
+  document.querySelectorAll('#xMode button').forEach(b => b.onclick = () => { XS.mode = b.dataset.m; xSave(); xMsg(''); renderExport(); });
+  const schema = {type: 'object', properties: {to: {type: 'string'}, cc: {type: 'string'}, subject: {type: 'string'}, html: {type: 'string'}, fileName: {type: 'string'}, fileBase64: {type: 'string'}, count: {type: 'integer'}, zone: {type: 'string'}}};
   $('xSchema').textContent = JSON.stringify(schema, null, 2);
   $('xSchemaCopy').onclick = () => navigator.clipboard.writeText(JSON.stringify(schema, null, 2)).then(() => toast('คัดลอก Schema แล้ว'), () => toast('คัดลอกไม่สำเร็จ'));
   const busy = async (btn, fn) => { btn.disabled = true; const t = btn.textContent; btn.textContent = 'กำลังทำ…'; try { await fn(); } catch (e) { xMsg(esc(e.message || String(e)), 'err'); } finally { btn.textContent = t; btn.disabled = false; renderExport(); } };
-  $('xXlsx').onclick = e => busy(e.currentTarget, async () => { const f = await xDownload(xCollect()); xMsg(`ดาวน์โหลด ${esc(f.name)} แล้ว${xCsvNote(f)}`, 'ok'); });
+  const cur = () => { const a = xPrevArea(); return {a, X: xCollect(a)}; };
+  $('xXlsx').onclick = e => busy(e.currentTarget, async () => { const f = await xDownload(cur().X); xMsg(`ดาวน์โหลด ${esc(f.name)} แล้ว${xCsvNote(f)}`, 'ok'); });
   $('xMail').onclick = e => busy(e.currentTarget, async () => {
-    const r = xCheckTo(); if (!r) return; const X = xCollect();
-    const f = await xDownload(X);
-    const base = `mailto:${r.to.map(encodeURIComponent).join(';')}?${r.cc.length ? `cc=${r.cc.map(encodeURIComponent).join(';')}&` : ''}subject=${encodeURIComponent(xSubject())}&body=`;
-    const body = xPlain(X, 7000 - base.length);
-    const m = document.createElement('a'); m.href = window.__lastMailto = base + encodeURIComponent(body); document.body.append(m); m.click(); m.remove();
+    const {a, X} = cur(), r = xCheck(a); if (typeof r === 'string') { xMsg(r, 'err'); if (a === undefined) $('xTo').focus(); return; }
+    const f = await xDoMail(X, r);
     xMsg(`เปิดโปรแกรมอีเมลแล้ว และดาวน์โหลด <b>${esc(f.name)}</b>${xCsvNote(f)} ลากไฟล์นี้ไปแนบในอีเมลก่อนกดส่ง · ถ้าอยากได้ตารางในเนื้อหา กด "คัดลอกเนื้อหาอีเมล" แล้ววางแทนข้อความเดิม`, 'ok');
   });
-  $('xCopy').onclick = e => busy(e.currentTarget, async () => {
-    const X = xCollect(), html = xHTML(X), text = xPlain(X);
-    if (window.ClipboardItem) await navigator.clipboard.write([new ClipboardItem({'text/html': new Blob([html], {type: 'text/html'}), 'text/plain': new Blob([text], {type: 'text/plain'})})]);
-    else await navigator.clipboard.writeText(text);
-    xMsg('คัดลอกเนื้อหาอีเมลแล้ว วางในอีเมล Outlook ได้เลย (Ctrl+V) อย่าลืมแนบไฟล์ Excel', 'ok');
-  });
+  $('xCopy').onclick = e => busy(e.currentTarget, async () => { await xDoCopy(cur().X); xMsg('คัดลอกเนื้อหาอีเมลแล้ว วางในอีเมล Outlook ได้เลย (Ctrl+V) อย่าลืมแนบไฟล์ Excel', 'ok'); });
   $('xHook').onclick = e => busy(e.currentTarget, async () => {
-    const r = xCheckTo(); if (!r) return;
+    const {a, X} = cur(), r = xCheck(a); if (typeof r === 'string') { xMsg(r, 'err'); return; }
     if (!/^https:\/\//i.test(XS.url)) { xMsg('URL ของ flow ต้องขึ้นต้นด้วย https://', 'err'); $('xPa').open = true; return; }
-    const X = xCollect(), f = await xWorkbook(X);
-    const payload = {to: r.to.join(';'), cc: r.cc.join(';'), subject: xSubject(), html: xHTML(X), fileName: f.name, fileBase64: f.base64(), count: X.A.length};
-    // text/plain keeps this a "simple" request: no CORS preflight (OPTIONS), so the flow runs exactly once with the full body
-    let res;
-    try { res = await fetch(XS.url, {method: 'POST', headers: {'Content-Type': 'text/plain;charset=UTF-8'}, body: JSON.stringify(payload)}); }
-    catch (err) { xMsg(`ส่งคำขอไปที่ flow แล้ว แต่เบราว์เซอร์อ่านผลตอบกลับไม่ได้ (flow ไม่ได้เปิด CORS) ตรวจผลในกล่องอีเมล หรือประวัติการรัน (28-day run history) ของ flow · ไม่ต้องกดส่งซ้ำ`, ''); return; }
-    if (!res.ok) throw new Error(`flow ตอบกลับ ${res.status} ${esc(res.statusText || '')} เปิดประวัติการรันของ flow เพื่อดูว่าขั้นไหนผิด`);
-    xMsg(`ส่งอีเมลถึง ${r.to.map(esc).join(', ')} แล้ว (${fmt(X.A.length)} สาขา แนบ ${esc(f.name)})${xCsvNote(f)}`, 'ok');
+    const o = await xDoHook(X, r);
+    if (a !== undefined) xZStat[xZKey(a)] = o.ok ? {c: 'ok', t: o.unsure ? 'ส่งแล้ว (รอตรวจ)' : 'ส่งแล้ว'} : {c: 'err', t: o.err};
+    if (!o.ok) throw new Error(`${o.err} เปิดประวัติการรันของ flow เพื่อดูว่าขั้นไหนผิด`);
+    xMsg(o.unsure ? 'ส่งคำขอไปที่ flow แล้ว แต่เบราว์เซอร์อ่านผลตอบกลับไม่ได้ (flow ไม่ได้เปิด CORS) ตรวจผลในกล่องอีเมล หรือประวัติการรันของ flow · ไม่ต้องกดส่งซ้ำ'
+      : `ส่งอีเมลถึง ${r.to.map(esc).join(', ')} แล้ว (${fmt(X.A.length)} สาขา แนบ ${esc(o.f.name)})${xCsvNote(o.f)}`, 'ok');
   });
+  /* zone master table */
+  const zt = $('xzT');
+  zt.addEventListener('input', e => { const el = e.target; if (!el.dataset.f || el.dataset.f === 'sel') return; const m = XS.zm[el.dataset.k] ||= {to: '', cc: ''}; m[el.dataset.f] = el.value; xSave(); clearTimeout(zt._t); zt._t = setTimeout(renderExport, 350); });
+  zt.addEventListener('change', e => { const el = e.target; if (el.dataset.f !== 'sel') return; XS.zsel[el.dataset.k] = el.checked; xSave(); renderExport(); });
+  zt.addEventListener('click', e => { const b = e.target.closest('.xzv'); if (b) { XS.zprev = b.dataset.k; xSave(); renderExport(); } });
+  $('xzAll').onclick = () => { for (const {id, X} of xAreas()) XS.zsel[xZKey(id)] = X.A.length > 0; xSave(); renderExport(); };
+  $('xzNone').onclick = () => { for (const {id} of xAreas()) XS.zsel[xZKey(id)] = false; xSave(); renderExport(); };
+  const chosen = () => xAreas().filter(({id, X}) => XS.zsel[xZKey(id)] ?? (X.A.length > 0));
+  $('xzSend').onclick = e => busy(e.currentTarget, async () => {
+    if (!/^https:\/\//i.test(XS.url)) { xMsg('URL ของ flow ต้องขึ้นต้นด้วย https://', 'err'); $('xPa').open = true; return; }
+    const L = chosen(), skip = [], fail = [], unsure = []; let sent = 0;
+    for (const {id, X} of L) { const k = xZKey(id), r = xCheck(id);
+      if (typeof r === 'string') { xZStat[k] = {c: 'err', t: 'ไม่มีผู้รับ'}; skip.push(xZoneLbl(id)); continue; }
+      xZStat[k] = {c: '', t: 'กำลังส่ง…'}; renderExportZones();
+      try { const o = await xDoHook(X, r); xZStat[k] = o.ok ? {c: 'ok', t: o.unsure ? 'ส่งแล้ว (รอตรวจ)' : 'ส่งแล้ว'} : {c: 'err', t: o.err}; if (o.ok) { sent++; if (o.unsure) unsure.push(1); } else fail.push(xZoneLbl(id)); }
+      catch (err) { xZStat[k] = {c: 'err', t: 'ผิดพลาด'}; fail.push(xZoneLbl(id)); }
+      renderExportZones();
+    }
+    xMsg(`ส่งแล้ว ${fmt(sent)} โซน${skip.length ? ` · ข้าม ${fmt(skip.length)} โซนที่ยังไม่มีผู้รับ (${skip.map(esc).join(', ')})` : ''}${fail.length ? ` · ไม่สำเร็จ ${fail.map(esc).join(', ')}` : ''}${unsure.length ? ' · เบราว์เซอร์อ่านผลตอบกลับจาก flow ไม่ได้ ตรวจผลในประวัติการรันของ flow ไม่ต้องกดส่งซ้ำ' : ''}`, fail.length || skip.length ? 'err' : 'ok');
+  });
+  $('xzXlsx').onclick = e => busy(e.currentTarget, async () => { const L = chosen(); for (const {X} of L) { await xDownload(X); await new Promise(r => setTimeout(r, 400)); } xMsg(`ดาวน์โหลด ${fmt(L.length)} ไฟล์แล้ว (เบราว์เซอร์อาจถามอนุญาตให้ดาวน์โหลดหลายไฟล์)`, 'ok'); });
+  /* master import / export as CSV: area,to,cc */
+  $('xzOut').onclick = () => { const rows = [['area', 'area_name', 'to', 'cc']].concat(xAreas().map(({id}) => { const m = XS.zm[xZKey(id)] || {}; return [id ?? '', id == null ? 'ไม่ระบุ' : areaName(id), m.to || '', m.cc || '']; }));
+    const csv = '﻿' + rows.map(r => r.map(v => { const t = String(v ?? ''); return /[",\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t; }).join(',')).join('\r\n');
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], {type: 'text/csv;charset=utf-8'})); a.download = 'master_mail_รายโซน.csv'; document.body.append(a); a.click(); a.remove(); };
+  $('xzIn').onclick = () => $('xzFile').click();
+  $('xzFile').onchange = async e => { const file = e.target.files[0]; if (!file) return; e.target.value = '';
+    try { const rows = parseCSV(await file.text()); let n = 0;
+      for (const r of rows) { const keyCol = Object.keys(r).find(k => /^(area|area_id|zone|พื้นที่|โซน)$/i.test(k.trim())), toCol = Object.keys(r).find(k => /^(to|mail_to|email|อีเมล|ถึง)$/i.test(k.trim())), ccCol = Object.keys(r).find(k => /^(cc|สำเนา)$/i.test(k.trim()));
+        if (!keyCol || !toCol) continue; const raw = String(r[keyCol]).trim(), id = raw === '' ? null : isNaN(+raw) ? raw : +raw;
+        XS.zm[xZKey(id)] = {to: String(r[toCol] || '').trim(), cc: ccCol ? String(r[ccCol] || '').trim() : ''}; n++; }
+      xSave(); renderExport(); xMsg(n ? `นำเข้า Master ผู้รับ ${fmt(n)} โซนแล้ว` : 'ไม่พบคอลัมน์ area และ to ในไฟล์', n ? 'ok' : 'err');
+    } catch (err) { xMsg('อ่านไฟล์ไม่สำเร็จ ใช้ไฟล์ CSV ที่มีคอลัมน์ area, to, cc', 'err'); } };
 })();
 
 /* ================= main render ================= */
