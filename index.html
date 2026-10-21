@@ -609,6 +609,7 @@ header h1#pgTitle{margin:0;font:700 19px/1.15 var(--f-display);letter-spacing:.0
               <label><input type="checkbox" data-l="stores" checked>ร้าน 7-Eleven (สีตามประเด็น)</label>
               <label><input type="checkbox" data-l="area" checked><span class="sw" style="background:color-mix(in srgb,var(--svc) 25%,transparent);border:1.5px solid var(--svc)"></span>เทรดแอเรียจากไฟล์</label>
               <label><input type="checkbox" data-l="std" checked><span class="sw" style="border:1.5px dashed var(--fg)"></span>รัศมีมาตรฐาน</label>
+              <label data-only="anomaly" hidden><input type="checkbox" data-l="far" checked><span class="sw" style="border-top:2px dashed var(--short);height:0;margin-top:5px"></span>ระยะไกลสุดจากร้าน (กม.)</label>
               <label><input type="checkbox" data-l="cut" checked><span class="sw" style="background:repeating-linear-gradient(135deg,var(--short) 0 2px,transparent 2px 5px);border:1px solid var(--short)"></span>แนะนำให้ตัด (เลขคือลำดับ)</label>
               <label><input type="checkbox" data-l="bounds" checked>เส้นเขตจังหวัด/อำเภอ</label>
               <div class="h">บ้านลูกค้า</div>
@@ -1570,7 +1571,7 @@ function whatIf(b, R) { return statsFor(b, i => CUST.dist[i] <= R); }
 const DMAP = (() => {
   const wrap = document.getElementById('dmapWrap'), cv = document.getElementById('dcv'), ctx = cv.getContext('2d');
   let W = 0, H = 0, dpr = 1, cx = 100.5, cy = MERC(13), s = 40, dirty = true, anim = null;
-  const L = {stores: true, area: true, std: true, cut: true, bounds: true, t: [true, true, true]};
+  const L = {stores: true, area: true, std: true, cut: true, bounds: true, far: true, t: [true, true, true]};
   let col = {};
   const readCol = () => { const g = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
     col = {water: g('--map-water'), land: g('--map-land2'), edge: g('--map-line'), edge2: g('--map-line2'), fg: g('--fg'), muted: g('--muted'), surface: g('--surface'),
@@ -1696,7 +1697,7 @@ const DMAP = (() => {
       }
     }
     // anomaly page: dashed line from the store to the farthest point of its trade area, labelled in km
-    if (page === 'anomaly' && detail) {
+    if (page === 'anomaly' && detail && L.far) {
       const list = visible.filter(b => b.tradeRings && (k > 9 || b === sel)), lbl = [];
       ctx.save(); ctx.setLineDash([6, 4]); ctx.lineWidth = 2; ctx.strokeStyle = col.sla;
       for (const b of list) { const [fx, fy] = tradeGeom(b).far, X0 = sx(b.lon), Y0 = sy(b.my), X1 = sx(fx), Y1 = sy(MERC(fy));
