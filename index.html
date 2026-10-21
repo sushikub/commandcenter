@@ -803,11 +803,11 @@ header h1#pgTitle{margin:0;font:700 19px/1.15 var(--f-display);letter-spacing:.0
           <div class="xform">
             <label>HTTP URL ของ flow <input type="url" id="xUrl" placeholder="https://prod-00.southeastasia.logic.azure.com/workflows/..." autocomplete="off"></label>
             <ol class="xsteps">
-              <li>สร้าง flow ใหม่ใน Power Automate แบบ <b>Instant cloud flow</b> ทริกเกอร์ <b>When an HTTP request is received</b> ตั้ง Who can trigger เป็น <b>Anyone</b></li>
-              <li>ใส่ Request Body JSON Schema ตามกล่องด้านล่าง (กดคัดลอก)</li>
-              <li>เพิ่มขั้น <b>Office 365 Outlook → Send an email (V2)</b> หรือ <b>Send an email from a shared mailbox</b> แล้วผูกช่อง: To = <code>to</code>, CC = <code>cc</code>, Subject = <code>subject</code>, Body = <code>html</code></li>
-              <li>ในส่วน Attachments: Name = <code>fileName</code>, Content = นิพจน์ <code>base64ToBinary(triggerBody()?['fileBase64'])</code></li>
-              <li>เพิ่มขั้น <b>Response</b> ส่ง Status 200 แล้วบันทึก flow คัดลอก HTTP URL มาใส่ช่องด้านบน</li>
+              <li>สร้าง flow แบบ <b>Instant cloud flow</b> ทริกเกอร์ <b>When an HTTP request is received</b> · Who can trigger = <b>Anyone</b> · ในตัวเลือกขั้นสูงตั้ง Method = <b>POST</b> · ช่อง Request Body JSON Schema <b>เว้นว่าง</b></li>
+              <li>เพิ่มขั้น <b>Data Operation → Parse JSON</b> · Content = นิพจน์ <code>json(triggerBody())</code> · Schema = กล่องด้านล่าง (กดคัดลอก)</li>
+              <li>เพิ่มขั้น <b>Office 365 Outlook → Send an email (V2)</b> (หรือ from a shared mailbox) เลือกค่าจาก Parse JSON: To = <code>to</code>, CC = <code>cc</code>, Subject = <code>subject</code>, Body = <code>html</code> (กดปุ่ม &lt;/&gt; ในช่อง Body เพื่อวางแบบ HTML)</li>
+              <li>Attachments: Name = <code>fileName</code> · Content = นิพจน์ <code>base64ToBinary(body('Parse_JSON')?['fileBase64'])</code> (ใช้ base64ToBinary ไม่ใช่ base64ToString)</li>
+              <li>บันทึก flow แล้วคัดลอก HTTP URL มาใส่ช่องด้านบน · ถ้าเพิ่มขั้น <b>Response</b> (Status 200, Header <code>Access-Control-Allow-Origin: *</code>) หน้านี้จะยืนยันผลการส่งได้</li>
             </ol>
             <div class="xschema"><button class="btn" id="xSchemaCopy">คัดลอก Schema</button><pre id="xSchema"></pre></div>
             <div class="hint">หน้านี้ส่งข้อมูลออกนอกเบราว์เซอร์เฉพาะตอนกดส่งอัตโนมัติ และส่งไปที่ URL ที่ใส่ไว้เท่านั้น ถ้าเปิดไฟล์ผ่านหน้าที่บล็อกการเชื่อมต่อภายนอก ให้เปิดไฟล์ HTML โดยตรงหรือจากเซิร์ฟเวอร์ภายใน</div>
@@ -3160,10 +3160,11 @@ function renderExport() {
     if (!/^https:\/\//i.test(XS.url)) { xMsg('URL ของ flow ต้องขึ้นต้นด้วย https://', 'err'); $('xPa').open = true; return; }
     const X = xCollect(), f = await xWorkbook(X);
     const payload = {to: r.to.join(';'), cc: r.cc.join(';'), subject: xSubject(), html: xHTML(X), fileName: f.name, fileBase64: f.base64(), count: X.A.length};
+    // text/plain keeps this a "simple" request: no CORS preflight (OPTIONS), so the flow runs exactly once with the full body
     let res;
-    try { res = await fetch(XS.url, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload)}); }
-    catch (err) { throw new Error('เชื่อมต่อ flow ไม่ได้ ตรวจ URL และสิทธิ์ Who can trigger = Anyone หรือหน้านี้อาจถูกบล็อกการเชื่อมต่อภายนอก (ลองเปิดไฟล์ HTML โดยตรง)'); }
-    if (!res.ok) throw new Error(`flow ตอบกลับ ${res.status} ${esc(res.statusText || '')} ตรวจการตั้งค่า flow อีกครั้ง`);
+    try { res = await fetch(XS.url, {method: 'POST', headers: {'Content-Type': 'text/plain;charset=UTF-8'}, body: JSON.stringify(payload)}); }
+    catch (err) { xMsg(`ส่งคำขอไปที่ flow แล้ว แต่เบราว์เซอร์อ่านผลตอบกลับไม่ได้ (flow ไม่ได้เปิด CORS) ตรวจผลในกล่องอีเมล หรือประวัติการรัน (28-day run history) ของ flow · ไม่ต้องกดส่งซ้ำ`, ''); return; }
+    if (!res.ok) throw new Error(`flow ตอบกลับ ${res.status} ${esc(res.statusText || '')} เปิดประวัติการรันของ flow เพื่อดูว่าขั้นไหนผิด`);
     xMsg(`ส่งอีเมลถึง ${r.to.map(esc).join(', ')} แล้ว (${fmt(X.A.length)} สาขา แนบ ${esc(f.name)})${xCsvNote(f)}`, 'ok');
   });
 })();
