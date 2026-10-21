@@ -1968,9 +1968,9 @@ function renderAnomRecs(list) {
   const el = document.getElementById('dRecList');
   el.innerHTML = list.slice(0, dShowN).map(b => { const d = b.dv, lim = anomalyLim(b);
     return `<div class="rec" data-code="${b.code}" tabindex="0"><span class="sv" style="background:var(--short)"></span>
-      <div style="min-width:0"><div class="rt"><b>${esc(b.name)}</b><span class="rm">${esc(provByCode[b.prov]?.n || '')} · ${ZONE_TH[zoneOf(b)]} · ${b.code}</span></div>
-      <div class="rl">รัศมีไกลสุด ${f1(d.rMax)} กม. เกินเกณฑ์ ${f1(lim)} กม. อยู่ ${f1(d.rMax - lim)} กม. · ${d.ordSrc ? fmt(Math.round(d.ordersDay)) + ' ออเดอร์/วัน' : ''}${d.cut?.recN ? ` · แนะนำตัด ${d.cut.recN} ส่วน` : ''}</div></div>
-      <div class="rv">SLA <b class="num">${d.avgT.toFixed(0)}</b> นาที<br><span class="num">${f1(d.rMax)}</span> / ${f1(lim)} กม.</div></div>`; }).join('') || `<div class="empty">ไม่พบสาขาที่ SLA เกิน ${ASET.sla} นาที และเทรดแอเรียเกินมาตรฐาน</div>`;
+      <div style="min-width:0"><div class="rt"><b>${esc(b.code)} ${esc(b.name)}</b><span class="rm">${b.area ? `พื้นที่ ${typeof b.area === 'number' ? b.area + ' · ' : ''}${esc(areaName(b.area))} · ` : ''}${esc(provByCode[b.prov]?.n || '')} · เกณฑ์ ${ZONE_TH[zoneOf(b)]}</span></div>
+      <div class="rl">รัศมีไกลสุด ${f1(d.rMax)} กม. เกินเกณฑ์ ${f1(lim)} กม. อยู่ ${d.rMax - lim < 1 ? fmt(Math.max(1, Math.round((d.rMax - lim) * 1000))) + ' ม.' : f1(d.rMax - lim) + ' กม.'} · ${d.ordSrc ? fmt(Math.round(d.ordersDay)) + ' ออเดอร์/วัน' : ''}${d.cut?.recN ? ` · แนะนำตัด ${d.cut.recN} ส่วน` : ''}</div></div>
+      <div class="rv">SLA <b class="num">${d.avgT.toFixed(0)}</b> นาที<br><span class="num">${d.rMax - lim < .05 ? d.rMax.toFixed(2) : f1(d.rMax)}</span> / ${f1(lim)} กม.</div></div>`; }).join('') || `<div class="empty">ไม่พบสาขาที่ SLA เกิน ${ASET.sla} นาที และเทรดแอเรียเกินมาตรฐาน</div>`;
   const more = document.getElementById('dRecMore');
   more.innerHTML = list.length > dShowN ? `แสดง ${dShowN} จาก ${fmt(list.length)} <button class="btn" id="dRecMoreBtn">แสดงเพิ่ม</button>` : '';
   const mb = document.getElementById('dRecMoreBtn'); if (mb) mb.onclick = () => { dShowN += 40; renderAnomRecs(list); };
