@@ -605,6 +605,18 @@ header h1#pgTitle{margin:0;font:700 19px/1.15 var(--f-display);letter-spacing:.0
     <span>สาขา "SLA สูง" คือ SLA ในไฟล์สาขาเกินเป้า</span>
   </div>
 
+  <section class="panel" data-only="anomaly" hidden>
+    <div class="ph"><h2>สรุปรายโซน</h2><span class="note" id="azNote"></span>
+      <div class="right"><div class="seg" id="azBy" role="group" aria-label="แยกตาม"><button data-by="area" aria-pressed="true">13 พื้นที่</button><button data-by="grp" aria-pressed="false">กทม./ปริมณฑล/ตจว.</button><button data-by="prov" aria-pressed="false">จังหวัด</button></div>
+      <button class="btn" id="azCopy">คัดลอกตาราง</button></div></div>
+    <div class="tscroll" id="azScroll"><table id="azT">
+      <thead><tr><th class="sort" data-k="name">โซน</th><th class="sort n" data-k="data">มีข้อมูล / ทั้งหมด</th><th class="sort" data-k="n">สาขาผิดปกติ</th><th class="sort n" data-k="share">% ผิดปกติ</th>
+        <th class="sort n" data-k="sla">SLA เฉลี่ย นาที</th><th class="sort n" data-k="rAvg">รัศมีเฉลี่ย กม.</th><th class="sort n" data-k="rMax">รัศมีสูงสุด กม.</th><th>สาขาที่ไกลสุด</th>
+        <th class="sort n" data-k="ord">ออเดอร์/วัน ที่กระทบ</th><th class="sort n" data-k="slaOnly">SLA เกิน พื้นที่ปกติ</th><th class="sort n" data-k="areaOnly">พื้นที่เกิน SLA ผ่าน</th></tr></thead>
+      <tbody></tbody><tfoot></tfoot>
+    </table></div>
+    <div class="hint" style="padding:8px 14px">ตัวเลขสาขาผิดปกติ SLA เฉลี่ย รัศมี และออเดอร์ นับเฉพาะสาขาผิดปกติ · SLA เฉลี่ยถ่วงตามออเดอร์/วัน · สองคอลัมน์สุดท้ายคือสาขาที่เข้าเกณฑ์ข้อเดียวจึงไม่แสดงในหน้านี้</div>
+  </section>
   <section class="dgrid2">
     <div class="panel" id="dmapPanel">
       <div class="ph"><h2>แผนที่พื้นที่จัดส่ง</h2><span class="note">คลิกร้านเพื่อดูพื้นที่และคำแนะนำ · ลากเพื่อเลื่อน · ล้อเมาส์หรือสองนิ้วเพื่อซูม</span></div>
@@ -652,18 +664,6 @@ header h1#pgTitle{margin:0;font:700 19px/1.15 var(--f-display);letter-spacing:.0
     </div>
   </section>
 
-  <section class="panel" data-only="anomaly" hidden>
-    <div class="ph"><h2>สรุปรายโซน</h2><span class="note" id="azNote"></span>
-      <div class="right"><div class="seg" id="azBy" role="group" aria-label="แยกตาม"><button data-by="area" aria-pressed="true">13 พื้นที่</button><button data-by="grp" aria-pressed="false">กทม./ปริมณฑล/ตจว.</button><button data-by="prov" aria-pressed="false">จังหวัด</button></div>
-      <button class="btn" id="azCopy">คัดลอกตาราง</button></div></div>
-    <div class="tscroll" id="azScroll"><table id="azT">
-      <thead><tr><th class="sort" data-k="name">โซน</th><th class="sort n" data-k="data">มีข้อมูล / ทั้งหมด</th><th class="sort" data-k="n">สาขาผิดปกติ</th><th class="sort n" data-k="share">% ผิดปกติ</th>
-        <th class="sort n" data-k="sla">SLA เฉลี่ย นาที</th><th class="sort n" data-k="rAvg">รัศมีเฉลี่ย กม.</th><th class="sort n" data-k="rMax">รัศมีสูงสุด กม.</th><th>สาขาที่ไกลสุด</th>
-        <th class="sort n" data-k="ord">ออเดอร์/วัน ที่กระทบ</th><th class="sort n" data-k="slaOnly">SLA เกิน พื้นที่ปกติ</th><th class="sort n" data-k="areaOnly">พื้นที่เกิน SLA ผ่าน</th></tr></thead>
-      <tbody></tbody><tfoot></tfoot>
-    </table></div>
-    <div class="hint" style="padding:8px 14px">ตัวเลขสาขาผิดปกติ SLA เฉลี่ย รัศมี และออเดอร์ นับเฉพาะสาขาผิดปกติ · SLA เฉลี่ยถ่วงตามออเดอร์/วัน · สองคอลัมน์สุดท้ายคือสาขาที่เข้าเกณฑ์ข้อเดียวจึงไม่แสดงในหน้านี้</div>
-  </section>
   <section class="panel">
     <div class="ph"><h2>ขนาดพื้นที่จัดส่งรายสาขา</h2><span class="note" id="dTNote"></span><div class="right"><button class="btn" id="dCopyT">คัดลอกตาราง</button></div></div>
     <div class="tscroll" id="dTScroll"><table id="dT">
