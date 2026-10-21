@@ -564,6 +564,8 @@ header h1#pgTitle{margin:0;font:700 19px/1.15 var(--f-display);letter-spacing:.0
     <b style="color:var(--fg)">เกณฑ์</b>
     <label>รัศมี กทม. ไม่เกิน <input type="number" id="cBkk" data-k="rBkk" value="1" min="0.3" max="10" step="0.1"> กม.</label>
     <label>ต่างจังหวัด ไม่เกิน <input type="number" id="cUp" data-k="rUp" value="2" min="0.3" max="20" step="0.1"> กม.</label>
+    <label>ขับรถต่อขา ต่างจังหวัดไม่เกิน <input type="number" id="cTUp" data-k="tUp" value="10" min="1" max="60" step="1"> นาที</label>
+    <label>กทม. ไม่เกิน <input type="number" id="cTBkk" data-k="tBkk" value="" placeholder="ไม่ใช้" min="1" max="60" step="1"> นาที</label>
     <label>เป้า SLA ส่งถึงภายใน <input type="number" id="cSla" data-k="sla" value="30" min="5" max="120" step="1"> นาที</label>
     <span>สาขา "SLA สูง" คือเวลาเฉลี่ยเกินเป้า หรือส่งช้าตั้งแต่ 25% ของออเดอร์</span>
   </div>
@@ -1219,7 +1221,10 @@ document.getElementById('pauseBtn').onclick = () => { running = !running; setSou
 
 /* ================= delivery area: model ================= */
 let CUST = {n: 0};
-const DSET = {sla: 30, rBkk: 1, rUp: 2};
+const DSET = {sla: 30, rBkk: 1, rUp: 2, tBkk: null, tUp: 10};
+// one-way ride time limit (minutes) and the road distance it allows
+const travelLimitOf = b => isBkk(b) ? DSET.tBkk : DSET.tUp;
+const travelDistOf = b => { const t = travelLimitOf(b); return t ? t * speedOf(b) / 60 / 1.35 : Infinity; };
 const isBkk = b => b.prov === '10';
 const limitOf = b => isBkk(b) ? DSET.rBkk : DSET.rUp;
 const KM_LAT = 110.574, kmLon = lat => 111.32 * Math.cos(lat * Math.PI / 180);
@@ -1425,10 +1430,11 @@ function computeDeliveryStats(b) {
   }
   const tg = b.tradeRings ? tradeGeom(b) : null, rMax = tg ? tg.rmax : b.rad ? Math.max(...b.rad) : 0, area = b.tradeRings ? ringsAreaKm(b.tradeRings) : b.rad ? polyArea(b.rad) : 0;
   const has = s.ord > 0;
-  const flags = {over: rMax > lim + .05, sla: (has || !!b.slaFile) && (s.avgT > DSET.sla || (has && s.lateP >= .25)), cap: (has || b.ordFile != null) && s.load > 1};
+  const far = rMax > travelDistOf(b) + .02;
+  const flags = {far, radius: rMax > lim + .05, over: rMax > lim + .05 || far, sla: (has || !!b.slaFile) && (s.avgT > DSET.sla || (has && s.lateP >= .25)), cap: (has || b.ordFile != null) && s.load > 1};
   let outC = 0, outOrd = 0;
   for (let i = b.c0; i < b.c1; i++) if (CUST.dist[i] > lim) { outC++; outOrd += CUST.orders[i]; }
-  b.dv = Object.assign(s, {lim, rMax, area, stdArea: Math.PI * lim * lim, flags, outC, outOrd, outShare: s.ord ? outOrd / s.ord : 0,
+  b.dv = Object.assign(s, {lim, rMax, rideMax: rideMin(b, rMax), dT: travelDistOf(b), area, stdArea: Math.PI * lim * lim, flags, outC, outOrd, outShare: s.ord ? outOrd / s.ord : 0,
     issue: flags.sla ? 'sla' : flags.cap ? 'cap' : flags.over ? 'over' : 'ok'});
   b.dv.cut = (flags.over || flags.sla || flags.cap) ? computeCut(b) : null;
   b.dv.capRec = flags.cap ? computeCapRec(b) : null;
@@ -1444,8 +1450,8 @@ function cutScore(x, lim) {
   return {far, occS, modS, regS, lateS, score: Math.pow(far, 1.5) * (occS + .4 * modS) * Math.pow(1 - regS, 2) * (1 + .5 * lateS)};
 }
 function computeCut(b) {
-  if (!b.rad || b.c1 <= b.c0) return null;
-  const lim = limitOf(b), w = isBkk(b) ? .25 : .5, rMax = Math.max(...b.rad), nb = Math.ceil(rMax / w) + 1, floorJ = Math.ceil(lim * .5 / w);
+  if (!b.rad) return null;
+  const lim = limitOf(b), dT = travelDistOf(b), tLim = travelLimitOf(b), w = isBkk(b) ? .25 : .5, rMax = Math.max(...b.rad), nb = Math.ceil(rMax / w) + 1, floorJ = Math.ceil(lim * .5 / w);
   const blank = () => ({c: 0, ord: 0, occ: 0, mod: 0, reg: 0, late: 0, tSum: 0, dSum: 0});
   const cell = Array.from({length: 8}, () => Array.from({length: nb}, blank));
   for (let i = b.c0; i < b.c1; i++) {
@@ -1457,7 +1463,22 @@ function computeCut(b) {
   const ptr = rOut.map(r => Math.min(nb - 1, Math.floor(r / w)));
   const peeled = Array(8).fill(false);
   const steps = [];
-  for (let guard = 0; guard < 40 && steps.length < 10; guard++) {
+  if (isFinite(dT)) for (let k = 0; k < 8; k++) {
+    if (rOut[k] <= dT + .02) continue;
+    const acc = blank();
+    for (let i = b.c0; i < b.c1; i++) if (sec8(CUST.brg[i]) === k && CUST.dist[i] > dT) {
+      const o = CUST.orders[i], t = CUST.tier[i]; acc.c++; acc.ord += o; acc.tSum += o * CUST.time[i]; acc.dSum += CUST.dist[i]; if (CUST.time[i] > DSET.sla) acc.late += o;
+      if (t === 0) acc.occ++; else if (t === 1) acc.mod++; else acc.reg++;
+    }
+    const sc = acc.c ? cutScore(acc, lim) : {far: dT / lim, occS: 0, modS: 0, regS: 0, lateS: 0, score: 9};
+    steps.push(Object.assign({k, r0: dT, r1: rOut[k], grp: 0, acc, dir: DIR8[k], travel: true}, sc));
+    // customers between the last whole band and dT are already counted in this step
+    const j = Math.floor(dT / w); for (let q = j; q < nb; q++) cell[k][q] = blank();
+    peeled[k] = true; ptr[k] = Math.min(ptr[k], j - 1);
+  }
+  steps.sort((p, q) => q.r1 - q.r0 - (p.r1 - p.r0));
+  const nTravel = steps.length;
+  for (let guard = 0; b.c1 > b.c0 && guard < 40 && steps.length < 10 + nTravel; guard++) {
     let best = null;
     for (let k = 0; k < 8; k++) {
       const acc = blank(); let j = ptr[k];
@@ -1467,10 +1488,10 @@ function computeCut(b) {
       if (!best || sc.score > best.sc.score) best = {k, jFrom: j, jTo: ptr[k], acc, sc};
     }
     if (!best || best.sc.score < .3) break;
-    const {k, jFrom, jTo, acc, sc} = best, r0 = jFrom * w, r1 = peeled[k] ? (jTo + 1) * w : rOut[k];
+    const {k, jFrom, jTo, acc, sc} = best, r0 = jFrom * w, r1 = peeled[k] ? Math.min((jTo + 1) * w, isFinite(dT) ? dT : Infinity) : rOut[k];
     const grp = (r0 >= lim * .9 && sc.occS >= .5) || sc.score >= .9 ? 1 : 2;
     const prev = steps[steps.length - 1];
-    if (prev && prev.k === k && prev.grp === grp) { for (const f in acc) prev.acc[f] += acc[f]; prev.r0 = r0; Object.assign(prev, cutScore(prev.acc, lim)); }
+    if (prev && prev.k === k && prev.grp === grp && !prev.travel) { for (const f in acc) prev.acc[f] += acc[f]; prev.r0 = r0; Object.assign(prev, cutScore(prev.acc, lim)); }
     else steps.push(Object.assign({k, r0, r1, grp, acc, dir: DIR8[k]}, sc));
     peeled[k] = true; ptr[k] = jFrom - 1;
   }
@@ -1489,11 +1510,11 @@ function computeCut(b) {
   let recN = 0;
   for (let i = 0; i < steps.length; i++) {
     const prev = i ? steps[i - 1].cum : before, slaMet = prev.avgT <= DSET.sla && prev.lateP < .25;
-    if (steps[i].grp === 1 || (b.dv.flags.sla && !slaMet)) recN = i + 1; else break;
+    if (steps[i].grp <= 1 || (b.dv.flags.sla && !slaMet)) recN = i + 1; else break;
   }
   const rec = steps.slice(0, recN), after = recN ? steps[recN - 1].cum : before;
   const sum = f => rec.reduce((s, z) => s + z[f], 0), custLost = sum('c');
-  return {steps, recN, before, after, lim, cutOrd: before.ord - after.ord, movedOrd: rec.filter(z => z.takeover).reduce((s, z) => s + z.ord, 0),
+  return {steps, recN, before, after, lim, dT, tLim, nTravel, cutOrd: before.ord - after.ord, movedOrd: rec.filter(z => z.takeover).reduce((s, z) => s + z.ord, 0),
     regLost: sum('reg'), occLost: sum('occ'), custLost, occShare: custLost ? sum('occ') / custLost : 0,
     newRMax: recN ? steps[recN - 1].cumRMax : rMax, newArea: recN ? steps[recN - 1].cumArea : polyArea(b.rad)};
 }
@@ -1588,7 +1609,7 @@ const DMAP = (() => {
           ctx.beginPath(); polyLL(b, outer, a0, a1, 2.5);
           for (let a = a1; a >= a0 - 1e-6; a -= 2.5) { const [lon, lat] = offsetLL(b.lon, b.lat, (a + 360) % 360, z.r0); ctx.lineTo(sx(lon), sy(MERC(lat))); }
           ctx.closePath();
-          const cc = z.grp === 1 ? col.sla : col.over;
+          const cc = z.grp <= 1 ? col.sla : col.over;
           if (rec) { ctx.fillStyle = getHatch(cc); ctx.fill(); ctx.setLineDash([]); } else ctx.setLineDash([4, 3]);
           ctx.strokeStyle = cc; ctx.globalAlpha = rec ? 1 : .7; ctx.lineWidth = b === sel ? 1.6 : 1; ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1;
           if (b === sel && k > 8) { const [lon, lat] = offsetLL(b.lon, b.lat, z.k * 45, (z.r0 + outer(z.k * 45)) / 2); labels.push([sx(lon), sy(MERC(lat)), idx + 1, cc, rec]); }
@@ -1601,6 +1622,7 @@ const DMAP = (() => {
     if (detail && L.std) {
       ctx.setLineDash([5, 4]);
       for (const b of visible) { if (k < 25 && b !== sel) continue; ctx.beginPath(); ctx.arc(sx(b.lon), sy(b.my), limitOf(b) * k, 0, 6.283); ctx.strokeStyle = col.fg; ctx.globalAlpha = b === sel ? .8 : .35; ctx.lineWidth = 1.2; ctx.stroke(); }
+      if (sel && visible.includes(sel) && isFinite(travelDistOf(sel))) { ctx.setLineDash([2, 4]); ctx.beginPath(); ctx.arc(sx(sel.lon), sy(sel.my), travelDistOf(sel) * k, 0, 6.283); ctx.strokeStyle = col.sla; ctx.globalAlpha = .9; ctx.lineWidth = 1.6; ctx.stroke(); }
       ctx.setLineDash([]); ctx.globalAlpha = 1;
     }
     if (sel && whatR != null) { ctx.beginPath(); ctx.arc(sx(sel.lon), sy(sel.my), whatR * k, 0, 6.283); ctx.strokeStyle = col.accent; ctx.lineWidth = 2.5; ctx.stroke(); }
@@ -1762,7 +1784,7 @@ const DMAP = (() => {
 let dSel = null, whatR = null, dTab = 'sla', dShowN = 40, dSortK = 'avgT', dSortDir = -1, dTShow = 50, dFirst = true;
 const dScope = b => MODE !== 'sim' && inScope(b, true) && (filt.iss === 'all' || (b.dv && b.dv.flags[filt.iss]));
 const ISSUE = {sla: {t: 'SLA สูง', c: 'p-short'}, over: {t: 'เกินรัศมี', c: 'p-over'}, cap: {t: 'เกินกำลังไรเดอร์', c: 'p-cap'}};
-function issuePills(b) { if (!b.rad && !b.dv?.cnt) return '<span class="pill p-none">ยังไม่มีเทรดแอเรีย</span>'; const f = b.dv?.flags || {}; const p = ['sla', 'cap', 'over'].filter(k => f[k]).map(k => `<span class="pill ${ISSUE[k].c}">${ISSUE[k].t}</span>`); return p.join(' ') || '<span class="pill p-ok">ปกติ</span>'; }
+function issuePills(b) { if (!b.rad && !b.dv?.cnt) return '<span class="pill p-none">ยังไม่มีเทรดแอเรีย</span>'; const f = b.dv?.flags || {}; const p = ['sla', 'cap'].filter(k => f[k]).map(k => `<span class="pill ${ISSUE[k].c}">${ISSUE[k].t}</span>`); if (f.radius) p.push(`<span class="pill p-over">เกินรัศมี</span>`); if (f.far) p.push(`<span class="pill p-short">เดินทางเกิน ${travelLimitOf(b)} นาที/ขา</span>`); return p.join(' ') || '<span class="pill p-ok">ปกติ</span>'; }
 const f1 = v => (Math.round(v * 10) / 10).toLocaleString('th-TH', {minimumFractionDigits: 1, maximumFractionDigits: 1});
 const pct = v => Math.round(v * 100) + '%';
 
@@ -1804,7 +1826,7 @@ function recLine(b) {
   if (dTab === 'cap' && d.capRec) return `ต้องการไรเดอร์ช่วงพีค ${d.capRec.need} คน มี ${d.ridersPeak} คน · เพิ่ม ${d.capRec.add} คน${d.capRec.fitR ? ` หรือลดรัศมีเหลือ ${f1(d.capRec.fitR)} กม.` : ''}`;
   if (!c || !c.recN) return c ? 'ส่วนที่ไกลส่วนใหญ่เป็นลูกค้าประจำ ไม่แนะนำให้ตัด ดูกำลังไรเดอร์แทน' : dTab === 'sla' ? 'ไม่มีส่วนที่ไกลและซื้อน้อยให้ตัด ตรวจกำลังไรเดอร์และเวลาเตรียมของ' : '';
   const dirs = [...new Set(c.steps.slice(0, c.recN).map(z => z.dir))];
-  return `ตัด ${c.recN} ส่วน (ทิศ${dirs.slice(0, 2).join(', ')}${dirs.length > 2 ? ` +${dirs.length - 2}` : ''}) ลูกค้านานๆ ที ${pct(c.occShare)} · เวลา ${c.before.avgT.toFixed(0)}→${c.after.avgT.toFixed(0)} นาที · ออเดอร์หาย ${pct(c.cutOrd / Math.max(1, c.before.ord))}`;
+  return `${c.nTravel ? `ขับรถเกิน ${c.tLim} นาที/ขา ${c.nTravel} ทิศ · ` : ''}ตัด ${c.recN} ส่วน (ทิศ${dirs.slice(0, 2).join(', ')}${dirs.length > 2 ? ` +${dirs.length - 2}` : ''}) ลูกค้านานๆ ที ${pct(c.occShare)} · เวลา ${c.before.avgT.toFixed(0)}→${c.after.avgT.toFixed(0)} นาที · ออเดอร์หาย ${pct(c.cutOrd / Math.max(1, c.before.ord))}`;
 }
 function renderRecs(scoped) {
   const key = dTab, list = scoped.filter(b => b.dv?.flags[key]);
@@ -1854,7 +1876,7 @@ function bandChart(b) {
 function recText(b) {
   const d = b.dv, c = d.cut, L = [`สาขา ${b.name} (${b.code}) ${provByCode[b.prov]?.n || ''}`,
     `รัศมีไกลสุด ${f1(d.rMax)} กม. (มาตรฐาน ${d.lim} กม.) พื้นที่ ${f1(d.area)} ตร.กม. ลูกค้า ${fmt(d.cnt)} ราย SLA ${d.avgT ? d.avgT.toFixed(0) : '–'} นาที ออเดอร์ ${d.ordSrc ? fmt(Math.round(d.ordersDay)) : '–'}/วัน${d.lateKnown ? ` ส่งช้า ${pct(d.lateP)}` : ''}`];
-  if (c && c.recN) { L.push('แนะนำตัดพื้นที่ตามลำดับ (ส่วนที่ไกลและลูกค้าซื้อนานๆ ที ก่อน):'); c.steps.slice(0, c.recN).forEach((z, i) => L.push(`${i + 1}. ทิศ${z.dir} ช่วง ${f1(z.r0)}–${f1(z.r1)} กม.: ลูกค้า ${z.c} ราย (นานๆ ที ${pct(z.occS)}, ประจำ ${z.reg} ราย) ${fmt(Math.round(z.ord / 30 * (b.ordScale || 1)))} ออเดอร์/วัน ส่งช้า ${pct(z.lateP)}${z.takeover ? ` → สาขา ${z.takeover.b.name} (${z.takeover.b.code}) รับแทนได้` : ' → ไม่มีสาขาใกล้เคียงรับแทน'}`));
+  if (c && c.recN) { L.push(`แนะนำตัดพื้นที่ตามลำดับ (${c.nTravel ? `ส่วนที่ขับรถเกิน ${c.tLim} นาที/ขา ก่อน แล้ว` : ''}ส่วนที่ไกลและลูกค้าซื้อนานๆ ที):`); c.steps.slice(0, c.recN).forEach((z, i) => L.push(`${i + 1}. ทิศ${z.dir} ช่วง ${f1(z.r0)}–${f1(Math.min(z.r1, d.rMax))} กม. (ขับรถ ${Math.round(rideMin(b, z.r0))}–${Math.round(rideMin(b, Math.min(z.r1, d.rMax)))} นาที/ขา)${z.travel ? ' เดินทางเกินเกณฑ์' : ''}: ลูกค้า ${z.c} ราย (นานๆ ที ${pct(z.occS)}, ประจำ ${z.reg} ราย) ${fmt(Math.round(z.ord / 30 * (b.ordScale || 1)))} ออเดอร์/วัน ส่งช้า ${pct(z.lateP)}${z.takeover ? ` → สาขา ${z.takeover.b.name} (${z.takeover.b.code}) รับแทนได้` : ' → ไม่มีสาขาใกล้เคียงรับแทน'}`));
     L.push(`ผลหลังตัด: เวลาเฉลี่ย ${c.before.avgT.toFixed(0)}→${c.after.avgT.toFixed(0)} นาที ส่งช้า ${pct(c.before.lateP)}→${pct(c.after.lateP)} ออเดอร์หาย ${pct(c.cutOrd / Math.max(1, c.before.ord))} ลูกค้าประจำกระทบ ${c.regLost} ราย`); }
   if (d.capRec) L.push(`กำลังไรเดอร์: ต้องการช่วงพีค ${d.capRec.need} คน มี ${d.ridersPeak} คน → เพิ่ม ${d.capRec.add} คน${d.capRec.fitR ? ` หรือลดรัศมีเหลือ ${f1(d.capRec.fitR)} กม.` : ''}`);
   return L.join('\n');
@@ -1880,16 +1902,17 @@ function renderDDetail() {
     ${b.adj?.length ? `<div class="dsec2"><div class="h">พื้นที่ติดกับ ${b.adj.length} สาขา</div><div class="adjl">${b.adj.slice().sort((x, y) => distKm(b.lon, b.lat, x.lon, x.lat) - distKm(b.lon, b.lat, y.lon, y.lat)).map(o => `<button class="adjb" data-go="${o.code}"><span class="dot" style="background:var(--${o.dv?.issue === 'sla' ? 'short' : o.dv?.issue === 'cap' ? 'cap' : o.dv?.issue === 'over' ? 'over' : 'ok'})"></span>${esc(o.name)} <span class="num">${f1(distKm(b.lon, b.lat, o.lon, o.lat))} กม.</span></button>`).join('')}</div><div class="hint">นับเป็นพื้นที่ติดกันเมื่อขอบห่างกันไม่เกิน 50 ม.</div></div>` : ''}
     ${d.cnt ? `<div class="dsec2"><div class="h">ออเดอร์และเวลาส่งตามระยะทาง (กม.)</div>${bandChart(b)}</div>` : ''}
     <div class="dsec2"><div class="h">คำแนะนำ</div>
-      ${c && c.recN ? `<div class="cutsum">แนะนำตัด <b>${c.recN} ส่วน</b> เรียงจากส่วนที่ไกลและลูกค้าซื้อนานๆ ที ก่อน · ลูกค้าในส่วนที่ตัดเป็นกลุ่มนานๆ ที <b>${pct(c.occShare)}</b>
+      ${c && c.recN ? `<div class="cutsum">แนะนำตัด <b>${c.recN} ส่วน</b> ${c.nTravel ? `เริ่มจาก <b>${c.nTravel} ส่วนที่ขับรถเกิน ${c.tLim} นาที/ขา</b> (เกิน ${f1(c.dT)} กม. ตามถนน วงประสีแดงบนแผนที่) แล้วตามด้วย` : 'เรียงจาก'}ส่วนที่ไกลและลูกค้าซื้อนานๆ ที · ลูกค้าในส่วนที่ตัดเป็นกลุ่มนานๆ ที <b>${pct(c.occShare)}</b>
           <div class="imp"><div><span>เวลาเฉลี่ย</span><b>${c.before.avgT.toFixed(0)} → ${c.after.avgT.toFixed(0)} นาที</b></div><div><span>ส่งช้า</span><b>${pct(c.before.lateP)} → ${pct(c.after.lateP)}</b></div>
           <div><span>ออเดอร์ที่หายไป</span><b>${pct(c.cutOrd / Math.max(1, c.before.ord))}</b></div><div><span>ลูกค้าประจำที่กระทบ</span><b>${fmt(c.regLost)} จาก ${fmt(d.tiers[2])} ราย</b></div>
           <div><span>รัศมีไกลสุด</span><b>${f1(d.rMax)} → ${f1(c.newRMax)} กม.</b></div><div><span>สาขาข้างเคียงรับแทนได้</span><b>${pct(c.movedOrd / Math.max(1, c.cutOrd))}</b></div></div></div>` :
         `<div class="empty" style="padding:4px 0">${c ? 'ส่วนที่อยู่ไกลส่วนใหญ่เป็นลูกค้าประจำหรือปานกลาง จึงไม่แนะนำให้ตัด ' : ''}${d.flags.sla ? 'เวลาส่งที่สูงน่าจะมาจากกำลังไรเดอร์หรือเวลาเตรียมของ' : c ? '' : 'ไม่มีส่วนที่ไกลและซื้อน้อยพอจะแนะนำให้ตัด'}</div>`}
       ${c ? `<div class="zones">${c.steps.map((z, i) => { const rec = i < c.recN, prev = i ? c.steps[i - 1].cum : c.before;
-          return `${i === c.recN ? '<div class="zsep">ตัดเพิ่มได้ถ้าจำเป็น (ลำดับถัดไป)</div>' : ''}<div class="zone ${rec ? (z.grp === 1 ? 'g1' : 'g2') : 'opt'}">
-          <div class="zh"><span class="zn ${z.grp === 1 ? 'g1' : 'g2'}">${i + 1}</span><b>ทิศ${z.dir}</b><span class="num">${f1(z.r0)}–${f1(Math.min(z.r1, d.rMax))} กม.</span>${z.grp === 1 ? '<span class="pill p-short">ไกล + ซื้อนานๆ ที</span>' : '<span class="pill p-over">ไกล ซื้อปะปน</span>'}</div>
+          return `${i === c.recN ? '<div class="zsep">ตัดเพิ่มได้ถ้าจำเป็น (ลำดับถัดไป)</div>' : ''}<div class="zone ${rec ? (z.grp <= 1 ? 'g1' : 'g2') : 'opt'}">
+          <div class="zh"><span class="zn ${z.grp <= 1 ? 'g1' : 'g2'}">${i + 1}</span><b>ทิศ${z.dir}</b><span class="num">${f1(z.r0)}–${f1(Math.min(z.r1, d.rMax))} กม.</span>${z.travel ? `<span class="pill p-short">เดินทางเกิน ${c.tLim} นาที/ขา</span>` : z.grp === 1 ? '<span class="pill p-short">ไกล + ซื้อนานๆ ที</span>' : '<span class="pill p-over">ไกล ซื้อปะปน</span>'}</div>
+          <div class="zm">ขับรถจากร้าน ${Math.round(rideMin(b, z.r0))}–${Math.round(rideMin(b, Math.min(z.r1, d.rMax)))} นาที/ขา</div>
           <div class="tiers"><i style="width:${z.occS * 100}%;background:var(--t0)"></i><i style="width:${z.modS * 100}%;background:var(--t1)"></i><i style="width:${z.regS * 100}%;background:var(--t2)"></i></div>
-          <div class="zm">ลูกค้า ${z.c} ราย · นานๆ ที ${pct(z.occS)} · ประจำ ${z.reg} ราย · ${fmt(Math.round(z.ord / 30 * (b.ordScale || 1) * 10) / 10)} ออเดอร์/วัน · เฉลี่ย ${z.avg.toFixed(0)} นาที · ช้า ${pct(z.lateP)}</div>
+          ${z.c ? `<div class="zm">ลูกค้า ${z.c} ราย · นานๆ ที ${pct(z.occS)} · ประจำ ${z.reg} ราย · ${fmt(Math.round(z.ord / 30 * (b.ordScale || 1) * 10) / 10)} ออเดอร์/วัน · เฉลี่ย ${z.avg.toFixed(0)} นาที · ช้า ${pct(z.lateP)}</div>` : '<div class="zm">ไม่มีหมุดลูกค้าในส่วนนี้</div>'}
           <div class="zm">${z.takeover ? `ย้ายให้ <button class="linkbtn" data-go="${z.takeover.b.code}">${esc(z.takeover.b.name)}</button> ห่าง ${f1(z.takeover.d)} กม.` : 'ไม่มีสาขาใกล้เคียงรับแทน ควรคิดค่าส่งเพิ่มหรือนัดจุดรับ'}</div>
           <div class="zm cum">ตัดถึงลำดับนี้: เวลา ${prev.avgT.toFixed(0)}→${z.cum.avgT.toFixed(0)} นาที · ช้า ${pct(z.cum.lateP)} · ออเดอร์เหลือ ${pct(z.cum.ord / Math.max(1, c.before.ord))}</div>
           ${z.reg >= 5 ? `<div class="zm warn">มีลูกค้าประจำ ${z.reg} ราย ควรแจ้งล่วงหน้าหรือให้สาขาข้างเคียงรับต่อ</div>` : ''}</div>`; }).join('')}</div>` : ''}
@@ -1939,7 +1962,9 @@ document.getElementById('dCopyT').onclick = () => {
   navigator.clipboard.writeText(rows.map(r => r.join('\t')).join('\n')).then(() => toast(`คัดลอก ${fmt(dLast.length)} สาขาแล้ว วางใน Excel ได้เลย`), () => toast('คัดลอกไม่สำเร็จ'));
 };
 document.querySelectorAll('#crit input').forEach(inp => inp.onchange = () => {
-  const v = parseFloat(inp.value); if (!isFinite(v) || v <= 0) { inp.value = DSET[inp.dataset.k]; return; }
+  const k = inp.dataset.k, v = parseFloat(inp.value);
+  if (k[0] === 't' && inp.value.trim() === '') { DSET[k] = null; computeAllDelivery(); renderDelivery(); return; }
+  if (!isFinite(v) || v <= 0) { inp.value = DSET[k] ?? ''; return; }
   DSET[inp.dataset.k] = v; computeAllDelivery(); renderDelivery();
 });
 document.querySelectorAll('.tile[data-iss]').forEach(t => t.onclick = () => { filt.iss = filt.iss === t.dataset.iss ? 'all' : t.dataset.iss; dTab = filt.iss === 'all' ? dTab : filt.iss; syncFilterUI(); render(); DMAP.redraw(); });
