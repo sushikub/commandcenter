@@ -602,7 +602,7 @@ header h1#pgTitle{margin:0;font:700 19px/1.15 var(--f-display);letter-spacing:.0
     <b style="color:var(--fg)">เกณฑ์</b>
     <label>รัศมี กทม. ไม่เกิน <input type="number" id="cBkk" data-k="rBkk" value="1" min="0.3" max="10" step="0.1"> กม.</label>
     <label>ต่างจังหวัด ไม่เกิน <input type="number" id="cUp" data-k="rUp" value="2" min="0.3" max="20" step="0.1"> กม.</label>
-    <label>ขับรถต่อขา ต่างจังหวัดไม่เกิน <input type="number" id="cTUp" data-k="tUp" value="10" min="1" max="60" step="1"> นาที</label>
+    <label>ขับรถต่อเที่ยว ต่างจังหวัดไม่เกิน <input type="number" id="cTUp" data-k="tUp" value="10" min="1" max="60" step="1"> นาที</label>
     <label>กทม. ไม่เกิน <input type="number" id="cTBkk" data-k="tBkk" value="" placeholder="ไม่ใช้" min="1" max="60" step="1"> นาที</label>
     <label>เป้า SLA ส่งถึงภายใน <input type="number" id="cSla" data-k="sla" value="30" min="5" max="120" step="1"> นาที</label>
     <span>สาขา "SLA สูง" คือ SLA ในไฟล์สาขาเกินเป้า</span>
@@ -1871,7 +1871,7 @@ const DMAP = (() => {
 let dSel = null, whatR = null, dTab = 'sla', dShowN = 40, dSortK = 'avgT', dSortDir = -1, dTShow = 50, dFirst = true;
 const dScope = b => MODE !== 'sim' && inScope(b, true) && (page === 'anomaly' ? isAnomaly(b) : (filt.iss === 'all' || (b.dv && b.dv.flags[filt.iss])));
 const ISSUE = {sla: {t: 'SLA สูง', c: 'p-short'}, over: {t: 'เกินรัศมี', c: 'p-over'}, cap: {t: 'เกินกำลังไรเดอร์', c: 'p-cap'}};
-function issuePills(b) { if (!b.rad && !b.dv?.cnt) return '<span class="pill p-none">ยังไม่มีเทรดแอเรีย</span>'; const f = b.dv?.flags || {}; const p = ['sla', 'cap'].filter(k => f[k]).map(k => `<span class="pill ${ISSUE[k].c}">${ISSUE[k].t}</span>`); if (f.radius) p.push(`<span class="pill p-over">เกินรัศมี</span>`); if (f.far) p.push(`<span class="pill p-short">เดินทางเกิน ${travelLimitOf(b)} นาที/ขา</span>`); return p.join(' ') || '<span class="pill p-ok">ปกติ</span>'; }
+function issuePills(b) { if (!b.rad && !b.dv?.cnt) return '<span class="pill p-none">ยังไม่มีเทรดแอเรีย</span>'; const f = b.dv?.flags || {}; const p = ['sla', 'cap'].filter(k => f[k]).map(k => `<span class="pill ${ISSUE[k].c}">${ISSUE[k].t}</span>`); if (f.radius) p.push(`<span class="pill p-over">เกินรัศมี</span>`); if (f.far) p.push(`<span class="pill p-short">เดินทางเกิน ${travelLimitOf(b)} นาที/เที่ยว</span>`); return p.join(' ') || '<span class="pill p-ok">ปกติ</span>'; }
 const f1 = v => (Math.round(v * 10) / 10).toLocaleString('th-TH', {minimumFractionDigits: 1, maximumFractionDigits: 1});
 const pct = v => Math.round(v * 100) + '%';
 
@@ -1967,7 +1967,7 @@ function recLine(b) {
   if (dTab === 'cap' && d.capRec) return `ต้องการไรเดอร์ช่วงพีค ${d.capRec.need} คน มี ${f1r(d.ridersPeak)} คน · เพิ่ม ${d.capRec.add} คน${d.capRec.fitR ? ` หรือลดรัศมีเหลือ ${f1(d.capRec.fitR)} กม.` : ''}`;
   if (!c || !c.recN) return c ? 'ส่วนที่ไกลส่วนใหญ่เป็นลูกค้าประจำ ไม่แนะนำให้ตัด ดูกำลังไรเดอร์แทน' : dTab === 'sla' ? 'ไม่มีส่วนที่ไกลและซื้อน้อยให้ตัด ตรวจกำลังไรเดอร์และเวลาเตรียมของ' : '';
   const dirs = [...new Set(c.steps.slice(0, c.recN).map(z => z.dir))];
-  return `${c.nTravel ? `ขับรถเกิน ${c.tLim} นาที/ขา ${c.nTravel} ทิศ · ` : ''}ตัด ${c.recN} ส่วน (ทิศ${dirs.slice(0, 2).join(', ')}${dirs.length > 2 ? ` +${dirs.length - 2}` : ''}) ลูกค้านานๆ ที ${pct(c.occShare)} · เวลา ${c.before.avgT.toFixed(0)}→${c.after.avgT.toFixed(0)} นาที · ออเดอร์หาย ${pct(c.cutOrd / Math.max(1, c.before.ord))}`;
+  return `${c.nTravel ? `ขับรถเกิน ${c.tLim} นาที/เที่ยว ${c.nTravel} ทิศ · ` : ''}ตัด ${c.recN} ส่วน (ทิศ${dirs.slice(0, 2).join(', ')}${dirs.length > 2 ? ` +${dirs.length - 2}` : ''}) ลูกค้านานๆ ที ${pct(c.occShare)} · เวลา ${c.before.avgT.toFixed(0)}→${c.after.avgT.toFixed(0)} นาที · ออเดอร์หาย ${pct(c.cutOrd / Math.max(1, c.before.ord))}`;
 }
 function renderAnomRecs(list) {
   list = list.slice().sort((a, b) => anomScore(b) - anomScore(a));
@@ -2022,13 +2022,13 @@ function bandChart(b) {
   g += `<text x="${W - pr + 3}" y="${pt + 8}">${Math.round(tMax)}</text>`;
   g += `<line x1="${xD(d.lim)}" x2="${xD(d.lim)}" y1="${pt}" y2="${H - pb}" stroke="var(--short)"/>`;
   return `<svg viewBox="0 0 ${W} ${H}" class="band" role="img" aria-label="ออเดอร์และเวลาขับรถตามระยะทาง">${g}</svg>
-    <div class="legend" style="padding:0 2px"><span><span class="dot" style="background:var(--svc)"></span>ออเดอร์/วัน (แกนซ้าย)</span><span><span class="dot" style="background:var(--fg)"></span>เวลาขับรถต่อขา นาที (แกนขวา)</span><span><span class="dot" style="background:var(--short-soft);border:1px solid var(--short)"></span>นอกรัศมีมาตรฐาน</span></div>`;
+    <div class="legend" style="padding:0 2px"><span><span class="dot" style="background:var(--svc)"></span>ออเดอร์/วัน (แกนซ้าย)</span><span><span class="dot" style="background:var(--fg)"></span>เวลาขับรถต่อเที่ยว นาที (แกนขวา)</span><span><span class="dot" style="background:var(--short-soft);border:1px solid var(--short)"></span>นอกรัศมีมาตรฐาน</span></div>`;
 }
 function recText(b) {
   const d = b.dv, c = d.cut, L = [`สาขา ${b.name} (${b.code}) ${provByCode[b.prov]?.n || ''}`,
     `รัศมีไกลสุด ${f1(d.rMax)} กม. (มาตรฐาน ${d.lim} กม.) พื้นที่ ${f1(d.area)} ตร.กม. ลูกค้า ${fmt(d.cnt)} ราย SLA ${d.avgT ? d.avgT.toFixed(0) : '–'} นาที ออเดอร์ ${d.ordSrc ? fmt(Math.round(d.ordersDay)) : '–'}/วัน`];
-  if (c && c.recN) { L.push(`แนะนำตัดพื้นที่ตามลำดับ (${c.nTravel ? `ส่วนที่ขับรถเกิน ${c.tLim} นาที/ขา ก่อน แล้ว` : ''}ส่วนที่ไกลและลูกค้าซื้อนานๆ ที):`); c.steps.slice(0, c.recN).forEach((z, i) => L.push(`${i + 1}. ทิศ${z.dir} ช่วง ${f1(z.r0)}–${f1(Math.min(z.r1, d.rMax))} กม. (ขับรถ ${Math.round(rideMin(b, z.r0))}–${Math.round(rideMin(b, Math.min(z.r1, d.rMax)))} นาที/ขา)${z.travel ? ' เดินทางเกินเกณฑ์' : ''}: ลูกค้า ${z.c} ราย (นานๆ ที ${pct(z.occS)}, ประจำ ${z.reg} ราย) ${fmt(Math.round(z.ord / 30 * (b.ordScale || 1)))} ออเดอร์/วัน${z.takeover ? ` → สาขา ${z.takeover.b.name} (${z.takeover.b.code}) รับแทนได้` : ' → ไม่มีสาขาใกล้เคียงรับแทน'}`));
-    L.push(`ผลหลังตัด: ${b.slaFile ? `SLA ประมาณ ${c.before.avgT.toFixed(0)}→${c.after.avgT.toFixed(0)} นาที ` : ''}ขับรถเฉลี่ย ${c.before.rideAvg.toFixed(1)}→${c.after.rideAvg.toFixed(1)} นาที/ขา ออเดอร์หาย ${pct(c.cutOrd / Math.max(1, c.before.ord))} ลูกค้าประจำกระทบ ${c.regLost} ราย`); }
+  if (c && c.recN) { L.push(`แนะนำตัดพื้นที่ตามลำดับ (${c.nTravel ? `ส่วนที่ขับรถเกิน ${c.tLim} นาที/เที่ยว ก่อน แล้ว` : ''}ส่วนที่ไกลและลูกค้าซื้อนานๆ ที):`); c.steps.slice(0, c.recN).forEach((z, i) => L.push(`${i + 1}. ทิศ${z.dir} ช่วง ${f1(z.r0)}–${f1(Math.min(z.r1, d.rMax))} กม. (ขับรถ ${Math.round(rideMin(b, z.r0))}–${Math.round(rideMin(b, Math.min(z.r1, d.rMax)))} นาที/เที่ยว)${z.travel ? ' เดินทางเกินเกณฑ์' : ''}: ลูกค้า ${z.c} ราย (นานๆ ที ${pct(z.occS)}, ประจำ ${z.reg} ราย) ${fmt(Math.round(z.ord / 30 * (b.ordScale || 1)))} ออเดอร์/วัน${z.takeover ? ` → สาขา ${z.takeover.b.name} (${z.takeover.b.code}) รับแทนได้` : ' → ไม่มีสาขาใกล้เคียงรับแทน'}`));
+    L.push(`ผลหลังตัด: ${b.slaFile ? `SLA ประมาณ ${c.before.avgT.toFixed(0)}→${c.after.avgT.toFixed(0)} นาที ` : ''}ขับรถเฉลี่ย ${c.before.rideAvg.toFixed(1)}→${c.after.rideAvg.toFixed(1)} นาที/เที่ยว ออเดอร์หาย ${pct(c.cutOrd / Math.max(1, c.before.ord))} ลูกค้าประจำกระทบ ${c.regLost} ราย`); }
   if (d.capRec) L.push(`กำลังไรเดอร์: ต้องการช่วงพีค ${d.capRec.need} คน มี ${f1r(d.ridersPeak)} คน → เพิ่ม ${d.capRec.add} คน${d.capRec.fitR ? ` หรือลดรัศมีเหลือ ${f1(d.capRec.fitR)} กม.` : ''}`);
   return L.join('\n');
 }
@@ -2043,7 +2043,7 @@ function renderDDetail() {
       <div><div class="l">รัศมีไกลสุด${page === 'anomaly' ? ` · เกณฑ์${ZONE_TH[zoneOf(b)]}` : ''}</div><div class="v ${(page === 'anomaly' ? anomArea(b) : d.flags.over) ? 'bad' : ''}">${f1(d.rMax)} <small>/ ${page === 'anomaly' ? f1(anomalyLim(b)) : d.lim} กม.</small></div></div>
       <div><div class="l">พื้นที่จัดส่ง</div><div class="v">${f1(d.area)} <small>/ ${f1(d.stdArea)} ตร.กม.</small></div></div>
       <div><div class="l">SLA เวลาส่งเฉลี่ย · ${d.slaSrc ? 'จากไฟล์สาขา' : 'ไม่มีในไฟล์สาขา'}</div><div class="v ${d.avgT > (page === 'anomaly' ? ASET.sla : DSET.sla) ? 'bad' : ''}">${d.avgT ? d.avgT.toFixed(1) : '–'} <small>/ ${page === 'anomaly' ? ASET.sla : DSET.sla} นาที</small></div></div>
-      <div><div class="l">ขับรถไกลสุด · เกณฑ์ ${travelLimitOf(b) ?? '–'} นาที</div><div class="v ${d.flags.far ? 'bad' : ''}">${b.rad ? d.rideMax.toFixed(0) : '–'} <small>นาที/ขา</small></div></div>
+      <div><div class="l">ขับรถไกลสุด · เกณฑ์ ${travelLimitOf(b) ?? '–'} นาที</div><div class="v ${d.flags.far ? 'bad' : ''}">${b.rad ? d.rideMax.toFixed(0) : '–'} <small>นาที/เที่ยว</small></div></div>
       <div><div class="l">ออเดอร์/วัน · ${d.ordSrc === 'file' ? 'จากไฟล์สาขา' : d.ordSrc ? 'จากหมุดลูกค้า' : 'ไม่มีข้อมูล'}</div><div class="v">${d.ordSrc ? fmt(Math.round(d.ordersDay)) : '–'}</div></div>
       <div><div class="l">ไรเดอร์เกิดจริง/วัน · ${d.actual != null ? 'จากไฟล์สาขา' : 'ไม่มีในไฟล์สาขา'}</div><div class="v">${d.actual != null ? f1r(d.actual) : '–'} <small>คน${b.reqFixed != null ? ` · ต้องการ ${fmt(b.reqFixed)} คน` : ''}${d.ordPerRider ? ` · ${f1r(d.ordPerRider)} ออเดอร์/คน` : ''}</small></div></div>
       <div><div class="l">ภาระไรเดอร์ช่วงพีค</div><div class="v ${d.load > 1 ? 'bad' : ''}">${pct(d.load)} <small>${f1r(d.ridersPeak)} คน</small></div></div>
@@ -2054,19 +2054,19 @@ function renderDDetail() {
     ${b.adj?.length ? `<div class="dsec2"><div class="h">พื้นที่ติดกับ ${b.adj.length} สาขา</div><div class="adjl">${b.adj.slice().sort((x, y) => distKm(b.lon, b.lat, x.lon, x.lat) - distKm(b.lon, b.lat, y.lon, y.lat)).map(o => `<button class="adjb" data-go="${o.code}"><span class="dot" style="background:var(--${o.dv?.issue === 'sla' ? 'short' : o.dv?.issue === 'cap' ? 'cap' : o.dv?.issue === 'over' ? 'over' : 'ok'})"></span>${esc(o.name)} <span class="num">${f1(distKm(b.lon, b.lat, o.lon, o.lat))} กม.</span></button>`).join('')}</div><div class="hint">นับเป็นพื้นที่ติดกันเมื่อขอบห่างกันไม่เกิน 50 ม.</div></div>` : ''}
     ${d.cnt ? `<div class="dsec2"><div class="h">ออเดอร์และเวลาส่งตามระยะทาง (กม.)</div>${bandChart(b)}</div>` : ''}
     <div class="dsec2"><div class="h">คำแนะนำ</div>
-      ${c && c.recN ? `<div class="cutsum">แนะนำตัด <b>${c.recN} ส่วน</b> ${c.nTravel ? `เริ่มจาก <b>${c.nTravel} ส่วนที่ขับรถเกิน ${c.tLim} นาที/ขา</b> (เกิน ${f1(c.dT)} กม. ตามถนน วงประสีแดงบนแผนที่) แล้วตามด้วย` : 'เรียงจาก'}ส่วนที่ไกลและลูกค้าซื้อนานๆ ที · ลูกค้าในส่วนที่ตัดเป็นกลุ่มนานๆ ที <b>${pct(c.occShare)}</b>
-          <div class="imp"><div><span>SLA ประมาณ</span><b>${b.slaFile ? `${c.before.avgT.toFixed(0)} → ${c.after.avgT.toFixed(0)} นาที` : 'ไม่มี SLA ในไฟล์สาขา'}</b></div><div><span>ขับรถเฉลี่ยต่อขา</span><b>${c.before.rideAvg.toFixed(1)} → ${c.after.rideAvg.toFixed(1)} นาที</b></div>
+      ${c && c.recN ? `<div class="cutsum">แนะนำตัด <b>${c.recN} ส่วน</b> ${c.nTravel ? `เริ่มจาก <b>${c.nTravel} ส่วนที่ขับรถเกิน ${c.tLim} นาที/เที่ยว</b> (เกิน ${f1(c.dT)} กม. ตามถนน วงประสีแดงบนแผนที่) แล้วตามด้วย` : 'เรียงจาก'}ส่วนที่ไกลและลูกค้าซื้อนานๆ ที · ลูกค้าในส่วนที่ตัดเป็นกลุ่มนานๆ ที <b>${pct(c.occShare)}</b>
+          <div class="imp"><div><span>SLA ประมาณ</span><b>${b.slaFile ? `${c.before.avgT.toFixed(0)} → ${c.after.avgT.toFixed(0)} นาที` : 'ไม่มี SLA ในไฟล์สาขา'}</b></div><div><span>ขับรถเฉลี่ยต่อเที่ยว</span><b>${c.before.rideAvg.toFixed(1)} → ${c.after.rideAvg.toFixed(1)} นาที</b></div>
           <div><span>ออเดอร์ที่หายไป</span><b>${pct(c.cutOrd / Math.max(1, c.before.ord))}</b></div><div><span>ลูกค้าประจำที่กระทบ</span><b>${fmt(c.regLost)} จาก ${fmt(d.tiers[2])} ราย</b></div>
           <div><span>รัศมีไกลสุด</span><b>${f1(d.rMax)} → ${f1(c.newRMax)} กม.</b></div><div><span>สาขาข้างเคียงรับแทนได้</span><b>${pct(c.movedOrd / Math.max(1, c.cutOrd))}</b></div></div></div>` :
         `<div class="empty" style="padding:4px 0">${c ? 'ส่วนที่อยู่ไกลส่วนใหญ่เป็นลูกค้าประจำหรือปานกลาง จึงไม่แนะนำให้ตัด ' : ''}${d.flags.sla ? 'SLA ในไฟล์สาขาสูง แต่พื้นที่ไม่ไกล น่าจะมาจากกำลังไรเดอร์หรือเวลาเตรียมของ' : c ? '' : 'ไม่มีส่วนที่ไกลและซื้อน้อยพอจะแนะนำให้ตัด'}</div>`}
       ${c ? `<div class="zones">${c.steps.map((z, i) => { const rec = i < c.recN, prev = i ? c.steps[i - 1].cum : c.before;
           return `${i === c.recN ? '<div class="zsep">ตัดเพิ่มได้ถ้าจำเป็น (ลำดับถัดไป)</div>' : ''}<div class="zone ${rec ? (z.grp <= 1 ? 'g1' : 'g2') : 'opt'}">
-          <div class="zh"><span class="zn ${z.grp <= 1 ? 'g1' : 'g2'}">${i + 1}</span><b>ทิศ${z.dir}</b><span class="num">${f1(z.r0)}–${f1(Math.min(z.r1, d.rMax))} กม.</span>${z.travel ? `<span class="pill p-short">เดินทางเกิน ${c.tLim} นาที/ขา</span>` : z.grp === 1 ? '<span class="pill p-short">ไกล + ซื้อนานๆ ที</span>' : '<span class="pill p-over">ไกล ซื้อปะปน</span>'}</div>
-          <div class="zm">ขับรถจากร้าน ${Math.round(rideMin(b, z.r0))}–${Math.round(rideMin(b, Math.min(z.r1, d.rMax)))} นาที/ขา</div>
+          <div class="zh"><span class="zn ${z.grp <= 1 ? 'g1' : 'g2'}">${i + 1}</span><b>ทิศ${z.dir}</b><span class="num">${f1(z.r0)}–${f1(Math.min(z.r1, d.rMax))} กม.</span>${z.travel ? `<span class="pill p-short">เดินทางเกิน ${c.tLim} นาที/เที่ยว</span>` : z.grp === 1 ? '<span class="pill p-short">ไกล + ซื้อนานๆ ที</span>' : '<span class="pill p-over">ไกล ซื้อปะปน</span>'}</div>
+          <div class="zm">ขับรถจากร้าน ${Math.round(rideMin(b, z.r0))}–${Math.round(rideMin(b, Math.min(z.r1, d.rMax)))} นาที/เที่ยว</div>
           <div class="tiers"><i style="width:${z.occS * 100}%;background:var(--t0)"></i><i style="width:${z.modS * 100}%;background:var(--t1)"></i><i style="width:${z.regS * 100}%;background:var(--t2)"></i></div>
           ${z.c ? `<div class="zm">ลูกค้า ${z.c} ราย · นานๆ ที ${pct(z.occS)} · ประจำ ${z.reg} ราย · ${fmt(Math.round(z.ord / 30 * (b.ordScale || 1) * 10) / 10)} ออเดอร์/วัน</div>` : '<div class="zm">ไม่มีหมุดลูกค้าในส่วนนี้</div>'}
           <div class="zm">${z.takeover ? `ย้ายให้ <button class="linkbtn" data-go="${z.takeover.b.code}">${esc(z.takeover.b.name)}</button> ห่าง ${f1(z.takeover.d)} กม.` : 'ไม่มีสาขาใกล้เคียงรับแทน ควรคิดค่าส่งเพิ่มหรือนัดจุดรับ'}</div>
-          <div class="zm cum">ตัดถึงลำดับนี้: ${b.slaFile ? `SLA ประมาณ ${prev.avgT.toFixed(0)}→${z.cum.avgT.toFixed(0)} นาที · ` : ''}ขับรถเฉลี่ย ${z.cum.rideAvg.toFixed(1)} นาที/ขา · ออเดอร์เหลือ ${pct(z.cum.ord / Math.max(1, c.before.ord))}</div>
+          <div class="zm cum">ตัดถึงลำดับนี้: ${b.slaFile ? `SLA ประมาณ ${prev.avgT.toFixed(0)}→${z.cum.avgT.toFixed(0)} นาที · ` : ''}ขับรถเฉลี่ย ${z.cum.rideAvg.toFixed(1)} นาที/เที่ยว · ออเดอร์เหลือ ${pct(z.cum.ord / Math.max(1, c.before.ord))}</div>
           ${z.reg >= 5 ? `<div class="zm warn">มีลูกค้าประจำ ${z.reg} ราย ควรแจ้งล่วงหน้าหรือให้สาขาข้างเคียงรับต่อ</div>` : ''}</div>`; }).join('')}</div>` : ''}
       ${d.capRec ? `<div class="caprec">กำลังไรเดอร์ช่วงพีคไม่พอ: ต้องการ <b>${d.capRec.need} คน</b> มีประมาณ ${f1r(d.ridersPeak)} คน ควรเพิ่ม <b>${d.capRec.add} คน</b>${d.capRec.fitR ? ` หรือลดรัศมีเหลือ <b>${f1(d.capRec.fitR)} กม.</b>` : ''}</div>` : ''}
     </div>
@@ -2074,7 +2074,7 @@ function renderDDetail() {
       <div class="field"><input type="range" id="whatR" min="0.3" max="${Math.max(d.rMax, .5).toFixed(1)}" step="0.1" value="${(whatR ?? d.rMax).toFixed(1)}" aria-label="รัศมีทดลอง"><b class="num" id="whatRv">${f1(whatR ?? d.rMax)} กม.</b>
         ${whatR != null ? '<button class="linkbtn" id="whatClear">ล้าง</button>' : ''}</div>
       <div class="imp">${wi ? `<div><span>ลูกค้าที่ยังอยู่</span><b>${fmt(wi.cnt)} / ${fmt(d.cnt)}</b></div><div><span>ออเดอร์ที่ยังอยู่</span><b>${pct(wi.ord / Math.max(1, d.ord))}</b></div>
-        <div><span>SLA ประมาณ</span><b>${b.slaFile ? `${d.avgT.toFixed(0)} → ${wi.avgT.toFixed(0)} นาที` : '–'}</b></div><div><span>ขับรถเฉลี่ยต่อขา</span><b>${d.rideAvg.toFixed(1)} → ${wi.rideAvg.toFixed(1)} นาที</b></div>
+        <div><span>SLA ประมาณ</span><b>${b.slaFile ? `${d.avgT.toFixed(0)} → ${wi.avgT.toFixed(0)} นาที` : '–'}</b></div><div><span>ขับรถเฉลี่ยต่อเที่ยว</span><b>${d.rideAvg.toFixed(1)} → ${wi.rideAvg.toFixed(1)} นาที</b></div>
         <div><span>ภาระพีค</span><b>${pct(d.load)} → ${pct(wi.load)}</b></div><div><span>ลูกค้าประจำที่หลุด</span><b>${fmt(d.tiers[2] - wi.tiers[2])} ราย</b></div>` : '<div class="hint" style="grid-column:1/-1">เลื่อนแถบเพื่อดูผลถ้าตัดทุกทิศที่ไกลกว่ารัศมีนี้ วงสีน้ำเงินบนแผนที่คือรัศมีทดลอง</div>'}</div></div>` : ''}
     <div class="dsec2 row2"><button class="btn" id="dCopy">คัดลอกคำแนะนำ</button><a class="btn" href="${gm}" target="_blank" rel="noopener">เปิดใน Google Maps</a></div>`;
   el.scrollTop = sc;
@@ -2108,7 +2108,7 @@ document.querySelectorAll('#dT th.sort').forEach(th => th.onclick = () => { cons
 document.querySelector('#dT tbody').addEventListener('click', e => { const tr = e.target.closest('tr[data-code]'); if (tr) selectDBranch(BR.find(b => b.code === tr.dataset.code)); });
 document.querySelector('#dT tbody').addEventListener('keydown', e => { if (e.key === 'Enter') { const tr = e.target.closest('tr[data-code]'); if (tr) selectDBranch(BR.find(b => b.code === tr.dataset.code)); } });
 document.getElementById('dCopyT').onclick = () => {
-  const rows = [['รหัส', 'สาขา', 'จังหวัด', 'รัศมีไกลสุด กม.', 'มาตรฐาน กม.', 'พื้นที่ ตร.กม.', 'ลูกค้า', 'ลูกค้าประจำ', 'ออเดอร์/วัน', 'ไรเดอร์เกิดจริง/วัน', 'SLA นาที (ไฟล์สาขา)', 'ขับรถไกลสุด นาที/ขา', 'ภาระพีค %', 'ประเด็น', 'คำแนะนำ']]
+  const rows = [['รหัส', 'สาขา', 'จังหวัด', 'รัศมีไกลสุด กม.', 'มาตรฐาน กม.', 'พื้นที่ ตร.กม.', 'ลูกค้า', 'ลูกค้าประจำ', 'ออเดอร์/วัน', 'ไรเดอร์เกิดจริง/วัน', 'SLA นาที (ไฟล์สาขา)', 'ขับรถไกลสุด นาที/เที่ยว', 'ภาระพีค %', 'ประเด็น', 'คำแนะนำ']]
     .concat(dLast.map(b => { const d = b.dv; return [b.code, b.name, provByCode[b.prov]?.n || '', d.rMax.toFixed(2), d.lim, d.area.toFixed(2), d.cnt, d.tiers[2], Math.round(d.ordersDay), d.actual ?? '', d.avgT ? d.avgT.toFixed(1) : '', b.rad ? Math.round(d.rideMax) : '', Math.round(d.load * 100),
       ['sla', 'cap', 'over'].filter(k => d.flags[k]).map(k => ISSUE[k].t).join(' / ') || 'ปกติ', recText(b).split('\n').slice(2).join(' | ')]; }));
   navigator.clipboard.writeText(rows.map(r => r.join('\t')).join('\n')).then(() => toast(`คัดลอก ${fmt(dLast.length)} สาขาแล้ว วางใน Excel ได้เลย`), () => toast('คัดลอกไม่สำเร็จ'));
