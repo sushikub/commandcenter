@@ -612,7 +612,7 @@ header h1#pgTitle{margin:0;font:700 19px/1.15 var(--f-display);letter-spacing:.0
     <div class="tscroll" id="azScroll"><table id="azT">
       <thead><tr><th class="sort" data-k="name">โซน</th><th class="sort n" data-k="data">มีข้อมูล / ทั้งหมด</th><th class="sort" data-k="n">สาขาผิดปกติ</th><th class="sort n" data-k="share">% ผิดปกติ</th>
         <th class="sort n" data-k="sla">SLA เฉลี่ย นาที</th><th class="sort n" data-k="rAvg">รัศมีเฉลี่ย กม.</th><th class="sort n" data-k="rMax">รัศมีสูงสุด กม.</th><th>สาขาที่ไกลสุด</th>
-        <th class="sort n" data-k="ord">ออเดอร์/วัน ที่กระทบ</th><th class="sort n" data-k="slaOnly">SLA เกิน พื้นที่ปกติ</th><th class="sort n" data-k="areaOnly">พื้นที่เกิน SLA ผ่าน</th></tr></thead>
+        <th class="sort n" data-k="ord">ออเดอร์/วัน ที่กระทบ</th><th class="sort n" data-k="slaOnly" style="min-width:150px;white-space:normal">สาขา SLA เกิน 45 นาที &amp; พื้นที่อยู่ในเกณฑ์ปกติ</th><th class="sort n" data-k="areaOnly">พื้นที่เกิน SLA ผ่าน</th></tr></thead>
       <tbody></tbody><tfoot></tfoot>
     </table></div>
     <div class="hint" style="padding:8px 14px">ตัวเลขสาขาผิดปกติ SLA เฉลี่ย รัศมี และออเดอร์ นับเฉพาะสาขาผิดปกติ · SLA เฉลี่ยถ่วงตามออเดอร์/วัน · สองคอลัมน์สุดท้ายคือสาขาที่เข้าเกณฑ์ข้อเดียวจึงไม่แสดงในหน้านี้</div>
@@ -1916,6 +1916,7 @@ function renderAnomZones(base) {
     <td class="n">${tot.data ? pct(tot.n / tot.data) : '–'}</td><td></td><td></td><td></td><td></td><td class="n">${fmt(Math.round(tot.ord))}</td><td class="n muted">${fmt(tot.slaOnly)}</td><td class="n muted">${fmt(tot.areaOnly)}</td></tr>` : '';
   document.getElementById('azNote').textContent = `${fmt(rows.length)} ${azBy === 'area' ? 'พื้นที่' : azBy === 'grp' ? 'กลุ่ม' : 'จังหวัด'} · คลิกแถวเพื่อกรอง`;
   document.querySelectorAll('#azBy button').forEach(x => x.setAttribute('aria-pressed', x.dataset.by === azBy));
+  document.querySelector('#azT th[data-k=slaOnly]').textContent = `สาขา SLA เกิน ${ASET.sla} นาที & พื้นที่อยู่ในเกณฑ์ปกติ`;
   document.querySelectorAll('#azT th.sort').forEach(th => { const k = th.dataset.k; th.innerHTML = th.textContent.replace(/[▲▼]/g, '') + (k === azSortK ? `<span class="ar">${azSortDir > 0 ? '▲' : '▼'}</span>` : ''); });
 }
 function renderDelivery() {
@@ -2121,7 +2122,7 @@ document.querySelector('#azT tbody').addEventListener('click', e => {
   dSel = null; syncFilterUI(); render(); DMAP.fitScope();
 });
 document.getElementById('azCopy').onclick = () => {
-  const head = [azBy === 'area' ? 'พื้นที่' : azBy === 'grp' ? 'กลุ่มเกณฑ์' : 'จังหวัด', 'สาขาที่มีข้อมูล', 'สาขาทั้งหมด', 'สาขาผิดปกติ', '% ผิดปกติ', 'SLA เฉลี่ย นาที', 'รัศมีเฉลี่ย กม.', 'รัศมีสูงสุด กม.', 'สาขาที่ไกลสุด', 'ออเดอร์/วัน ที่กระทบ', 'SLA เกินแต่พื้นที่ปกติ', 'พื้นที่เกินแต่ SLA ผ่าน'];
+  const head = [azBy === 'area' ? 'พื้นที่' : azBy === 'grp' ? 'กลุ่มเกณฑ์' : 'จังหวัด', 'สาขาที่มีข้อมูล', 'สาขาทั้งหมด', 'สาขาผิดปกติ', '% ผิดปกติ', 'SLA เฉลี่ย นาที', 'รัศมีเฉลี่ย กม.', 'รัศมีสูงสุด กม.', 'สาขาที่ไกลสุด', 'ออเดอร์/วัน ที่กระทบ', `สาขา SLA เกิน ${ASET.sla} นาที & พื้นที่อยู่ในเกณฑ์ปกติ`, 'พื้นที่เกินแต่ SLA ผ่าน'];
   const rows = [head].concat(azLast.map(r => [r.name, r.data, r.all, r.n, r.data ? Math.round(r.share * 100) : '', r.n ? r.sla.toFixed(1) : '', r.n ? r.rAvg.toFixed(2) : '', r.n ? r.rMax.toFixed(2) : '', r.worst ? r.worst.name : '', Math.round(r.ord), r.slaOnly, r.areaOnly]));
   navigator.clipboard.writeText(rows.map(r => r.join('\t')).join('\n')).then(() => toast(`คัดลอกสรุป ${fmt(azLast.length)} แถวแล้ว วางใน Excel ได้เลย`), () => toast('คัดลอกไม่สำเร็จ'));
 };
