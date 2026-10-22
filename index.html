@@ -665,10 +665,10 @@ header h1#pgTitle{margin:0;font:700 19px/1.15 var(--f-display);letter-spacing:.0
 
   <div class="crit" id="crit" data-only="delivery">
     <b style="color:var(--fg)">เกณฑ์</b>
-    <label>รัศมี กทม. ไม่เกิน <input type="number" id="cBkk" data-k="rBkk" value="1" min="0.3" max="10" step="0.1"> กม.</label>
+    <label>รัศมี กทม. ไม่เกิน <input type="number" id="cBkk" data-k="rBkk" value="2" min="0.3" max="10" step="0.1"> กม.</label>
     <label>ต่างจังหวัด ไม่เกิน <input type="number" id="cUp" data-k="rUp" value="2" min="0.3" max="20" step="0.1"> กม.</label>
     <label>ขับรถต่อเที่ยว ต่างจังหวัดไม่เกิน <input type="number" id="cTUp" data-k="tUp" value="10" min="1" max="60" step="1"> นาที</label>
-    <label>กทม. ไม่เกิน <input type="number" id="cTBkk" data-k="tBkk" value="" placeholder="ไม่ใช้" min="1" max="60" step="1"> นาที</label>
+    <label>กทม. ไม่เกิน <input type="number" id="cTBkk" data-k="tBkk" value="10" placeholder="ไม่ใช้" min="1" max="60" step="1"> นาที</label>
     <label>เป้า SLA ส่งถึงภายใน <input type="number" id="cSla" data-k="sla" value="30" min="5" max="120" step="1"> นาที</label>
     <span>สาขา "SLA สูง" คือ SLA ในไฟล์สาขาเกินเป้า</span>
   </div>
@@ -1427,7 +1427,7 @@ document.getElementById('pauseBtn').onclick = () => { running = !running; setSou
 
 /* ================= delivery area: model ================= */
 let CUST = {n: 0};
-const DSET = {sla: 30, rBkk: 1, rUp: 2, tBkk: null, tUp: 10};
+const DSET = {sla: 30, rBkk: 2, rUp: 2, tBkk: 10, tUp: 10};
 // one-way ride time limit (minutes) and the road distance it allows
 // "ชี้เป้าสาขาผิดปกติ": SLA over the limit AND trade area reaching past the radius standard
 const ASET = {sla: 45, rBkk: 1, rVic: 4, rUp: 4};
