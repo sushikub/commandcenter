@@ -410,6 +410,12 @@ header h1#pgTitle{margin:0;font:700 19px/1.15 var(--f-display);letter-spacing:.0
 .xzst{font-size:12.5px;white-space:nowrap}.xzst.ok{color:var(--ok)}.xzst.err{color:var(--short)}
 .xmodep .ph .seg{margin-left:4px}
 
+/* read-only HTML report (exported) */
+.rcc-report .side,.rcc-report #menuBtn,.rcc-report #sideScrim,.rcc-report #pauseBtn{display:none!important}
+.rcc-report #acrit input:disabled{opacity:1;background:transparent;border-color:transparent;color:var(--fg);width:4.5em}
+.xpw label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted)}
+.xpw input{font:inherit;font-size:13px;color:var(--fg);background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:7px 9px}
+
 /* ---- sub menu ---- */
 .nav a.sub{padding:7px 10px 7px 22px;font-size:13.5px;position:relative;margin-left:16px;border-left:1.5px solid var(--line);border-radius:0 8px 8px 0}
 .nav a.sub svg{width:16px;height:16px}
@@ -800,7 +806,7 @@ header h1#pgTitle{margin:0;font:700 19px/1.15 var(--f-display);letter-spacing:.0
         <tbody></tbody>
       </table></div>
       <div class="xzbar foot">
-        <button class="btn primary" id="xzSend">ส่งอัตโนมัติทุกโซนที่เลือก</button><button class="btn" id="xzXlsx">ดาวน์โหลด Excel แยกโซน</button>
+        <button class="btn primary" id="xzSend">ส่งอัตโนมัติทุกโซนที่เลือก</button><button class="btn" id="xzXlsx">ดาวน์โหลด Excel แยกโซน</button><button class="btn" id="xzHtml">ดาวน์โหลด HTML แยกโซน</button>
         <span class="note" id="xzSendS"></span>
         <span class="note right">Master ผู้รับบันทึกไว้ในเบราว์เซอร์นี้ ดาวน์โหลดเก็บไว้หรือส่งต่อให้เครื่องอื่นนำเข้าได้</span>
       </div>
@@ -829,6 +835,8 @@ header h1#pgTitle{margin:0;font:700 19px/1.15 var(--f-display);letter-spacing:.0
         <div class="ph"><h2 id="xActH">2. Export และส่งอีเมล</h2></div>
         <div class="xact">
           <div class="xa"><button class="btn primary" id="xXlsx">ดาวน์โหลด Excel</button><span>ไฟล์ .xlsx ชีตรายสาขา</span></div>
+          <div class="xa"><button class="btn" id="xHtml">ดาวน์โหลด HTML</button><span>หน้ารายงานเปิดดูอย่างเดียว (แผนที่ รายการสาขา ตาราง) ไม่มีเมนูซ้าย มีเฉพาะข้อมูลของขอบเขตที่เลือก และเข้ารหัสทั้งไฟล์</span></div>
+          <div class="xa xpw"><span></span><label>รหัสผ่านไฟล์ HTML <input type="password" id="xPw" autocomplete="new-password" placeholder="ไม่บังคับ แต่ควรตั้งถ้าข้อมูลเป็นความลับ"></label></div>
           <div class="xa"><button class="btn" id="xMail">เปิดโปรแกรมอีเมล</button><span>เปิด Outlook หรือโปรแกรมอีเมลพร้อมผู้รับ หัวเรื่อง และสรุปย่อ แล้วดาวน์โหลด Excel ให้ลากไปแนบ</span></div>
           <div class="xa"><button class="btn" id="xCopy">คัดลอกเนื้อหาอีเมล</button><span>คัดลอกเป็นตาราง วางในอีเมล Outlook ได้ทันที (Ctrl+V) ได้ตารางสวยกว่าวิธีเปิดโปรแกรมอีเมล</span></div>
           <div class="xa"><button class="btn" id="xHook">ส่งอัตโนมัติ</button><span id="xHookS">ส่งผ่าน Power Automate พร้อมแนบไฟล์ ต้องตั้งค่า URL ก่อน (ข้อ 3)</span></div>
@@ -901,6 +909,8 @@ const GEO_BKKT=[{"n":"พระบรมมหาราชวัง","g":[[10049
 </script>
 <script>
 (() => {
+/* untouched page markup, captured before any script changes the DOM (used to build protected HTML reports) */
+const PRISTINE = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
 const P40 = (lon, lat) => [(lon - 97.3) * Math.cos(13.2 * Math.PI / 180) * 40, (20.5 - lat) * 40];
 const decRings = g => g.map(a => { const n = a.length / 2, lon = new Float64Array(n), lat = new Float64Array(n); let x = 0, y = 0;
   for (let i = 0; i < n; i++) { x += a[2 * i]; y += a[2 * i + 1]; lon[i] = x / 1e4; lat[i] = y / 1e4; } return {lon, lat}; });
@@ -2306,6 +2316,7 @@ const PAGES = {overview: {t: 'ภาพรวมไรเดอร์', s: 'ไ�
   anomaly: {t: 'ชี้เป้ารายสาขา SLA สูง ขนาด Trade Area ใหญ่ผิดปกติ', s: 'สาขาที่ SLA เกินเกณฑ์ และเทรดแอเรียเกินมาตรฐานพร้อมกัน'},
   data: {t: 'จัดการข้อมูล', s: 'พื้นที่จัดส่ง › อัปโหลดไฟล์สาขา เทรดแอเรีย หมุดลูกค้า และสถานะไรเดอร์'}};
 function go(p) {
+  if (window.__RCC_EMBED) p = 'anomaly';
   if (!PAGES[p]) p = 'overview';
   const prevPage = page;
   const view = p === 'anomaly' ? 'delivery' : p;
@@ -3046,7 +3057,19 @@ document.getElementById('dmReset').onclick = () => {
 document.getElementById('overN2').onchange = e => { overN = Math.max(1, Math.min(20, +e.target.value || 2)); e.target.value = overN; render(); toast(`สาขาที่ออนไลน์เกินที่ต้องการตั้งแต่ ${overN} คน นับเป็น "เกิน"`); };
 document.getElementById('dEmptyGo').onclick = () => { go('data'); scrollTo(0, 0); };
 document.getElementById('importBtn').onclick = () => { go('data'); scrollTo(0, 0); };
+/* read-only report built by the Export page: data comes embedded in the page, nothing is saved in this browser */
+function bootEmbed(e) {
+  remember = false;
+  for (const k of DS_KEYS) DS[k] = e.ds[k] || null; DS.log = [];
+  Object.assign(ASET, e.aset || {}); Object.assign(DSET, e.dset || {});
+  document.documentElement.classList.add('rcc-report');
+  document.querySelectorAll('#acrit input').forEach(inp => { inp.value = ASET[inp.dataset.k] ?? inp.value; inp.disabled = true; });
+  document.title = e.title || document.title;
+  rebuildAll(); go('anomaly');
+  document.getElementById('pgSub').textContent = `${e.scope} · ข้อมูล ณ ${e.stamp} · รายงานสำหรับเปิดดู`;
+}
 function bootSavedData() {
+  if (window.__RCC_EMBED) return bootEmbed(window.__RCC_EMBED);
   if (!remember) return;
   IDB.get('ds').then(saved => {
     if (!saved || !DS_KEYS.some(k => saved[k])) return;
@@ -3247,7 +3270,7 @@ function renderExport() {
   document.getElementById('xActH').textContent = zone ? `2. ส่งทีละโซน · ${X.scope}` : '2. Export และส่งอีเมล';
   const hb = document.getElementById('xHook'); hb.disabled = !XS.url || !X.A.length;
   document.getElementById('xHookS').textContent = XS.url ? 'ส่งผ่าน Power Automate ทันที พร้อมแนบไฟล์ Excel' : 'ส่งผ่าน Power Automate พร้อมแนบไฟล์ ต้องตั้งค่า URL ก่อน (ข้อ 3)';
-  for (const id of ['xXlsx', 'xMail', 'xCopy']) document.getElementById(id).disabled = !X.A.length;
+  for (const id of ['xXlsx', 'xMail', 'xCopy', 'xHtml']) document.getElementById(id).disabled = !X.A.length;
   if (zone) renderExportZones();
 }
 (function initExport() {
@@ -3309,6 +3332,71 @@ function renderExport() {
         XS.zm[xZKey(id)] = {to: String(r[toCol] || '').trim(), cc: ccCol ? String(r[ccCol] || '').trim() : ''}; n++; }
       xSave(); renderExport(); xMsg(n ? `นำเข้า Master ผู้รับ ${fmt(n)} โซนแล้ว` : 'ไม่พบคอลัมน์ area และ to ในไฟล์', n ? 'ok' : 'err');
     } catch (err) { xMsg('อ่านไฟล์ไม่สำเร็จ ใช้ไฟล์ CSV ที่มีคอลัมน์ area, to, cc', 'err'); } };
+})();
+
+/* ---------- protected HTML report ----------
+   Page = the app itself without the side menu, opened straight on the anomaly page, carrying only the chosen branches.
+   The whole page (code + data) is gzip-compressed and AES-GCM encrypted inside a small loader. With a password the key
+   comes from the password (PBKDF2); without one the key ships inside the file, which hides the content from view-source
+   but cannot stop someone determined who runs it in developer tools. */
+function xSubsetDS(list) {
+  const codes = new Set(list.map(b => codeKey(b.code))), pick = e => e ? {file: e.file, at: e.at, rows: e.rows.filter(r => codes.has(codeKey(r.code)))} : null;
+  const out = {branches: pick(DS.branches), trade: pick(DS.trade), riders: null, areas: DS.areas || null, customers: null};
+  if (DS.customers && CUST.n) { const rows = [];
+    for (const b of list) for (let i = b.c0; i < b.c1; i++) rows.push({id: '', code: b.code, lat: +CUST.lat[i].toFixed(6), lng: +CUST.lon[i].toFixed(6), o: CUST.orders[i], t: null});
+    out.customers = {file: DS.customers.file, at: DS.customers.at, rows}; }
+  return out;
+}
+const xB64 = u8 => { let s = ''; for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000)); return btoa(s); };
+async function xGzip(str) { return new Uint8Array(await new Response(new Blob([str]).stream().pipeThrough(new CompressionStream('gzip'))).arrayBuffer()); }
+const X_IT = 250000;
+async function xEncrypt(u8, pw) {
+  const iv = crypto.getRandomValues(new Uint8Array(12)), salt = crypto.getRandomValues(new Uint8Array(16)); let key, raw = null;
+  if (pw) { const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(pw), 'PBKDF2', false, ['deriveKey']);
+    key = await crypto.subtle.deriveKey({name: 'PBKDF2', salt, iterations: X_IT, hash: 'SHA-256'}, base, {name: 'AES-GCM', length: 256}, false, ['encrypt']); }
+  else { raw = crypto.getRandomValues(new Uint8Array(32)); key = await crypto.subtle.importKey('raw', raw, 'AES-GCM', false, ['encrypt']); }
+  const ct = new Uint8Array(await crypto.subtle.encrypt({name: 'AES-GCM', iv}, key, u8));
+  return {iv: xB64(iv), salt: xB64(salt), it: X_IT, k: raw ? xB64(raw) : '', d: xB64(ct)};
+}
+function xLoader(P, title) {
+  const t = esc(title);
+  return `<!DOCTYPE html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>${t}</title>
+<style>:root{color-scheme:light dark}body{margin:0;font-family:system-ui,'Leelawadee UI',Tahoma,sans-serif;background:#f4f5f7;color:#1d2433;display:grid;place-items:center;min-height:100vh}
+.c{background:#fff;border:1px solid #e2e5ea;border-radius:12px;padding:26px;max-width:400px;width:calc(100% - 32px);box-sizing:border-box}h1{font-size:17px;margin:0 0 6px;line-height:1.4}p{font-size:13px;color:#667085;margin:0 0 16px}
+input{width:100%;box-sizing:border-box;font:inherit;padding:10px 12px;border:1px solid #c9ced6;border-radius:8px;margin-bottom:10px;background:transparent;color:inherit}button{width:100%;font:inherit;font-weight:600;padding:10px;border:0;border-radius:8px;background:#2f5bd3;color:#fff;cursor:pointer}
+.e{color:#c4320a;font-size:13px;min-height:18px;margin-top:8px}@media(prefers-color-scheme:dark){body{background:#14161a;color:#e6e8eb}.c{background:#1d2026;border-color:#2c3038}p{color:#9aa3af}input{border-color:#3a3f48}}</style></head>
+<body><div class="c"><h1>${t}</h1><p id="s">กำลังเปิดรายงาน…</p><form id="f" hidden><input type="password" id="p" placeholder="รหัสผ่าน" autocomplete="current-password"><button>เปิดรายงาน</button></form><div class="e" id="e"></div></div>
+<script>(()=>{const P=${JSON.stringify(P)};const $=i=>document.getElementById(i);
+const ub=s=>{const b=atob(s),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);return u};
+async function run(pw){if(!window.crypto||!crypto.subtle||!window.DecompressionStream)throw new Error('เบราว์เซอร์นี้เปิดรายงานไม่ได้ ใช้ Chrome หรือ Edge รุ่นใหม่ และเปิดไฟล์จากเครื่องโดยตรง (ดับเบิลคลิกไฟล์)');
+let key;if(P.k)key=await crypto.subtle.importKey('raw',ub(P.k),'AES-GCM',false,['decrypt']);else{const b=await crypto.subtle.importKey('raw',new TextEncoder().encode(pw),'PBKDF2',false,['deriveKey']);key=await crypto.subtle.deriveKey({name:'PBKDF2',salt:ub(P.salt),iterations:P.it,hash:'SHA-256'},b,{name:'AES-GCM',length:256},false,['decrypt'])}
+let pt;try{pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:ub(P.iv)},key,ub(P.d))}catch(e){throw new Error(P.k?'ไฟล์เสียหาย ดาวน์โหลดใหม่อีกครั้ง':'รหัสผ่านไม่ถูกต้อง')}
+const html=await new Response(new Blob([pt]).stream().pipeThrough(new DecompressionStream('gzip'))).text();document.open();document.write(html);document.close()}
+const fail=e=>{$('e').textContent=e.message||String(e)};
+if(P.k)run().catch(fail);else{$('s').textContent='รายงานนี้ป้องกันด้วยรหัสผ่าน';$('f').hidden=false;$('p').focus();$('f').onsubmit=ev=>{ev.preventDefault();$('e').textContent='';$('s').textContent='กำลังเปิดรายงาน…';run($('p').value).catch(e=>{$('s').textContent='รายงานนี้ป้องกันด้วยรหัสผ่าน';fail(e)})}}})()<\/script></body></html>`;
+}
+async function xReportHTML(X, pw) {
+  if (!window.CompressionStream || !crypto.subtle) throw new Error('เบราว์เซอร์นี้สร้างไฟล์ HTML แบบเข้ารหัสไม่ได้ ใช้ Chrome หรือ Edge รุ่นใหม่ และเปิดแอปจากไฟล์บนเครื่องหรือ https');
+  const title = `ชี้เป้ารายสาขา SLA สูง ขนาด Trade Area ใหญ่ผิดปกติ · ${X.scope}`;
+  const embed = {ds: xSubsetDS(X.base), aset: {...ASET}, dset: {...DSET}, title, scope: X.scope, stamp: xStamp()};
+  const js = JSON.stringify(embed).replace(/</g, '\\u003c').replace(/[\u2028\u2029]/g, c => c === '\u2028' ? '\\u2028' : '\\u2029');
+  const page = PRISTINE.replace('<head>', () => `<head><meta charset="utf-8"><script>window.__RCC_EMBED=${js};<\/script>`);
+  const enc = await xEncrypt(await xGzip(page), pw);
+  return {name: xFileName(X).replace(/\.xlsx$/, '.html'), blob: new Blob([xLoader(enc, title)], {type: 'text/html;charset=utf-8'})};
+}
+async function xDownloadHTML(X) {
+  const f = await xReportHTML(X, document.getElementById('xPw').value), a = document.createElement('a');
+  a.href = URL.createObjectURL(f.blob); a.download = f.name; document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  return f;
+}
+(function initHtmlExport() {
+  const $ = id => document.getElementById(id);
+  const run = async (btn, fn) => { btn.disabled = true; const t = btn.textContent; btn.textContent = 'กำลังสร้าง…'; try { await fn(); } catch (e) { xMsg(esc(e.message || String(e)), 'err'); } finally { btn.textContent = t; btn.disabled = false; renderExport(); } };
+  const pwNote = () => $('xPw').value ? ' · เปิดไฟล์ต้องใส่รหัสผ่านที่ตั้งไว้' : ' · ไม่ได้ตั้งรหัสผ่าน ผู้รับเปิดได้ทันที';
+  $('xHtml').onclick = e => run(e.currentTarget, async () => { const a = xPrevArea(), f = await xDownloadHTML(xCollect(a)); xMsg(`ดาวน์โหลด ${esc(f.name)} แล้ว (${fmt(Math.round(f.blob.size / 1024))} KB)${pwNote()}`, 'ok'); });
+  $('xzHtml').onclick = e => run(e.currentTarget, async () => { const L = xAreas().filter(({id, X}) => XS.zsel[xZKey(id)] ?? (X.A.length > 0)); let n = 0;
+    for (const {X} of L) { if (!X.base.length) continue; await xDownloadHTML(X); n++; await new Promise(r => setTimeout(r, 500)); }
+    xMsg(`ดาวน์โหลด HTML ${fmt(n)} ไฟล์แล้ว (1 ไฟล์ต่อ 1 โซน เบราว์เซอร์อาจถามอนุญาตให้ดาวน์โหลดหลายไฟล์)${pwNote()}`, 'ok'); });
 })();
 
 /* ================= main render ================= */
