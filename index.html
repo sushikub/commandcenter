@@ -3228,6 +3228,7 @@ const xPrevArea = () => { if (XS.mode !== 'zone') return undefined; const L = xA
 /* ---------- send actions (one email) ---------- */
 async function xDoHook(X, r) {
   const f = await xWorkbook(X), b64 = f.base64();
+  if (!f.csv && !b64.startsWith('UEsDB')) throw new Error('สร้างไฟล์ Excel ไม่สมบูรณ์ ลองโหลดหน้านี้ใหม่แล้วส่งอีกครั้ง');   // a real .xlsx is a zip: base64 starts with 'UEsDB' (PK..)
   const h = await xReportHTML(X, document.getElementById('xPw').value), hb64 = xB64(new Uint8Array(await h.blob.arrayBuffer()));
   const payload = {to: r.to.join(';'), cc: r.cc.join(';'), subject: xSubject(X), html: xHTML(X), fileName: f.name, fileBase64: b64, htmlName: h.name, htmlBase64: hb64,
     attachments: [{Name: f.name, ContentBytes: b64}, {Name: h.name, ContentBytes: hb64}], count: X.A.length, zone: X.area === undefined ? '' : X.scope};
