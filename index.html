@@ -691,7 +691,7 @@ header h1#pgTitle{margin:0;font:700 19px/1.15 var(--f-display);letter-spacing:.0
           <details open><summary>ชั้นข้อมูล</summary>
             <div style="display:flex;flex-direction:column;gap:5px">
               <label class="bmrow">แผนที่พื้นหลัง <select id="bmSel" aria-label="แผนที่พื้นหลัง">
-                <option value="osm">OpenStreetMap</option><option value="osmGray">OSM สีเทา</option><option value="cartoLN">สีเทาเรียบ ไม่มีชื่อถนน (CARTO)</option><option value="cartoL">OSM สว่าง (CARTO)</option><option value="cartoD">OSM มืด (CARTO)</option><option value="none">ไม่มี (เส้นเขตอย่างเดียว)</option></select></label>
+                <option value="carto">แผนที่ถนน (CARTO)</option></select></label>
               <label><input type="checkbox" data-l="stores" checked>ร้าน 7-Eleven (สีตามประเด็น)</label>
               <label><input type="checkbox" data-l="area" checked><span class="sw" style="background:color-mix(in srgb,var(--svc) 25%,transparent);border:1.5px solid var(--svc)"></span>เทรดแอเรียจากไฟล์</label>
               <label><input type="checkbox" data-l="std" checked><span class="sw" style="border:1.5px dashed var(--fg)"></span>รัศมีมาตรฐาน</label>
@@ -709,7 +709,7 @@ header h1#pgTitle{margin:0;font:700 19px/1.15 var(--f-display);letter-spacing:.0
         </div>
         <div class="dctl"><button id="dzin" aria-label="ซูมเข้า">+</button><button id="dzout" aria-label="ซูมออก">−</button><button id="dzhome" aria-label="พอดีกับขอบเขต">⌂</button></div>
         <div id="bmAttr"></div>
-        <div id="bmNote" hidden><b>โหลดแผนที่ OpenStreetMap ไม่ได้ในหน้านี้</b> หน้าที่เปิดผ่าน Claude ไม่อนุญาตให้โหลดรูปแผนที่จากเว็บภายนอก จึงแสดงเส้นเขตแทน เปิดไฟล์ HTML นี้จากเซิร์ฟเวอร์ภายในของบริษัทเพื่อดูแผนที่ถนน <button class="linkbtn" id="bmNoteX">ปิด</button></div>
+        <div id="bmNote" hidden><b>โหลดแผนที่ถนนไม่ได้</b> เครื่องนี้อาจไม่ได้ต่ออินเทอร์เน็ต หรือหน้าที่เปิดอยู่บล็อกการโหลดรูปจากเว็บภายนอก จึงแสดงเส้นเขตจังหวัด/อำเภอแทน <button class="linkbtn" id="bmNoteX">ปิด</button></div>
         <div id="dEmpty" hidden><b id="dEmptyT">ยังไม่มีข้อมูลเทรดแอเรีย</b><span id="dEmptyD">หน้านี้แสดงเฉพาะเทรดแอเรียจากไฟล์ที่อัปโหลด รูปแบบ store_code, geometry, created_at</span><button class="btn primary" id="dEmptyGo">อัปโหลดไฟล์เทรดแอเรีย</button></div>
         <div id="dZoomHint">ซูมเข้าระดับเมืองเพื่อดูพื้นที่จัดส่งและบ้านลูกค้า</div>
       </div>
@@ -1915,18 +1915,15 @@ const DMAP = (() => {
     document.getElementById('dZoomHint').hidden = k > 18 || !document.getElementById('dEmpty').hidden;
   }
   /* ---- OpenStreetMap raster basemap (web-mercator tiles; our y axis is already mercator degrees) ---- */
+  /* one free basemap that does not need a Referer header: OSM's own tile server blocks pages opened from a file (shows "Access blocked") */
   const BASEMAPS = {
-    osm: {url: (z, x, y) => `https://tile.openstreetmap.org/${z}/${x}/${y}.png`, max: 19, attr: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors'},
-    osmGray: {src: 'osm', url: (z, x, y) => `https://tile.openstreetmap.org/${z}/${x}/${y}.png`, max: 19, filter: 'grayscale(1) contrast(.9) brightness(1.06)', filterDark: 'grayscale(1) invert(.9) brightness(.85) contrast(.9)', attr: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors'},
-    cartoLN: {url: (z, x, y) => `https://${'abcd'[(x + y) % 4]}.basemaps.cartocdn.com/light_nolabels/${z}/${x}/${y}${dpr > 1 ? '@2x' : ''}.png`, max: 20, filterDark: 'invert(.92) brightness(.9) contrast(.9)', attr: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors © <a href="https://carto.com/attributions" target="_blank" rel="noopener">CARTO</a>'},
-    cartoL: {url: (z, x, y) => `https://${'abcd'[(x + y) % 4]}.basemaps.cartocdn.com/light_all/${z}/${x}/${y}${dpr > 1 ? '@2x' : ''}.png`, max: 20, attr: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors © <a href="https://carto.com/attributions" target="_blank" rel="noopener">CARTO</a>'},
-    cartoD: {url: (z, x, y) => `https://${'abcd'[(x + y) % 4]}.basemaps.cartocdn.com/dark_all/${z}/${x}/${y}${dpr > 1 ? '@2x' : ''}.png`, max: 20, attr: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors © <a href="https://carto.com/attributions" target="_blank" rel="noopener">CARTO</a>'}
+    carto: {url: (z, x, y) => `https://${'abcd'[(x + y) % 4]}.basemaps.cartocdn.com/light_all/${z}/${x}/${y}${dpr > 1 ? '@2x' : ''}.png`, max: 20, filterDark: 'invert(.92) hue-rotate(180deg) brightness(.9) contrast(.9)', attr: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors © <a href="https://carto.com/attributions" target="_blank" rel="noopener">CARTO</a>'},
   };
-  let bm = 'osm';
+  let bm = 'carto';
   const tileCache = new Map(), bmStat = {}, bmFailed = new Set();
   const bmSel = document.getElementById('bmSel'), bmAttr = document.getElementById('bmAttr'), bmNote = document.getElementById('bmNote');
   function setBasemap(id, auto) {
-    bm = id; bmSel.value = id; if (!auto) try { localStorage.setItem('rcc-basemap', id); } catch {}
+    bm = id; if (BASEMAPS[id]) bmSel.value = id; if (!auto) try { localStorage.setItem('rcc-basemap', id); } catch {}
     bmAttr.innerHTML = id === 'none' ? '' : BASEMAPS[id].attr; bmAttr.hidden = id === 'none';
     if (!auto) bmNote.hidden = true;
     dirty = true;
@@ -1934,9 +1931,7 @@ const DMAP = (() => {
   function tileFailed() {
     const st = bmStat[bm]; if (!st || st.ok || st.err < 4) return;
     bmFailed.add(bm);
-    const next = (bm === 'osmGray' ? ['cartoLN', 'cartoL'] : ['osm', 'cartoL']).find(id => !bmFailed.has(id));
-    if (next) setBasemap(next, true);
-    else { setBasemap('none', true); bmNote.hidden = false; }
+    setBasemap('none', true); bmNote.hidden = false;
   }
   function getTile(z, x, y, load) {
     const key = (BASEMAPS[bm].src || bm) + '/' + z + '/' + x + '/' + y; let t = tileCache.get(key);
@@ -2028,7 +2023,7 @@ const DMAP = (() => {
   document.getElementById('dzout').onclick = () => { anim = null; zoomAt(W / 2, H / 2, 1 / 1.6); };
   document.getElementById('dzhome').onclick = () => dSel ? fitBranch(dSel) : fitScope();
   document.querySelectorAll('#layers input').forEach(inp => inp.onchange = () => { const k = inp.dataset.l; if (k.startsWith('t')) L.t[+k[1]] = inp.checked; else L[k] = inp.checked; dirty = true; });
-  let bm0 = 'osm'; try { const v = localStorage.getItem('rcc-basemap'); if (v && (BASEMAPS[v] || v === 'none')) bm0 = v; } catch {}
+  const bm0 = 'carto';
   readCol(); setBasemap(bm0, true); requestAnimationFrame(loop);
   if (innerWidth < 700) document.querySelector('#layers details').open = false;
   return {redraw: () => dirty = true, flyTo, fitBranch, fitScope, resize, readCol, isFresh: () => !!W};
