@@ -691,7 +691,7 @@ header h1#pgTitle{margin:0;font:700 19px/1.15 var(--f-display);letter-spacing:.0
           <details open><summary>ชั้นข้อมูล</summary>
             <div style="display:flex;flex-direction:column;gap:5px">
               <label class="bmrow">แผนที่พื้นหลัง <select id="bmSel" aria-label="แผนที่พื้นหลัง">
-                <option value="carto">แผนที่ถนน (CARTO)</option></select></label>
+                <option value="esri">แผนที่ถนน (Esri)</option></select></label>
               <label><input type="checkbox" data-l="stores" checked>ร้าน 7-Eleven (สีตามประเด็น)</label>
               <label><input type="checkbox" data-l="area" checked><span class="sw" style="background:color-mix(in srgb,var(--svc) 25%,transparent);border:1.5px solid var(--svc)"></span>เทรดแอเรียจากไฟล์</label>
               <label><input type="checkbox" data-l="std" checked><span class="sw" style="border:1.5px dashed var(--fg)"></span>รัศมีมาตรฐาน</label>
@@ -1915,11 +1915,12 @@ const DMAP = (() => {
     document.getElementById('dZoomHint').hidden = k > 18 || !document.getElementById('dEmpty').hidden;
   }
   /* ---- OpenStreetMap raster basemap (web-mercator tiles; our y axis is already mercator degrees) ---- */
-  /* one free basemap that does not need a Referer header: OSM's own tile server blocks pages opened from a file (shows "Access blocked") */
+  /* one free basemap that works from a page opened as a local file: OSM blocks requests without a Referer ("Access blocked")
+     and CARTO now asks for an API key in that case; Esri's public tile service needs neither */
   const BASEMAPS = {
-    carto: {url: (z, x, y) => `https://${'abcd'[(x + y) % 4]}.basemaps.cartocdn.com/light_all/${z}/${x}/${y}${dpr > 1 ? '@2x' : ''}.png`, max: 20, filterDark: 'invert(.92) hue-rotate(180deg) brightness(.9) contrast(.9)', attr: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors © <a href="https://carto.com/attributions" target="_blank" rel="noopener">CARTO</a>'},
+    esri: {url: (z, x, y) => `https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/${z}/${y}/${x}`, max: 19, filter: 'saturate(.35) brightness(1.03)', filterDark: 'grayscale(.7) invert(.9) hue-rotate(180deg) brightness(.85) contrast(.9)', attr: 'Tiles © <a href="https://www.esri.com" target="_blank" rel="noopener">Esri</a> — Esri, HERE, Garmin, © OpenStreetMap contributors, GIS user community'},
   };
-  let bm = 'carto';
+  let bm = 'esri';
   const tileCache = new Map(), bmStat = {}, bmFailed = new Set();
   const bmSel = document.getElementById('bmSel'), bmAttr = document.getElementById('bmAttr'), bmNote = document.getElementById('bmNote');
   function setBasemap(id, auto) {
@@ -2023,7 +2024,7 @@ const DMAP = (() => {
   document.getElementById('dzout').onclick = () => { anim = null; zoomAt(W / 2, H / 2, 1 / 1.6); };
   document.getElementById('dzhome').onclick = () => dSel ? fitBranch(dSel) : fitScope();
   document.querySelectorAll('#layers input').forEach(inp => inp.onchange = () => { const k = inp.dataset.l; if (k.startsWith('t')) L.t[+k[1]] = inp.checked; else L[k] = inp.checked; dirty = true; });
-  const bm0 = 'carto';
+  const bm0 = 'esri';
   readCol(); setBasemap(bm0, true); requestAnimationFrame(loop);
   if (innerWidth < 700) document.querySelector('#layers details').open = false;
   return {redraw: () => dirty = true, flyTo, fitBranch, fitScope, resize, readCol, isFresh: () => !!W};
