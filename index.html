@@ -726,7 +726,7 @@ header h1#pgTitle{margin:0;font:700 19px/1.15 var(--f-display);letter-spacing:.0
   <section class="panel">
     <div class="ph"><h2>ขนาดพื้นที่จัดส่งรายสาขา</h2><span class="note" id="dTNote"></span><div class="right"><button class="btn" id="dCopyT">คัดลอกตาราง</button></div></div>
     <div class="tscroll" id="dTScroll"><table id="dT">
-      <thead><tr><th class="sort" data-k="code">รหัส</th><th class="sort" data-k="name">สาขา</th><th class="sort" data-k="prov">จังหวัด</th>
+      <thead><tr><th class="sort" data-k="code">รหัส</th><th class="sort" data-k="name">สาขา</th><th class="sort" data-k="stype">Store type</th><th class="sort" data-k="prov">จังหวัด</th>
         <th class="sort n" data-k="rMax">รัศมีไกลสุด กม.</th><th class="n">มาตรฐาน</th><th class="sort n" data-k="area">พื้นที่ ตร.กม.</th><th class="sort n" data-k="cnt">ลูกค้า</th><th class="sort n" data-k="reg">ประจำ</th>
         <th class="sort n" data-k="ordersDay">ออเดอร์/วัน</th><th class="sort n" data-k="actual">ไรเดอร์จริง/วัน</th><th class="sort n" data-k="avgT">SLA นาที</th><th class="sort n" data-k="rideMax">ขับรถไกลสุด นาที</th><th class="sort n" data-k="load">ภาระพีค</th><th class="sort" data-k="issue">ประเด็น</th></tr></thead>
       <tbody></tbody>
@@ -2250,26 +2250,26 @@ function renderDDetail() {
 let dLast = [];
 function renderDTable(list) {
   const k = dSortK, dir = dSortDir, ord = {sla: 0, cap: 1, over: 2, ok: 3};
-  const val = b => k === 'code' ? b.code : k === 'name' ? b.name : k === 'prov' ? (provByCode[b.prov]?.n || '') : k === 'issue' ? ord[b.dv.issue] : k === 'reg' ? b.dv.tiers[2] : k === 'actual' ? (b.dv.actual ?? -1) : b.dv[k];
+  const val = b => k === 'code' ? b.code : k === 'name' ? b.name : k === 'stype' ? (b.stype || '') : k === 'prov' ? (provByCode[b.prov]?.n || '') : k === 'issue' ? ord[b.dv.issue] : k === 'reg' ? b.dv.tiers[2] : k === 'actual' ? (b.dv.actual ?? -1) : b.dv[k];
   list.sort((a, b) => { const x = val(a), y = val(b); return (typeof x === 'string' ? x.localeCompare(y, 'th') : x - y) * dir; });
   dLast = list;
   document.querySelector('#dT tbody').innerHTML = list.slice(0, dTShow).map(b => { const d = b.dv; return `<tr data-code="${b.code}" tabindex="0" class="${dSel === b ? 'selrow' : ''}">
-    <td class="num">${b.code}</td><td><b>${esc(b.name)}</b></td><td>${esc(provByCode[b.prov]?.n || '')}</td>
+    <td class="num">${b.code}</td><td><b>${esc(b.name)}</b></td><td>${esc(b.stype || '–')}</td><td>${esc(provByCode[b.prov]?.n || '')}</td>
     <td class="n ${(page === 'anomaly' ? anomArea(b) : d.flags.over) ? 'diff-pos' : ''}">${b.rad ? f1(d.rMax) : '–'}</td><td class="n">${page === 'anomaly' ? f1(anomalyLim(b)) : d.lim}</td><td class="n">${b.rad ? f1(d.area) : '–'}</td><td class="n">${fmt(d.cnt)}</td><td class="n">${fmt(d.tiers[2])}</td>
     <td class="n" title="${d.ordSrc === 'file' ? 'จากไฟล์สาขา' : 'จากหมุดลูกค้า'}">${d.ordSrc ? fmt(Math.round(d.ordersDay)) : '–'}</td><td class="n">${d.actual != null ? f1r(d.actual) : '–'}</td><td class="n ${d.avgT > (page === 'anomaly' ? ASET.sla : DSET.sla) ? 'diff-neg' : ''}">${d.avgT ? d.avgT.toFixed(1) : '–'}</td><td class="n ${d.flags.far ? 'diff-neg' : ''}">${b.rad ? d.rideMax.toFixed(0) : '–'}</td>
-    <td class="n ${d.load > 1 ? 'diff-neg' : ''}">${pct(d.load)}</td><td>${issuePills(b)}</td></tr>`; }).join('') || `<tr><td colspan="14" class="empty">ไม่พบสาขาตามเงื่อนไข</td></tr>`;
+    <td class="n ${d.load > 1 ? 'diff-neg' : ''}">${pct(d.load)}</td><td>${issuePills(b)}</td></tr>`; }).join('') || `<tr><td colspan="15" class="empty">ไม่พบสาขาตามเงื่อนไข</td></tr>`;
   document.getElementById('dTNote').textContent = `${fmt(list.length)} สาขา`;
   const more = document.getElementById('dTMore');
   more.innerHTML = list.length > dTShow ? `แสดง ${fmt(dTShow)} จาก ${fmt(list.length)} <button class="btn" id="dTMoreBtn">แสดงเพิ่ม 50</button>` : '';
   const mb = document.getElementById('dTMoreBtn'); if (mb) mb.onclick = () => { dTShow += 50; renderDTable(dLast); };
   document.querySelectorAll('#dT th.sort').forEach(th => { const kk = th.dataset.k; th.innerHTML = th.textContent.replace(/[▲▼]/g, '') + (kk === dSortK ? `<span class="ar">${dSortDir > 0 ? '▲' : '▼'}</span>` : ''); });
 }
-document.querySelectorAll('#dT th.sort').forEach(th => th.onclick = () => { const k = th.dataset.k; if (dSortK === k) dSortDir *= -1; else { dSortK = k; dSortDir = ['code', 'name', 'prov', 'issue'].includes(k) ? 1 : -1; } renderDTable(dLast); });
+document.querySelectorAll('#dT th.sort').forEach(th => th.onclick = () => { const k = th.dataset.k; if (dSortK === k) dSortDir *= -1; else { dSortK = k; dSortDir = ['code', 'name', 'stype', 'prov', 'issue'].includes(k) ? 1 : -1; } renderDTable(dLast); });
 document.querySelector('#dT tbody').addEventListener('click', e => { const tr = e.target.closest('tr[data-code]'); if (tr) selectDBranch(BR.find(b => b.code === tr.dataset.code)); });
 document.querySelector('#dT tbody').addEventListener('keydown', e => { if (e.key === 'Enter') { const tr = e.target.closest('tr[data-code]'); if (tr) selectDBranch(BR.find(b => b.code === tr.dataset.code)); } });
 document.getElementById('dCopyT').onclick = () => {
-  const rows = [['รหัส', 'สาขา', 'จังหวัด', 'ฝ่าย', 'เขต', 'FC', 'GM', 'รัศมีไกลสุด กม.', 'มาตรฐาน กม.', 'พื้นที่ ตร.กม.', 'ลูกค้า', 'ลูกค้าประจำ', 'ออเดอร์/วัน', 'ไรเดอร์เกิดจริง/วัน', 'SLA นาที (ไฟล์สาขา)', 'ขับรถไกลสุด นาที/เที่ยว', 'ภาระพีค %', 'ประเด็น', 'คำแนะนำ']]
-    .concat(dLast.map(b => { const d = b.dv; return [b.code, b.name, provByCode[b.prov]?.n || '', b.div ?? '', b.dist ?? '', b.fc ?? '', b.gm ?? '', d.rMax.toFixed(2), d.lim, d.area.toFixed(2), d.cnt, d.tiers[2], Math.round(d.ordersDay), d.actual ?? '', d.avgT ? d.avgT.toFixed(1) : '', b.rad ? Math.round(d.rideMax) : '', Math.round(d.load * 100),
+  const rows = [['รหัส', 'สาขา', 'Store type', 'จังหวัด', 'ฝ่าย', 'เขต', 'FC', 'GM', 'รัศมีไกลสุด กม.', 'มาตรฐาน กม.', 'พื้นที่ ตร.กม.', 'ลูกค้า', 'ลูกค้าประจำ', 'ออเดอร์/วัน', 'ไรเดอร์เกิดจริง/วัน', 'SLA นาที (ไฟล์สาขา)', 'ขับรถไกลสุด นาที/เที่ยว', 'ภาระพีค %', 'ประเด็น', 'คำแนะนำ']]
+    .concat(dLast.map(b => { const d = b.dv; return [b.code, b.name, b.stype ?? '', provByCode[b.prov]?.n || '', b.div ?? '', b.dist ?? '', b.fc ?? '', b.gm ?? '', d.rMax.toFixed(2), d.lim, d.area.toFixed(2), d.cnt, d.tiers[2], Math.round(d.ordersDay), d.actual ?? '', d.avgT ? d.avgT.toFixed(1) : '', b.rad ? Math.round(d.rideMax) : '', Math.round(d.load * 100),
       ['sla', 'cap', 'over'].filter(k => d.flags[k]).map(k => ISSUE[k].t).join(' / ') || 'ปกติ', recText(b).split('\n').slice(2).join(' | ')]; }));
   navigator.clipboard.writeText(rows.map(r => r.join('\t')).join('\n')).then(() => toast(`คัดลอก ${fmt(dLast.length)} สาขาแล้ว วางใน Excel ได้เลย`), () => toast('คัดลอกไม่สำเร็จ'));
 };
@@ -2355,6 +2355,7 @@ const SPEC = {
       {k: 'fc', t: 'FC', syn: ['fc', 'fc_name', 'fcname', 'field_consultant', 'ชื่อfc', 'ชื่อ fc', 'เอฟซี']},
       {k: 'dist', t: 'เขต', syn: ['เขต', 'district', 'district_name', 'ชื่อเขต', 'เขตการขาย', 'sales_district', 'dist']},
       {k: 'div', t: 'ฝ่าย', syn: ['ฝ่าย', 'division', 'division_name', 'ชื่อฝ่าย', 'ฝ่ายปฏิบัติการ', 'div', 'department']},
+      {k: 'stype', t: 'Store type', syn: ['storetype', 'store_type', 'type', 'store_format', 'format', 'ประเภทร้าน', 'ประเภทสาขา', 'รูปแบบร้าน', 'ประเภท']},
       {k: 'gm', t: 'GM', syn: ['gm', 'gm_name', 'gmname', 'general_manager', 'ชื่อgm', 'ชื่อ gm', 'จีเอ็ม']}],
     ex: 'branch_code,branch_name,lat,lng,province,area,required,sla,orders_per_day,actual_rider,fc,district,division,gm\n10234,สีลม 2,13.7270,100.5240,กรุงเทพมหานคร,1,6,27.5,120,5.4,สมชาย ใจดี,BA1,ฝ่ายปฏิบัติการ 1,วิชัย รักงาน\n20871,เมืองเชียงใหม่ 3,18.7883,98.9853,เชียงใหม่,8,4,34.0,65,3,สุดา มีสุข,NA2,ฝ่ายปฏิบัติการ 5,ประเสริฐ ดีมาก',
     note: 'SLA = เวลาส่งเฉลี่ยของสาขาเป็นนาที · ออเดอร์/วัน = จำนวนออเดอร์เฉลี่ยต่อวัน · actual_rider = จำนวนไรเดอร์เฉลี่ยที่เกิดจริงต่อวัน ใช้คำนวณภาระไรเดอร์แทนจำนวนที่ต้องการ · FC เขต ฝ่าย GM = สายบังคับบัญชาของร้าน ใช้แสดงและค้นหา ไม่บังคับ ถ้ามีสองคอลัมน์นี้ SLA ของสาขาใช้จากไฟล์นี้เท่านั้น ส่วนออเดอร์/วัน ถ้าไม่มีจะนับจากหมุดลูกค้า'},
@@ -2578,7 +2579,7 @@ function validate(key, src, map) {
       if (rawAct && !(actual >= 0 && actual < 1000)) { bag.add('warn', 'ไรเดอร์เกิดจริง ไม่ใช่ตัวเลขที่ถูกต้อง ไม่ใช้ค่านี้', ln); actual = NaN; }
       if (seen.has(code)) bag.add('warn', 'รหัสสาขาซ้ำ ใช้แถวล่าสุด', ln);
       seen.set(code, out.length);
-      out.push({code, name: String(g(row, 'name')).trim() || code, lat, lng, prov, area: parseArea(g(row, 'area')), req, sla: isFinite(sla) ? sla : null, orders: isFinite(orders) ? orders : null, actual: rawAct && isFinite(actual) ? actual : null, ...Object.fromEntries(['fc', 'dist', 'div', 'gm'].map(k => [k, String(g(row, k) ?? '').trim() || null]))});
+      out.push({code, name: String(g(row, 'name')).trim() || code, lat, lng, prov, area: parseArea(g(row, 'area')), req, sla: isFinite(sla) ? sla : null, orders: isFinite(orders) ? orders : null, actual: rawAct && isFinite(actual) ? actual : null, ...Object.fromEntries(['fc', 'dist', 'div', 'gm', 'stype'].map(k => [k, String(g(row, k) ?? '').trim() || null]))});
     } else if (key === 'riders') {
       const id = String(g(row, 'id')).trim(), br = BI.byCode.get(codeKey(g(row, 'code')));
       if (!id) return bag.add('err', 'ไม่มีรหัสไรเดอร์', ln);
@@ -2789,7 +2790,7 @@ function rebuildAll(changed) {
   if (!hasStores()) { buildSim(); running = true; }
   else {
     BR = (DS.branches ? DS.branches.rows : tradeStores()).map(x => ({code: x.code, name: x.name, prov: x.prov, lat: x.lat, lon: x.lng, area: x.area != null && (typeof x.area !== 'number' || AREAS.some(a => a.id === x.area)) ? x.area : areaFor(x.prov, x.lng, x.lat),
-      reqFixed: x.req, reqPeak: x.req, riders: [], bias: 1, svcR: 0, slaFile: x.sla ?? null, ordFile: x.orders ?? null, actFile: x.actual ?? null, fc: x.fc ?? null, dist: x.dist ?? null, div: x.div ?? null, gm: x.gm ?? null}));
+      reqFixed: x.req, reqPeak: x.req, riders: [], bias: 1, svcR: 0, slaFile: x.sla ?? null, ordFile: x.orders ?? null, actFile: x.actual ?? null, fc: x.fc ?? null, dist: x.dist ?? null, div: x.div ?? null, gm: x.gm ?? null, stype: x.stype ?? null}));
     const byKey = new Map(BR.map(b => [codeKey(b.code), b])), byCode = {get: c => byKey.get(codeKey(c))};
     RD = []; let lostR = 0;
     for (const r of DS.riders?.rows || []) { const b = byCode.get(r.code); if (!b) { lostR++; continue; } const rd = {id: r.id, b, st: r.st, since: r.t, jobs: 0}; b.riders.push(rd); RD.push(rd); }
@@ -2912,7 +2913,7 @@ const fmtStamp = t => { const d = new Date(t + 7 * 3600e3); return `${d.getUTCDa
 const csvCell = v => { const s = String(v ?? ''); return /[",\n\t]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
 function exportText(key) {
   const rows = [];
-  if (key === 'branches') { rows.push(['branch_code', 'branch_name', 'lat', 'lng', 'province', 'area', 'required', 'sla', 'orders_per_day', 'actual_rider', 'fc', 'district', 'division', 'gm']); for (const b of BR) rows.push([b.code, b.name, b.lat.toFixed(6), b.lon.toFixed(6), provByCode[b.prov]?.n || '', b.area, b.reqFixed ?? b.reqPeak, b.dv?.avgT ? b.dv.avgT.toFixed(1) : '', b.dv?.ordersDay ? Math.round(b.dv.ordersDay) : '', b.actFile ?? '', b.fc ?? '', b.dist ?? '', b.div ?? '', b.gm ?? '']); }
+  if (key === 'branches') { rows.push(['branch_code', 'branch_name', 'lat', 'lng', 'province', 'area', 'required', 'sla', 'orders_per_day', 'actual_rider', 'fc', 'district', 'division', 'gm', 'storetype']); for (const b of BR) rows.push([b.code, b.name, b.lat.toFixed(6), b.lon.toFixed(6), provByCode[b.prov]?.n || '', b.area, b.reqFixed ?? b.reqPeak, b.dv?.avgT ? b.dv.avgT.toFixed(1) : '', b.dv?.ordersDay ? Math.round(b.dv.ordersDay) : '', b.actFile ?? '', b.fc ?? '', b.dist ?? '', b.div ?? '', b.gm ?? '', b.stype ?? '']); }
   else if (key === 'riders') { rows.push(['rider_id', 'branch_code', 'status', 'last_update']); const S = {deliver: 'delivering', pickup: 'pickup', idle: 'idle', break: 'break', offline: 'offline'};
     for (const r of RD) rows.push([r.id, r.b.code, S[r.st], new Date(r.since + 7 * 3600e3).toISOString().slice(0, 16).replace('T', ' ')]); }
   else if (key === 'customers') { rows.push(['customer_id', 'branch_code', 'lat', 'lng', 'orders_30d']); for (let i = 0; i < CUST.n; i++) rows.push(['C-' + String(i + 1).padStart(7, '0'), BR[CUST.br[i]].code, CUST.lat[i].toFixed(6), CUST.lon[i].toFixed(6), CUST.orders[i]]); }
@@ -2958,13 +2959,13 @@ function runValidate() {
   REV.res = validate(key, src.kind === 'table' ? {kind: 'table', rows: sh.rows.slice(1)} : src, REV.map);
 }
 function previewCells(key, r) {
-  if (key === 'branches') return [r.code, r.name, r.lat.toFixed(5), r.lng.toFixed(5), provByCode[r.prov]?.n || '', r.area ?? '–', r.req, r.sla ?? '–', r.orders ?? '–', r.actual ?? '–', r.fc ?? '–', r.dist ?? '–', r.div ?? '–', r.gm ?? '–'];
+  if (key === 'branches') return [r.code, r.name, r.lat.toFixed(5), r.lng.toFixed(5), provByCode[r.prov]?.n || '', r.area ?? '–', r.req, r.sla ?? '–', r.orders ?? '–', r.actual ?? '–', r.fc ?? '–', r.dist ?? '–', r.div ?? '–', r.gm ?? '–', r.stype ?? '–'];
   if (key === 'riders') return [r.id, r.code, ST[r.st].t, new Date(r.t).toLocaleString('th-TH', {day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'})];
   if (key === 'customers') return [r.id || '–', r.code, r.lat.toFixed(5), r.lng.toFixed(5), r.o, TIER[tierOf(r.o)].t];
   if (key === 'trade') { const b = branchIndex().byCode.get(codeKey(r.code)); return [r.code, b?.name || '', r.rings ? `${r.rings.length > 1 ? 'MultiPolygon' : 'Polygon'} ${r.rings.reduce((s, x) => s + x.length, 0)} จุด` : `รัศมี ${r.radius} กม.`, r.rings ? f1(ringsAreaKm(r.rings)) : f1(Math.PI * r.radius ** 2), r.t ? new Date(r.t).toLocaleString('th-TH', {day: 'numeric', month: 'short', year: '2-digit', hour: '2-digit', minute: '2-digit'}) : '–']; }
   return [provByCode[r.prov]?.n, r.area, r.aname || '–'];
 }
-const PREV_HEAD = {branches: ['รหัส', 'ชื่อ', 'lat', 'lng', 'จังหวัด', 'พื้นที่', 'ต้องการ', 'SLA นาที', 'ออเดอร์/วัน', 'ไรเดอร์จริง/วัน', 'FC', 'เขต', 'ฝ่าย', 'GM'], riders: ['ไรเดอร์', 'สาขา', 'สถานะ', 'อัปเดต'],
+const PREV_HEAD = {branches: ['รหัส', 'ชื่อ', 'lat', 'lng', 'จังหวัด', 'พื้นที่', 'ต้องการ', 'SLA นาที', 'ออเดอร์/วัน', 'ไรเดอร์จริง/วัน', 'FC', 'เขต', 'ฝ่าย', 'GM', 'Store type'], riders: ['ไรเดอร์', 'สาขา', 'สถานะ', 'อัปเดต'],
   customers: ['ลูกค้า', 'สาขา', 'lat', 'lng', 'ครั้ง/30 วัน', 'ระดับ'], trade: ['store_code', 'สาขา', 'รูปแบบ', 'พื้นที่ ตร.กม.', 'created_at'], areas: ['จังหวัด', 'พื้นที่', 'ชื่อพื้นที่']};
 function renderRev() {
   const box = document.getElementById('dmRevBox'); if (!REV) return;
@@ -3141,11 +3142,11 @@ async function xWorkbook(X) {
   // Excel rejects NaN/Infinity cells and sheet names over 31 characters or with []:*?/\\
   const cell = v => typeof v === 'number' && !isFinite(v) ? '' : v ?? '';
   const add = (name, aoa, widths) => sheets.push({name: name.replace(/[\[\]:*?\/\\]/g, ' ').slice(0, 31), aoa: aoa.map(r => r.map(cell)), widths});
-  add('รายสาขา', [['ลำดับ', 'รหัสสาขา', 'ชื่อสาขา', 'พื้นที่', 'ชื่อพื้นที่', 'จังหวัด', 'ฝ่าย', 'เขต', 'FC', 'GM', 'กลุ่มเกณฑ์', 'SLA นาที', 'รัศมีไกลสุด กม.', 'เกณฑ์รัศมี กม.', 'เกินเกณฑ์ กม.', 'พื้นที่ ตร.กม.', 'ออเดอร์/วัน', 'ไรเดอร์เกิดจริง/วัน', 'ออเดอร์/ไรเดอร์', 'ขับรถไกลสุด นาที/เที่ยว', 'คำแนะนำ', 'ละติจูด', 'ลองจิจูด']]
+  add('รายสาขา', [['ลำดับ', 'รหัสสาขา', 'ชื่อสาขา', 'Store type', 'พื้นที่', 'ชื่อพื้นที่', 'จังหวัด', 'ฝ่าย', 'เขต', 'FC', 'GM', 'กลุ่มเกณฑ์', 'SLA นาที', 'รัศมีไกลสุด กม.', 'เกณฑ์รัศมี กม.', 'เกินเกณฑ์ กม.', 'พื้นที่ ตร.กม.', 'ออเดอร์/วัน', 'ไรเดอร์เกิดจริง/วัน', 'ออเดอร์/ไรเดอร์', 'ขับรถไกลสุด นาที/เที่ยว', 'คำแนะนำ', 'ละติจูด', 'ลองจิจูด']]
     .concat(X.A.map((b, i) => { const d = b.dv, c = d.cut;
-      return [i + 1, b.code, b.name, b.area ?? '', b.area != null ? areaName(b.area) : '', provByCode[b.prov]?.n || '', b.div ?? '', b.dist ?? '', b.fc ?? '', b.gm ?? '', ZONE_TH[zoneOf(b)], +d.avgT.toFixed(1), +d.rMax.toFixed(2), anomalyLim(b), +(d.rMax - anomalyLim(b)).toFixed(2), +d.area.toFixed(2),
+      return [i + 1, b.code, b.name, b.stype ?? '', b.area ?? '', b.area != null ? areaName(b.area) : '', provByCode[b.prov]?.n || '', b.div ?? '', b.dist ?? '', b.fc ?? '', b.gm ?? '', ZONE_TH[zoneOf(b)], +d.avgT.toFixed(1), +d.rMax.toFixed(2), anomalyLim(b), +(d.rMax - anomalyLim(b)).toFixed(2), +d.area.toFixed(2),
         d.ordSrc ? Math.round(d.ordersDay) : '', d.actual ?? '', d.ordPerRider ? +d.ordPerRider.toFixed(1) : '', b.rad ? Math.round(d.rideMax) : '', xCut(b), +b.lat.toFixed(6), +b.lon.toFixed(6)]; })),
-    [6, 10, 28, 7, 16, 16, 18, 10, 20, 20, 11, 9, 13, 12, 12, 11, 11, 14, 13, 18, 40, 11, 11]);
+    [6, 10, 28, 14, 7, 16, 16, 18, 10, 20, 20, 11, 9, 13, 12, 12, 11, 11, 14, 13, 18, 40, 11, 11]);
   let XL = null; try { XL = await loadXLSX(); } catch (e) {}
   if (!XL) { const aoa = sheets.find(x => x.name === 'รายสาขา').aoa, csv = '\ufeff' + aoa.map(r => r.map(v => { const t = String(v ?? ''); return /[",\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t; }).join(',')).join('\r\n');
     return {csv: true, name: xFileName(X).replace(/\.xlsx$/, '.csv'), blob: new Blob([csv], {type: 'text/csv;charset=utf-8'}), base64: () => btoa(unescape(encodeURIComponent(csv)))}; }
