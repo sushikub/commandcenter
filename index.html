@@ -1024,7 +1024,7 @@ function inScope(b, ignoreSt) {
   if (!ignoreSt && filt.st !== 'all' && b.status !== filt.st) return false;
   if (filt.q) {
     const q = filt.q.toLowerCase();
-    if (!(b.name.toLowerCase().includes(q) || b.code.includes(q) || b.riders.some(r => r.id.toLowerCase().includes(q)))) return false;
+    if (!(b.name.toLowerCase().includes(q) || b.code.includes(q) || [b.fc, b.dist, b.div, b.gm].some(v => v && v.toLowerCase().includes(q)) || b.riders.some(r => r.id.toLowerCase().includes(q)))) return false;
   }
   return true;
 }
@@ -1451,6 +1451,8 @@ const polyArea = r => { let a = 0; for (let i = 0; i < r.length; i++) a += .5 * 
 const ridersAtPeak = b => MODE === 'sim' ? Math.max(1, Math.min(b.riders.length, Math.round(b.reqPeak * b.bias)))
   : b.actFile > 0 ? b.actFile : b.riders.length ? Math.max(1, b.riders.filter(r => r.st !== 'offline').length) : Math.max(1, b.reqFixed || 1);
 const f1r = v => fmt(Math.round(v * 10) / 10);
+const orgOf = b => [['ฝ่าย', b.div], ['เขต', b.dist], ['FC', b.fc], ['GM', b.gm]].filter(x => x[1]);
+const orgText = b => orgOf(b).map(([k, v]) => v.toLowerCase().startsWith(k.toLowerCase()) ? v : `${k} ${v}`).join(' · ');
 
 function allocCust(n) {
   return {n, lon: new Float32Array(n), lat: new Float32Array(n), my: new Float32Array(n), dist: new Float32Array(n), time: new Float32Array(n),
@@ -2119,7 +2121,7 @@ function renderAnomRecs(list) {
   const el = document.getElementById('dRecList');
   el.innerHTML = list.slice(0, dShowN).map(b => { const d = b.dv, lim = anomalyLim(b);
     return `<div class="rec" data-code="${b.code}" tabindex="0"><span class="sv" style="background:var(--short)"></span>
-      <div style="min-width:0"><div class="rt"><b>${esc(b.code)} ${esc(b.name)}</b><span class="rm">${b.area ? `พื้นที่ ${typeof b.area === 'number' ? b.area + ' · ' : ''}${esc(areaName(b.area))} · ` : ''}${esc(provByCode[b.prov]?.n || '')} · เกณฑ์ ${ZONE_TH[zoneOf(b)]}</span></div>
+      <div style="min-width:0"><div class="rt"><b>${esc(b.code)} ${esc(b.name)}</b><span class="rm">${b.area ? `พื้นที่ ${typeof b.area === 'number' ? b.area + ' · ' : ''}${esc(areaName(b.area))} · ` : ''}${esc(provByCode[b.prov]?.n || '')} · เกณฑ์ ${ZONE_TH[zoneOf(b)]}</span>${orgOf(b).length ? `<span class="rm">${esc(orgText(b))}</span>` : ''}</div>
       <div class="rl">รัศมีไกลสุด ${f1(d.rMax)} กม. เกินเกณฑ์ ${f1(lim)} กม. อยู่ ${d.rMax - lim < 1 ? fmt(Math.max(1, Math.round((d.rMax - lim) * 1000))) + ' ม.' : f1(d.rMax - lim) + ' กม.'} · ${d.ordSrc ? fmt(Math.round(d.ordersDay)) + ' ออเดอร์/วัน' : ''}${d.actual != null ? ` · ไรเดอร์จริง ${f1r(d.actual)} คน/วัน${d.ordPerRider ? ` (${f1r(d.ordPerRider)} ออเดอร์/คน)` : ''}` : ''}${d.cut?.recN ? ` · แนะนำตัด ${d.cut.recN} ส่วน` : ''}</div></div>
       <div class="rv">SLA <b class="num">${d.avgT.toFixed(0)}</b> นาที<br><span class="num">${d.rMax - lim < .05 ? d.rMax.toFixed(2) : f1(d.rMax)}</span> / ${f1(lim)} กม.</div></div>`; }).join('') || `<div class="empty">ไม่พบสาขาที่ SLA เกิน ${ASET.sla} นาที และเทรดแอเรียเกินมาตรฐาน</div>`;
   const more = document.getElementById('dRecMore');
@@ -2183,7 +2185,7 @@ function renderDDetail() {
   const gm = `https://www.google.com/maps/search/?api=1&query=${b.lat.toFixed(5)},${b.lon.toFixed(5)}`;
   el.innerHTML = `<div class="ddh"><button class="linkbtn" id="dBack">← กลับไปรายการแนะนำ</button>
       <div class="m">สาขา ${b.code} · ${esc(provByCode[b.prov]?.n || '')} · ${isBkk(b) ? 'กทม.' : 'ต่างจังหวัด'} · ที่มาพื้นที่: ${SRC_TH[b.radSrc] || '–'}</div>${b.ovl ? `<div class="m" style="color:var(--over)">เทรดแอเรียในไฟล์ทับกับ ${TRADE_OVL.filter(p => p[0] === b || p[1] === b).map(p => esc((p[0] === b ? p[1] : p[0]).name) + ' ' + Math.round(p[2] * 1000) + ' ม.').join(', ')} ควรแก้ในระบบวาดเทรดแอเรีย</div>` : ''}
-      <h3>${esc(b.name)}</h3><div class="pills">${issuePills(b)}</div></div>
+      <h3>${esc(b.name)}</h3>${orgOf(b).length ? `<div class="m">${esc(orgText(b))}</div>` : ''}<div class="pills">${issuePills(b)}</div></div>
     <div class="dgrid">
       <div><div class="l">รัศมีไกลสุด${page === 'anomaly' ? ` · เกณฑ์${ZONE_TH[zoneOf(b)]}` : ''}</div><div class="v ${(page === 'anomaly' ? anomArea(b) : d.flags.over) ? 'bad' : ''}">${f1(d.rMax)} <small>/ ${page === 'anomaly' ? f1(anomalyLim(b)) : d.lim} กม.</small></div></div>
       <div><div class="l">พื้นที่จัดส่ง</div><div class="v">${f1(d.area)} <small>/ ${f1(d.stdArea)} ตร.กม.</small></div></div>
@@ -2253,8 +2255,8 @@ document.querySelectorAll('#dT th.sort').forEach(th => th.onclick = () => { cons
 document.querySelector('#dT tbody').addEventListener('click', e => { const tr = e.target.closest('tr[data-code]'); if (tr) selectDBranch(BR.find(b => b.code === tr.dataset.code)); });
 document.querySelector('#dT tbody').addEventListener('keydown', e => { if (e.key === 'Enter') { const tr = e.target.closest('tr[data-code]'); if (tr) selectDBranch(BR.find(b => b.code === tr.dataset.code)); } });
 document.getElementById('dCopyT').onclick = () => {
-  const rows = [['รหัส', 'สาขา', 'จังหวัด', 'รัศมีไกลสุด กม.', 'มาตรฐาน กม.', 'พื้นที่ ตร.กม.', 'ลูกค้า', 'ลูกค้าประจำ', 'ออเดอร์/วัน', 'ไรเดอร์เกิดจริง/วัน', 'SLA นาที (ไฟล์สาขา)', 'ขับรถไกลสุด นาที/เที่ยว', 'ภาระพีค %', 'ประเด็น', 'คำแนะนำ']]
-    .concat(dLast.map(b => { const d = b.dv; return [b.code, b.name, provByCode[b.prov]?.n || '', d.rMax.toFixed(2), d.lim, d.area.toFixed(2), d.cnt, d.tiers[2], Math.round(d.ordersDay), d.actual ?? '', d.avgT ? d.avgT.toFixed(1) : '', b.rad ? Math.round(d.rideMax) : '', Math.round(d.load * 100),
+  const rows = [['รหัส', 'สาขา', 'จังหวัด', 'ฝ่าย', 'เขต', 'FC', 'GM', 'รัศมีไกลสุด กม.', 'มาตรฐาน กม.', 'พื้นที่ ตร.กม.', 'ลูกค้า', 'ลูกค้าประจำ', 'ออเดอร์/วัน', 'ไรเดอร์เกิดจริง/วัน', 'SLA นาที (ไฟล์สาขา)', 'ขับรถไกลสุด นาที/เที่ยว', 'ภาระพีค %', 'ประเด็น', 'คำแนะนำ']]
+    .concat(dLast.map(b => { const d = b.dv; return [b.code, b.name, provByCode[b.prov]?.n || '', b.div ?? '', b.dist ?? '', b.fc ?? '', b.gm ?? '', d.rMax.toFixed(2), d.lim, d.area.toFixed(2), d.cnt, d.tiers[2], Math.round(d.ordersDay), d.actual ?? '', d.avgT ? d.avgT.toFixed(1) : '', b.rad ? Math.round(d.rideMax) : '', Math.round(d.load * 100),
       ['sla', 'cap', 'over'].filter(k => d.flags[k]).map(k => ISSUE[k].t).join(' / ') || 'ปกติ', recText(b).split('\n').slice(2).join(' | ')]; }));
   navigator.clipboard.writeText(rows.map(r => r.join('\t')).join('\n')).then(() => toast(`คัดลอก ${fmt(dLast.length)} สาขาแล้ว วางใน Excel ได้เลย`), () => toast('คัดลอกไม่สำเร็จ'));
 };
@@ -2336,9 +2338,13 @@ const SPEC = {
       {k: 'req', t: 'ไรเดอร์ที่ต้องการ', syn: ['required', 'rider_required', 'required_riders', 'req', 'target_rider', 'ไรเดอร์ที่ต้องการ', 'จำนวนไรเดอร์ที่ต้องการ']},
       {k: 'sla', t: 'SLA (นาที)', syn: ['sla', 'sla_min', 'sla_minute', 'slaนาที', 'avg_delivery_min', 'delivery_min', 'lead_time', 'เวลาส่งเฉลี่ย', 'เวลาส่ง']},
       {k: 'orders', t: 'ออเดอร์/วัน', syn: ['orders_per_day', 'order_per_day', 'orders_day', 'orderperday', 'ออเดอร์ต่อวัน', 'ออเดอร์/วัน', 'จำนวนออเดอร์ต่อวัน', 'avg_orders', 'orders', 'order', 'จำนวนออเดอร์', 'ออเดอร์']},
-      {k: 'actual', t: 'ไรเดอร์เกิดจริง/วัน', syn: ['actual_rider', 'actual_riders', 'actualrider', 'actualriders', 'rider_actual', 'riders_actual', 'avg_rider', 'avg_riders', 'actual', 'ไรเดอร์เกิดจริง', 'ไรเดอร์จริง', 'จำนวนไรเดอร์จริง', 'ไรเดอร์เฉลี่ย', 'จำนวนไรเดอร์เฉลี่ย']}],
-    ex: 'branch_code,branch_name,lat,lng,province,area,required,sla,orders_per_day,actual_rider\n10234,สีลม 2,13.7270,100.5240,กรุงเทพมหานคร,1,6,27.5,120,5.4\n20871,เมืองเชียงใหม่ 3,18.7883,98.9853,เชียงใหม่,8,4,34.0,65,3',
-    note: 'SLA = เวลาส่งเฉลี่ยของสาขาเป็นนาที · ออเดอร์/วัน = จำนวนออเดอร์เฉลี่ยต่อวัน · actual_rider = จำนวนไรเดอร์เฉลี่ยที่เกิดจริงต่อวัน ใช้คำนวณภาระไรเดอร์แทนจำนวนที่ต้องการ ถ้ามีสองคอลัมน์นี้ SLA ของสาขาใช้จากไฟล์นี้เท่านั้น ส่วนออเดอร์/วัน ถ้าไม่มีจะนับจากหมุดลูกค้า'},
+      {k: 'actual', t: 'ไรเดอร์เกิดจริง/วัน', syn: ['actual_rider', 'actual_riders', 'actualrider', 'actualriders', 'rider_actual', 'riders_actual', 'avg_rider', 'avg_riders', 'actual', 'ไรเดอร์เกิดจริง', 'ไรเดอร์จริง', 'จำนวนไรเดอร์จริง', 'ไรเดอร์เฉลี่ย', 'จำนวนไรเดอร์เฉลี่ย']},
+      {k: 'fc', t: 'FC', syn: ['fc', 'fc_name', 'fcname', 'field_consultant', 'ชื่อfc', 'ชื่อ fc', 'เอฟซี']},
+      {k: 'dist', t: 'เขต', syn: ['เขต', 'district', 'district_name', 'ชื่อเขต', 'เขตการขาย', 'sales_district', 'dist']},
+      {k: 'div', t: 'ฝ่าย', syn: ['ฝ่าย', 'division', 'division_name', 'ชื่อฝ่าย', 'ฝ่ายปฏิบัติการ', 'div', 'department']},
+      {k: 'gm', t: 'GM', syn: ['gm', 'gm_name', 'gmname', 'general_manager', 'ชื่อgm', 'ชื่อ gm', 'จีเอ็ม']}],
+    ex: 'branch_code,branch_name,lat,lng,province,area,required,sla,orders_per_day,actual_rider,fc,district,division,gm\n10234,สีลม 2,13.7270,100.5240,กรุงเทพมหานคร,1,6,27.5,120,5.4,สมชาย ใจดี,BA1,ฝ่ายปฏิบัติการ 1,วิชัย รักงาน\n20871,เมืองเชียงใหม่ 3,18.7883,98.9853,เชียงใหม่,8,4,34.0,65,3,สุดา มีสุข,NA2,ฝ่ายปฏิบัติการ 5,ประเสริฐ ดีมาก',
+    note: 'SLA = เวลาส่งเฉลี่ยของสาขาเป็นนาที · ออเดอร์/วัน = จำนวนออเดอร์เฉลี่ยต่อวัน · actual_rider = จำนวนไรเดอร์เฉลี่ยที่เกิดจริงต่อวัน ใช้คำนวณภาระไรเดอร์แทนจำนวนที่ต้องการ · FC เขต ฝ่าย GM = สายบังคับบัญชาของร้าน ใช้แสดงและค้นหา ไม่บังคับ ถ้ามีสองคอลัมน์นี้ SLA ของสาขาใช้จากไฟล์นี้เท่านั้น ส่วนออเดอร์/วัน ถ้าไม่มีจะนับจากหมุดลูกค้า'},
   trade: {n: 2, t: 'ขนาดเทรดแอเรีย', d: 'ขอบเขตพื้นที่ให้บริการของแต่ละสาขา เป็น polygon (GeoJSON, KML, WKT) หรือรัศมีเป็นกิโลเมตร', acc: '.geojson,.json,.kml,.csv,.txt,.xlsx,.xls',
     fields: [
       {k: 'code', t: 'store_code', req: 1, syn: COL_CODE},
@@ -2559,7 +2565,7 @@ function validate(key, src, map) {
       if (rawAct && !(actual >= 0 && actual < 1000)) { bag.add('warn', 'ไรเดอร์เกิดจริง ไม่ใช่ตัวเลขที่ถูกต้อง ไม่ใช้ค่านี้', ln); actual = NaN; }
       if (seen.has(code)) bag.add('warn', 'รหัสสาขาซ้ำ ใช้แถวล่าสุด', ln);
       seen.set(code, out.length);
-      out.push({code, name: String(g(row, 'name')).trim() || code, lat, lng, prov, area: parseArea(g(row, 'area')), req, sla: isFinite(sla) ? sla : null, orders: isFinite(orders) ? orders : null, actual: rawAct && isFinite(actual) ? actual : null});
+      out.push({code, name: String(g(row, 'name')).trim() || code, lat, lng, prov, area: parseArea(g(row, 'area')), req, sla: isFinite(sla) ? sla : null, orders: isFinite(orders) ? orders : null, actual: rawAct && isFinite(actual) ? actual : null, ...Object.fromEntries(['fc', 'dist', 'div', 'gm'].map(k => [k, String(g(row, k) ?? '').trim() || null]))});
     } else if (key === 'riders') {
       const id = String(g(row, 'id')).trim(), br = BI.byCode.get(codeKey(g(row, 'code')));
       if (!id) return bag.add('err', 'ไม่มีรหัสไรเดอร์', ln);
@@ -2770,7 +2776,7 @@ function rebuildAll(changed) {
   if (!hasStores()) { buildSim(); running = true; }
   else {
     BR = (DS.branches ? DS.branches.rows : tradeStores()).map(x => ({code: x.code, name: x.name, prov: x.prov, lat: x.lat, lon: x.lng, area: x.area != null && (typeof x.area !== 'number' || AREAS.some(a => a.id === x.area)) ? x.area : areaFor(x.prov, x.lng, x.lat),
-      reqFixed: x.req, reqPeak: x.req, riders: [], bias: 1, svcR: 0, slaFile: x.sla ?? null, ordFile: x.orders ?? null, actFile: x.actual ?? null}));
+      reqFixed: x.req, reqPeak: x.req, riders: [], bias: 1, svcR: 0, slaFile: x.sla ?? null, ordFile: x.orders ?? null, actFile: x.actual ?? null, fc: x.fc ?? null, dist: x.dist ?? null, div: x.div ?? null, gm: x.gm ?? null}));
     const byKey = new Map(BR.map(b => [codeKey(b.code), b])), byCode = {get: c => byKey.get(codeKey(c))};
     RD = []; let lostR = 0;
     for (const r of DS.riders?.rows || []) { const b = byCode.get(r.code); if (!b) { lostR++; continue; } const rd = {id: r.id, b, st: r.st, since: r.t, jobs: 0}; b.riders.push(rd); RD.push(rd); }
@@ -2893,7 +2899,7 @@ const fmtStamp = t => { const d = new Date(t + 7 * 3600e3); return `${d.getUTCDa
 const csvCell = v => { const s = String(v ?? ''); return /[",\n\t]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
 function exportText(key) {
   const rows = [];
-  if (key === 'branches') { rows.push(['branch_code', 'branch_name', 'lat', 'lng', 'province', 'area', 'required', 'sla', 'orders_per_day', 'actual_rider']); for (const b of BR) rows.push([b.code, b.name, b.lat.toFixed(6), b.lon.toFixed(6), provByCode[b.prov]?.n || '', b.area, b.reqFixed ?? b.reqPeak, b.dv?.avgT ? b.dv.avgT.toFixed(1) : '', b.dv?.ordersDay ? Math.round(b.dv.ordersDay) : '', b.actFile ?? '']); }
+  if (key === 'branches') { rows.push(['branch_code', 'branch_name', 'lat', 'lng', 'province', 'area', 'required', 'sla', 'orders_per_day', 'actual_rider', 'fc', 'district', 'division', 'gm']); for (const b of BR) rows.push([b.code, b.name, b.lat.toFixed(6), b.lon.toFixed(6), provByCode[b.prov]?.n || '', b.area, b.reqFixed ?? b.reqPeak, b.dv?.avgT ? b.dv.avgT.toFixed(1) : '', b.dv?.ordersDay ? Math.round(b.dv.ordersDay) : '', b.actFile ?? '', b.fc ?? '', b.dist ?? '', b.div ?? '', b.gm ?? '']); }
   else if (key === 'riders') { rows.push(['rider_id', 'branch_code', 'status', 'last_update']); const S = {deliver: 'delivering', pickup: 'pickup', idle: 'idle', break: 'break', offline: 'offline'};
     for (const r of RD) rows.push([r.id, r.b.code, S[r.st], new Date(r.since + 7 * 3600e3).toISOString().slice(0, 16).replace('T', ' ')]); }
   else if (key === 'customers') { rows.push(['customer_id', 'branch_code', 'lat', 'lng', 'orders_30d']); for (let i = 0; i < CUST.n; i++) rows.push(['C-' + String(i + 1).padStart(7, '0'), BR[CUST.br[i]].code, CUST.lat[i].toFixed(6), CUST.lon[i].toFixed(6), CUST.orders[i]]); }
@@ -2939,13 +2945,13 @@ function runValidate() {
   REV.res = validate(key, src.kind === 'table' ? {kind: 'table', rows: sh.rows.slice(1)} : src, REV.map);
 }
 function previewCells(key, r) {
-  if (key === 'branches') return [r.code, r.name, r.lat.toFixed(5), r.lng.toFixed(5), provByCode[r.prov]?.n || '', r.area ?? '–', r.req, r.sla ?? '–', r.orders ?? '–', r.actual ?? '–'];
+  if (key === 'branches') return [r.code, r.name, r.lat.toFixed(5), r.lng.toFixed(5), provByCode[r.prov]?.n || '', r.area ?? '–', r.req, r.sla ?? '–', r.orders ?? '–', r.actual ?? '–', r.fc ?? '–', r.dist ?? '–', r.div ?? '–', r.gm ?? '–'];
   if (key === 'riders') return [r.id, r.code, ST[r.st].t, new Date(r.t).toLocaleString('th-TH', {day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'})];
   if (key === 'customers') return [r.id || '–', r.code, r.lat.toFixed(5), r.lng.toFixed(5), r.o, TIER[tierOf(r.o)].t];
   if (key === 'trade') { const b = branchIndex().byCode.get(codeKey(r.code)); return [r.code, b?.name || '', r.rings ? `${r.rings.length > 1 ? 'MultiPolygon' : 'Polygon'} ${r.rings.reduce((s, x) => s + x.length, 0)} จุด` : `รัศมี ${r.radius} กม.`, r.rings ? f1(ringsAreaKm(r.rings)) : f1(Math.PI * r.radius ** 2), r.t ? new Date(r.t).toLocaleString('th-TH', {day: 'numeric', month: 'short', year: '2-digit', hour: '2-digit', minute: '2-digit'}) : '–']; }
   return [provByCode[r.prov]?.n, r.area, r.aname || '–'];
 }
-const PREV_HEAD = {branches: ['รหัส', 'ชื่อ', 'lat', 'lng', 'จังหวัด', 'พื้นที่', 'ต้องการ', 'SLA นาที', 'ออเดอร์/วัน', 'ไรเดอร์จริง/วัน'], riders: ['ไรเดอร์', 'สาขา', 'สถานะ', 'อัปเดต'],
+const PREV_HEAD = {branches: ['รหัส', 'ชื่อ', 'lat', 'lng', 'จังหวัด', 'พื้นที่', 'ต้องการ', 'SLA นาที', 'ออเดอร์/วัน', 'ไรเดอร์จริง/วัน', 'FC', 'เขต', 'ฝ่าย', 'GM'], riders: ['ไรเดอร์', 'สาขา', 'สถานะ', 'อัปเดต'],
   customers: ['ลูกค้า', 'สาขา', 'lat', 'lng', 'ครั้ง/30 วัน', 'ระดับ'], trade: ['store_code', 'สาขา', 'รูปแบบ', 'พื้นที่ ตร.กม.', 'created_at'], areas: ['จังหวัด', 'พื้นที่', 'ชื่อพื้นที่']};
 function renderRev() {
   const box = document.getElementById('dmRevBox'); if (!REV) return;
@@ -3073,6 +3079,7 @@ function xHTML(X) {
   const td = 'style="border:1px solid #d0d5dd;padding:5px 8px"', tdn = 'style="border:1px solid #d0d5dd;padding:5px 8px;text-align:right;white-space:nowrap"';
   const red = 'style="border:1px solid #d0d5dd;padding:5px 8px;text-align:right;white-space:nowrap;color:#c4320a;font-weight:600"';
   const top = +XS.top ? X.A.slice(0, +XS.top) : X.A;
+  const org = top.some(b => b.div || b.dist || b.fc);
   const note = esc(XS.note || '').replace(/\n/g, '<br>');
   let h = `<div style="font-family:Tahoma,'Leelawadee UI',sans-serif;font-size:14px;color:#1d2433;line-height:1.5">`;
   if (note) h += `<p style="margin:0 0 12px">${note}</p>`;
@@ -3092,9 +3099,9 @@ function xHTML(X) {
   if (X.A.length) {
     h += `<p style="margin:0 0 6px;font-weight:700">รายสาขา${top.length < X.A.length ? ` (${fmt(top.length)} อันดับแรกจาก ${fmt(X.A.length)} สาขา ดูทั้งหมดในไฟล์แนบ)` : ''}</p>
       <table cellspacing="0" cellpadding="0" style="border-collapse:collapse;margin:0 0 14px;font-size:13px"><tr>
-      <th ${thn}>#</th><th ${th}>รหัส</th><th ${th}>สาขา</th><th ${th}>พื้นที่</th><th ${th}>จังหวัด</th><th ${thn}>SLA นาที</th><th ${thn}>รัศมีไกลสุด / เกณฑ์ กม.</th><th ${thn}>เกินเกณฑ์</th><th ${thn}>ออเดอร์/วัน</th><th ${thn}>ไรเดอร์จริง/วัน</th><th ${th}>แนะนำ</th></tr>`;
+      <th ${thn}>#</th><th ${th}>รหัส</th><th ${th}>สาขา</th><th ${th}>พื้นที่</th><th ${th}>จังหวัด</th>${org ? `<th ${th}>ฝ่าย / เขต / FC</th>` : ''}<th ${thn}>SLA นาที</th><th ${thn}>รัศมีไกลสุด / เกณฑ์ กม.</th><th ${thn}>เกินเกณฑ์</th><th ${thn}>ออเดอร์/วัน</th><th ${thn}>ไรเดอร์จริง/วัน</th><th ${th}>แนะนำ</th></tr>`;
     top.forEach((b, i) => { const d = b.dv;
-      h += `<tr><td ${tdn}>${i + 1}</td><td ${td}>${esc(b.code)}</td><td ${td}>${esc(b.name)}</td><td ${td}>${esc(xAreaLbl(b))}</td><td ${td}>${esc(provByCode[b.prov]?.n || '')}</td>
+      h += `<tr><td ${tdn}>${i + 1}</td><td ${td}>${esc(b.code)}</td><td ${td}>${esc(b.name)}</td><td ${td}>${esc(xAreaLbl(b))}</td><td ${td}>${esc(provByCode[b.prov]?.n || '')}</td>${org ? `<td ${td}>${esc([b.div, b.dist, b.fc].filter(Boolean).join(' / ')) || '–'}</td>` : ''}
         <td ${red}>${d.avgT.toFixed(1)}</td><td ${tdn}>${d.rMax.toFixed(2)} / ${f1(anomalyLim(b))}</td><td ${tdn}>${xExcess(b)}</td><td ${tdn}>${d.ordSrc ? fmt(Math.round(d.ordersDay)) : '–'}</td><td ${tdn}>${d.actual != null ? f1r(d.actual) : '–'}</td><td ${td}>${esc(xCut(b)) || '–'}</td></tr>`; });
     h += `</table>`;
   } else h += `<p>ไม่พบสาขาที่ SLA เกินเกณฑ์และขนาด Trade Area เกินมาตรฐานพร้อมกันในขอบเขตนี้</p>`;
@@ -3126,14 +3133,14 @@ async function xWorkbook(X) {
   add('สรุปรายโซน', [['โซน', 'สาขามี Trade', 'สาขาทั้งหมด', 'สาขาขนาดพื้นที่ใหญ่เกิน', '% สาขาเกินเกณฑ์', 'SLA เฉลี่ย นาที', 'รัศมีเฉลี่ย กม.', 'รัศมีสูงสุด กม.', 'รหัสสาขาที่ไกลที่สุด', 'ชื่อสาขาที่ไกลที่สุด', 'คาดการณ์กระทบออเดอร์/วัน', `สาขา SLA เกิน ${ASET.sla} นาที & พื้นที่อยู่ในเกณฑ์ปกติ`]]
     .concat(X.zones.map(r => [r.name, r.data, r.all, r.n, r.data ? +(r.share * 100).toFixed(1) : '', r.n ? +r.sla.toFixed(1) : '', r.n ? +r.rAvg.toFixed(2) : '', r.n ? +r.rMax.toFixed(2) : '', r.worst?.code || '', r.worst?.name || '', Math.round(r.ord), r.slaOnly])),
     [22, 12, 12, 20, 14, 13, 13, 13, 16, 26, 20, 28]);
-  add('รายสาขา', [['ลำดับ', 'รหัสสาขา', 'ชื่อสาขา', 'พื้นที่', 'ชื่อพื้นที่', 'จังหวัด', 'กลุ่มเกณฑ์', 'SLA นาที', 'รัศมีไกลสุด กม.', 'เกณฑ์รัศมี กม.', 'เกินเกณฑ์ กม.', 'พื้นที่ ตร.กม.', 'ออเดอร์/วัน', 'ไรเดอร์เกิดจริง/วัน', 'ออเดอร์/ไรเดอร์', 'ขับรถไกลสุด นาที/เที่ยว', 'ลูกค้า', 'ลูกค้าประจำ', 'แนะนำตัด (ส่วน)', 'SLA หลังตัด นาที', 'คำแนะนำ', 'ละติจูด', 'ลองจิจูด']]
+  add('รายสาขา', [['ลำดับ', 'รหัสสาขา', 'ชื่อสาขา', 'พื้นที่', 'ชื่อพื้นที่', 'จังหวัด', 'ฝ่าย', 'เขต', 'FC', 'GM', 'กลุ่มเกณฑ์', 'SLA นาที', 'รัศมีไกลสุด กม.', 'เกณฑ์รัศมี กม.', 'เกินเกณฑ์ กม.', 'พื้นที่ ตร.กม.', 'ออเดอร์/วัน', 'ไรเดอร์เกิดจริง/วัน', 'ออเดอร์/ไรเดอร์', 'ขับรถไกลสุด นาที/เที่ยว', 'ลูกค้า', 'ลูกค้าประจำ', 'แนะนำตัด (ส่วน)', 'SLA หลังตัด นาที', 'คำแนะนำ', 'ละติจูด', 'ลองจิจูด']]
     .concat(X.A.map((b, i) => { const d = b.dv, c = d.cut;
-      return [i + 1, b.code, b.name, b.area ?? '', b.area != null ? areaName(b.area) : '', provByCode[b.prov]?.n || '', ZONE_TH[zoneOf(b)], +d.avgT.toFixed(1), +d.rMax.toFixed(2), anomalyLim(b), +(d.rMax - anomalyLim(b)).toFixed(2), +d.area.toFixed(2),
+      return [i + 1, b.code, b.name, b.area ?? '', b.area != null ? areaName(b.area) : '', provByCode[b.prov]?.n || '', b.div ?? '', b.dist ?? '', b.fc ?? '', b.gm ?? '', ZONE_TH[zoneOf(b)], +d.avgT.toFixed(1), +d.rMax.toFixed(2), anomalyLim(b), +(d.rMax - anomalyLim(b)).toFixed(2), +d.area.toFixed(2),
         d.ordSrc ? Math.round(d.ordersDay) : '', d.actual ?? '', d.ordPerRider ? +d.ordPerRider.toFixed(1) : '', b.rad ? Math.round(d.rideMax) : '', d.cnt || '', d.tiers[2] || '', c?.recN || '', c?.recN ? +c.after.avgT.toFixed(1) : '', xCut(b), +b.lat.toFixed(6), +b.lon.toFixed(6)]; })),
-    [6, 10, 28, 7, 16, 16, 11, 9, 13, 12, 12, 11, 11, 14, 13, 18, 8, 10, 13, 13, 40, 11, 11]);
-  add('SLA เกินแต่พื้นที่ในเกณฑ์', [['รหัสสาขา', 'ชื่อสาขา', 'พื้นที่', 'ชื่อพื้นที่', 'จังหวัด', 'SLA นาที', 'รัศมีไกลสุด กม.', 'เกณฑ์รัศมี กม.', 'ออเดอร์/วัน', 'ไรเดอร์เกิดจริง/วัน']]
-    .concat(X.slaOnly.map(b => [b.code, b.name, b.area ?? '', b.area != null ? areaName(b.area) : '', provByCode[b.prov]?.n || '', +b.dv.avgT.toFixed(1), +b.dv.rMax.toFixed(2), anomalyLim(b), b.dv.ordSrc ? Math.round(b.dv.ordersDay) : '', b.dv.actual ?? ''])),
-    [10, 28, 7, 16, 16, 9, 13, 12, 11, 14]);
+    [6, 10, 28, 7, 16, 16, 18, 10, 20, 20, 11, 9, 13, 12, 12, 11, 11, 14, 13, 18, 8, 10, 13, 13, 40, 11, 11]);
+  add('SLA เกินแต่พื้นที่ในเกณฑ์', [['รหัสสาขา', 'ชื่อสาขา', 'พื้นที่', 'ชื่อพื้นที่', 'จังหวัด', 'ฝ่าย', 'เขต', 'FC', 'GM', 'SLA นาที', 'รัศมีไกลสุด กม.', 'เกณฑ์รัศมี กม.', 'ออเดอร์/วัน', 'ไรเดอร์เกิดจริง/วัน']]
+    .concat(X.slaOnly.map(b => [b.code, b.name, b.area ?? '', b.area != null ? areaName(b.area) : '', provByCode[b.prov]?.n || '', b.div ?? '', b.dist ?? '', b.fc ?? '', b.gm ?? '', +b.dv.avgT.toFixed(1), +b.dv.rMax.toFixed(2), anomalyLim(b), b.dv.ordSrc ? Math.round(b.dv.ordersDay) : '', b.dv.actual ?? ''])),
+    [10, 28, 7, 16, 16, 18, 10, 20, 20, 9, 13, 12, 11, 14]);
   let XL = null; try { XL = await loadXLSX(); } catch (e) {}
   if (!XL) { const aoa = sheets[2].aoa, csv = '\ufeff' + aoa.map(r => r.map(v => { const t = String(v ?? ''); return /[",\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t; }).join(',')).join('\r\n');
     return {csv: true, name: xFileName(X).replace(/\.xlsx$/, '.csv'), blob: new Blob([csv], {type: 'text/csv;charset=utf-8'}), base64: () => btoa(unescape(encodeURIComponent(csv)))}; }
