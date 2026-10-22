@@ -2224,8 +2224,8 @@ function renderDDetail() {
   const wi = whatR != null ? whatIf(b, whatR) : null;
   const gm = `https://www.google.com/maps/search/?api=1&query=${b.lat.toFixed(5)},${b.lon.toFixed(5)}`;
   el.innerHTML = `<div class="ddh"><button class="linkbtn" id="dBack">← กลับไปรายการแนะนำ</button>
-      <div class="m">สาขา ${b.code} · ${esc(provByCode[b.prov]?.n || '')} · ${isBkk(b) ? 'กทม.' : 'ต่างจังหวัด'} · ที่มาพื้นที่: ${SRC_TH[b.radSrc] || '–'}</div>${b.ovl ? `<div class="m" style="color:var(--over)">เทรดแอเรียในไฟล์ทับกับ ${TRADE_OVL.filter(p => p[0] === b || p[1] === b).map(p => esc((p[0] === b ? p[1] : p[0]).name) + ' ' + Math.round(p[2] * 1000) + ' ม.').join(', ')} ควรแก้ในระบบวาดเทรดแอเรีย</div>` : ''}
-      <h3>${esc(b.name)}</h3>${orgOf(b).length ? `<div class="m">${esc(orgText(b))}</div>` : ''}<div class="pills">${issuePills(b)}</div></div>
+      <div class="m">${esc(provByCode[b.prov]?.n || '')} · ${isBkk(b) ? 'กทม.' : 'ต่างจังหวัด'} · ที่มาพื้นที่: ${SRC_TH[b.radSrc] || '–'}</div>${b.ovl ? `<div class="m" style="color:var(--over)">เทรดแอเรียในไฟล์ทับกับ ${TRADE_OVL.filter(p => p[0] === b || p[1] === b).map(p => esc((p[0] === b ? p[1] : p[0]).name) + ' ' + Math.round(p[2] * 1000) + ' ม.').join(', ')} ควรแก้ในระบบวาดเทรดแอเรีย</div>` : ''}
+      <h3><span class="num">${esc(b.code)}</span> ${esc(b.name)}</h3>${orgOf(b).length ? `<div class="m">${esc(orgText(b))}</div>` : ''}<div class="pills">${issuePills(b)}</div></div>
     <div class="dgrid">
       <div><div class="l">รัศมีไกลสุด${page === 'anomaly' ? ` · เกณฑ์${ZONE_TH[zoneOf(b)]}` : ''}</div><div class="v ${(page === 'anomaly' ? anomArea(b) : d.flags.over) ? 'bad' : ''}">${f1(d.rMax)} <small>/ ${page === 'anomaly' ? f1(anomalyLim(b)) : d.lim} กม.</small></div></div>
       <div><div class="l">พื้นที่จัดส่ง</div><div class="v">${f1(d.area)} <small>/ ${f1(d.stdArea)} ตร.กม.</small></div></div>
