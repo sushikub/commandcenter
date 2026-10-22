@@ -415,6 +415,9 @@ header h1#pgTitle{margin:0;font:700 19px/1.15 var(--f-display);letter-spacing:.0
 .rcc-report #acrit input:disabled{opacity:1;background:transparent;border-color:transparent;color:var(--fg);width:4.5em}
 .xpw label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted)}
 .xpw input{font:inherit;font-size:13px;color:var(--fg);background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:7px 9px}
+.cutwhy{font-size:13px;background:var(--sunken);border-radius:8px;padding:10px 12px;margin:4px 0}
+.cutwhy ul{margin:6px 0 0;padding-left:18px;display:flex;flex-direction:column;gap:4px;color:var(--muted)}
+.nocut{color:var(--over)}
 
 /* ---- sub menu ---- */
 .nav a.sub{padding:7px 10px 7px 22px;font-size:13.5px;position:relative;margin-left:16px;border-left:1.5px solid var(--line);border-radius:0 8px 8px 0}
@@ -2128,6 +2131,24 @@ function renderDelivery() {
   if (dFirst && DMAP.isFresh()) { dFirst = false; DMAP.fitScope(); }
   DMAP.redraw();
 }
+/* plain-language reasons why the cut planner recommends nothing for this branch (mirrors computeCut's rules) */
+function cutWhy(b) {
+  const d = b.dv, n = b.c1 - b.c0, lim = limitOf(b), dT = travelDistOf(b), R = [];
+  if (!b.rad) return ['สาขานี้ยังไม่มีเทรดแอเรีย'];
+  if (!(d.flags.over || d.flags.sla || d.flags.cap)) return [`สาขานี้ไม่เกินเกณฑ์ของการวางแผนพื้นที่ (รัศมีไม่เกิน ${lim} กม. · SLA ไม่เกิน ${DSET.sla} นาที · ไรเดอร์พอ) จึงไม่คำนวณการตัด`];
+  if (!isFinite(dT)) R.push(`${isBkk(b) ? 'กทม. ' : 'สาขานี้'}ยังไม่ได้ตั้งเกณฑ์เวลาขับรถต่อเที่ยว ระบบจึงไม่ตัดส่วนที่ขับรถนานให้อัตโนมัติ (ตั้งได้ที่แถบเกณฑ์ในหน้าพื้นที่จัดส่ง)`);
+  else if (d.rMax <= dT + .02) R.push(`ทุกส่วนของพื้นที่ขับรถไม่เกิน ${travelLimitOf(b)} นาที/เที่ยว (ไม่เกิน ${f1(dT)} กม.)`);
+  if (!n) R.push('ไม่มีหมุดลูกค้าของสาขานี้ ระบบจึงประเมินไม่ได้ว่าส่วนที่ไกลเป็นลูกค้าประจำหรือนานๆ ที อัปโหลดไฟล์หมุดลูกค้าเพื่อให้แนะนำได้');
+  else {
+    const sec = Array.from({length: 8}, () => ({c: 0, occ: 0, mod: 0, reg: 0, late: 0, ord: 0, dSum: 0}));
+    for (let i = b.c0; i < b.c1; i++) { if (CUST.dist[i] < lim * .5) continue; const x = sec[sec8(CUST.brg[i])], t = CUST.tier[i]; x.c++; x.ord += CUST.orders[i]; x.dSum += CUST.dist[i]; if (t === 0) x.occ++; else if (t === 1) x.mod++; else x.reg++; }
+    const cand = sec.map((x, k) => ({k, x, sc: x.c >= 3 ? cutScore(x, lim) : null})).filter(o => o.sc).sort((p, q) => q.sc.score - p.sc.score);
+    if (!cand.length) R.push(`ลูกค้าที่อยู่ไกลกว่า ${f1(lim * .5)} กม. มีไม่ถึง 3 รายในแต่ละทิศ (สาขานี้มีหมุดลูกค้า ${fmt(n)} ราย) ข้อมูลน้อยเกินกว่าจะแนะนำ`);
+    else { const o = cand[0]; if (!d.cut || !d.cut.recN) R.push(`ส่วนที่ไกลส่วนใหญ่เป็นลูกค้าประจำหรือปานกลาง ทิศที่น่าตัดที่สุดคือทิศ${DIR8[o.k]} (นานๆ ที ${pct(o.sc.occS)} · ประจำ ${pct(o.sc.regS)}) ได้คะแนน ${o.sc.score.toFixed(2)} ต่ำกว่าเกณฑ์ 0.30 จึงไม่ตัดเพื่อรักษาลูกค้าประจำ`); }
+  }
+  if (!R.length) R.push('ไม่พบส่วนที่ไกลและซื้อน้อยพอจะแนะนำให้ตัด');
+  return R;
+}
 function recLine(b) {
   const d = b.dv, c = d.cut;
   if (dTab === 'cap' && d.capRec) return `ต้องการไรเดอร์ช่วงพีค ${d.capRec.need} คน มี ${f1r(d.ridersPeak)} คน · เพิ่ม ${d.capRec.add} คน${d.capRec.fitR ? ` หรือลดรัศมีเหลือ ${f1(d.capRec.fitR)} กม.` : ''}`;
@@ -2141,7 +2162,7 @@ function renderAnomRecs(list) {
   el.innerHTML = list.slice(0, dShowN).map(b => { const d = b.dv, lim = anomalyLim(b);
     return `<div class="rec" data-code="${b.code}" tabindex="0"><span class="sv" style="background:var(--short)"></span>
       <div style="min-width:0"><div class="rt"><b>${esc(b.code)} ${esc(b.name)}</b><span class="rm">${b.area ? `พื้นที่ ${typeof b.area === 'number' ? b.area + ' · ' : ''}${esc(areaName(b.area))} · ` : ''}${esc(provByCode[b.prov]?.n || '')} · เกณฑ์ ${ZONE_TH[zoneOf(b)]}</span>${orgOf(b).length ? `<span class="rm">${esc(orgText(b))}</span>` : ''}</div>
-      <div class="rl">รัศมีไกลสุด ${f1(d.rMax)} กม. เกินเกณฑ์ ${f1(lim)} กม. อยู่ ${d.rMax - lim < 1 ? fmt(Math.max(1, Math.round((d.rMax - lim) * 1000))) + ' ม.' : f1(d.rMax - lim) + ' กม.'} · ${d.ordSrc ? fmt(Math.round(d.ordersDay)) + ' ออเดอร์/วัน' : ''}${d.actual != null ? ` · ไรเดอร์จริง ${f1r(d.actual)} คน/วัน${d.ordPerRider ? ` (${f1r(d.ordPerRider)} ออเดอร์/คน)` : ''}` : ''}${d.cut?.recN ? ` · แนะนำตัด ${d.cut.recN} ส่วน` : ''}</div></div>
+      <div class="rl">รัศมีไกลสุด ${f1(d.rMax)} กม. เกินเกณฑ์ ${f1(lim)} กม. อยู่ ${d.rMax - lim < 1 ? fmt(Math.max(1, Math.round((d.rMax - lim) * 1000))) + ' ม.' : f1(d.rMax - lim) + ' กม.'} · ${d.ordSrc ? fmt(Math.round(d.ordersDay)) + ' ออเดอร์/วัน' : ''}${d.actual != null ? ` · ไรเดอร์จริง ${f1r(d.actual)} คน/วัน${d.ordPerRider ? ` (${f1r(d.ordPerRider)} ออเดอร์/คน)` : ''}` : ''}${d.cut?.recN ? ` · แนะนำตัด ${d.cut.recN} ส่วน` : ' · <span class="nocut">ไม่แนะนำตัด (ดูเหตุผลในรายละเอียด)</span>'}</div></div>
       <div class="rv">SLA <b class="num">${d.avgT.toFixed(0)}</b> นาที<br><span class="num">${d.rMax - lim < .05 ? d.rMax.toFixed(2) : f1(d.rMax)}</span> / ${f1(lim)} กม.</div></div>`; }).join('') || `<div class="empty">ไม่พบสาขาที่ SLA เกิน ${ASET.sla} นาที และเทรดแอเรียเกินมาตรฐาน</div>`;
   const more = document.getElementById('dRecMore');
   more.innerHTML = list.length > dShowN ? `แสดง ${dShowN} จาก ${fmt(list.length)} <button class="btn" id="dRecMoreBtn">แสดงเพิ่ม</button>` : '';
@@ -2224,7 +2245,7 @@ function renderDDetail() {
           <div class="imp"><div><span>SLA ประมาณ</span><b>${b.slaFile ? `${c.before.avgT.toFixed(0)} → ${c.after.avgT.toFixed(0)} นาที` : 'ไม่มี SLA ในไฟล์สาขา'}</b></div><div><span>ขับรถเฉลี่ยต่อเที่ยว</span><b>${c.before.rideAvg.toFixed(1)} → ${c.after.rideAvg.toFixed(1)} นาที</b></div>
           <div><span>ออเดอร์ที่หายไป</span><b>${pct(c.cutOrd / Math.max(1, c.before.ord))}</b></div><div><span>ลูกค้าประจำที่กระทบ</span><b>${fmt(c.regLost)} จาก ${fmt(d.tiers[2])} ราย</b></div>
           <div><span>รัศมีไกลสุด</span><b>${f1(d.rMax)} → ${f1(c.newRMax)} กม.</b></div><div><span>สาขาข้างเคียงรับแทนได้</span><b>${pct(c.movedOrd / Math.max(1, c.cutOrd))}</b></div></div></div>` :
-        `<div class="empty" style="padding:4px 0">${c ? 'ส่วนที่อยู่ไกลส่วนใหญ่เป็นลูกค้าประจำหรือปานกลาง จึงไม่แนะนำให้ตัด ' : ''}${d.flags.sla ? 'SLA ในไฟล์สาขาสูง แต่พื้นที่ไม่ไกล น่าจะมาจากกำลังไรเดอร์หรือเวลาเตรียมของ' : c ? '' : 'ไม่มีส่วนที่ไกลและซื้อน้อยพอจะแนะนำให้ตัด'}</div>`}
+        `<div class="cutwhy"><b>ทำไมไม่แนะนำตัดพื้นที่</b><ul>${cutWhy(b).map(t => `<li>${esc(t)}</li>`).join('')}</ul></div>`}
       ${c ? `<div class="zones">${c.steps.map((z, i) => { const rec = i < c.recN, prev = i ? c.steps[i - 1].cum : c.before;
           return `${i === c.recN ? '<div class="zsep">ตัดเพิ่มได้ถ้าจำเป็น (ลำดับถัดไป)</div>' : ''}<div class="zone ${rec ? (z.grp <= 1 ? 'g1' : 'g2') : 'opt'}">
           <div class="zh"><span class="zn ${z.grp <= 1 ? 'g1' : 'g2'}">${i + 1}</span><b>ทิศ${z.dir}</b><span class="num">${f1(z.r0)}–${f1(Math.min(z.r1, d.rMax))} กม.</span>${z.travel ? `<span class="pill p-short">เดินทางเกิน ${c.tLim} นาที/เที่ยว</span>` : z.grp === 1 ? '<span class="pill p-short">ไกล + ซื้อนานๆ ที</span>' : '<span class="pill p-over">ไกล ซื้อปะปน</span>'}</div>
