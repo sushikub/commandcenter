@@ -828,7 +828,7 @@ header h1#pgTitle{margin:0;font:700 19px/1.15 var(--f-display);letter-spacing:.0
       <section class="panel">
         <div class="ph"><h2 id="xActH">2. Export และส่งอีเมล</h2></div>
         <div class="xact">
-          <div class="xa"><button class="btn primary" id="xXlsx">ดาวน์โหลด Excel</button><span>ไฟล์ .xlsx 2 ชีต: สรุปรายโซน และรายสาขา</span></div>
+          <div class="xa"><button class="btn primary" id="xXlsx">ดาวน์โหลด Excel</button><span>ไฟล์ .xlsx ชีตรายสาขา</span></div>
           <div class="xa"><button class="btn" id="xMail">เปิดโปรแกรมอีเมล</button><span>เปิด Outlook หรือโปรแกรมอีเมลพร้อมผู้รับ หัวเรื่อง และสรุปย่อ แล้วดาวน์โหลด Excel ให้ลากไปแนบ</span></div>
           <div class="xa"><button class="btn" id="xCopy">คัดลอกเนื้อหาอีเมล</button><span>คัดลอกเป็นตาราง วางในอีเมล Outlook ได้ทันที (Ctrl+V) ได้ตารางสวยกว่าวิธีเปิดโปรแกรมอีเมล</span></div>
           <div class="xa"><button class="btn" id="xHook">ส่งอัตโนมัติ</button><span id="xHookS">ส่งผ่าน Power Automate พร้อมแนบไฟล์ ต้องตั้งค่า URL ก่อน (ข้อ 3)</span></div>
@@ -3141,14 +3141,11 @@ async function xWorkbook(X) {
   // Excel rejects NaN/Infinity cells and sheet names over 31 characters or with []:*?/\\
   const cell = v => typeof v === 'number' && !isFinite(v) ? '' : v ?? '';
   const add = (name, aoa, widths) => sheets.push({name: name.replace(/[\[\]:*?\/\\]/g, ' ').slice(0, 31), aoa: aoa.map(r => r.map(cell)), widths});
-  add('สรุปรายโซน', [['โซน', 'สาขามี Trade', 'สาขาทั้งหมด', 'สาขาขนาดพื้นที่ใหญ่เกิน', '% สาขาเกินเกณฑ์', 'SLA เฉลี่ย นาที', 'รัศมีเฉลี่ย กม.', 'รัศมีสูงสุด กม.', 'รหัสสาขาที่ไกลที่สุด', 'ชื่อสาขาที่ไกลที่สุด', 'คาดการณ์กระทบออเดอร์/วัน', `สาขา SLA เกิน ${ASET.sla} นาที & พื้นที่อยู่ในเกณฑ์ปกติ`]]
-    .concat(X.zones.map(r => [r.name, r.data, r.all, r.n, r.data ? +(r.share * 100).toFixed(1) : '', r.n ? +r.sla.toFixed(1) : '', r.n ? +r.rAvg.toFixed(2) : '', r.n ? +r.rMax.toFixed(2) : '', r.worst?.code || '', r.worst?.name || '', Math.round(r.ord), r.slaOnly])),
-    [22, 12, 12, 20, 14, 13, 13, 13, 16, 26, 20, 28]);
-  add('รายสาขา', [['ลำดับ', 'รหัสสาขา', 'ชื่อสาขา', 'พื้นที่', 'ชื่อพื้นที่', 'จังหวัด', 'ฝ่าย', 'เขต', 'FC', 'GM', 'กลุ่มเกณฑ์', 'SLA นาที', 'รัศมีไกลสุด กม.', 'เกณฑ์รัศมี กม.', 'เกินเกณฑ์ กม.', 'พื้นที่ ตร.กม.', 'ออเดอร์/วัน', 'ไรเดอร์เกิดจริง/วัน', 'ออเดอร์/ไรเดอร์', 'ขับรถไกลสุด นาที/เที่ยว', 'ลูกค้า', 'ลูกค้าประจำ', 'แนะนำตัด (ส่วน)', 'SLA หลังตัด นาที', 'คำแนะนำ', 'ละติจูด', 'ลองจิจูด']]
+  add('รายสาขา', [['ลำดับ', 'รหัสสาขา', 'ชื่อสาขา', 'พื้นที่', 'ชื่อพื้นที่', 'จังหวัด', 'ฝ่าย', 'เขต', 'FC', 'GM', 'กลุ่มเกณฑ์', 'SLA นาที', 'รัศมีไกลสุด กม.', 'เกณฑ์รัศมี กม.', 'เกินเกณฑ์ กม.', 'พื้นที่ ตร.กม.', 'ออเดอร์/วัน', 'ไรเดอร์เกิดจริง/วัน', 'ออเดอร์/ไรเดอร์', 'ขับรถไกลสุด นาที/เที่ยว', 'คำแนะนำ', 'ละติจูด', 'ลองจิจูด']]
     .concat(X.A.map((b, i) => { const d = b.dv, c = d.cut;
       return [i + 1, b.code, b.name, b.area ?? '', b.area != null ? areaName(b.area) : '', provByCode[b.prov]?.n || '', b.div ?? '', b.dist ?? '', b.fc ?? '', b.gm ?? '', ZONE_TH[zoneOf(b)], +d.avgT.toFixed(1), +d.rMax.toFixed(2), anomalyLim(b), +(d.rMax - anomalyLim(b)).toFixed(2), +d.area.toFixed(2),
-        d.ordSrc ? Math.round(d.ordersDay) : '', d.actual ?? '', d.ordPerRider ? +d.ordPerRider.toFixed(1) : '', b.rad ? Math.round(d.rideMax) : '', d.cnt || '', d.tiers[2] || '', c?.recN || '', c?.recN ? +c.after.avgT.toFixed(1) : '', xCut(b), +b.lat.toFixed(6), +b.lon.toFixed(6)]; })),
-    [6, 10, 28, 7, 16, 16, 18, 10, 20, 20, 11, 9, 13, 12, 12, 11, 11, 14, 13, 18, 8, 10, 13, 13, 40, 11, 11]);
+        d.ordSrc ? Math.round(d.ordersDay) : '', d.actual ?? '', d.ordPerRider ? +d.ordPerRider.toFixed(1) : '', b.rad ? Math.round(d.rideMax) : '', xCut(b), +b.lat.toFixed(6), +b.lon.toFixed(6)]; })),
+    [6, 10, 28, 7, 16, 16, 18, 10, 20, 20, 11, 9, 13, 12, 12, 11, 11, 14, 13, 18, 40, 11, 11]);
   let XL = null; try { XL = await loadXLSX(); } catch (e) {}
   if (!XL) { const aoa = sheets.find(x => x.name === 'รายสาขา').aoa, csv = '\ufeff' + aoa.map(r => r.map(v => { const t = String(v ?? ''); return /[",\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t; }).join(',')).join('\r\n');
     return {csv: true, name: xFileName(X).replace(/\.xlsx$/, '.csv'), blob: new Blob([csv], {type: 'text/csv;charset=utf-8'}), base64: () => btoa(unescape(encodeURIComponent(csv)))}; }
