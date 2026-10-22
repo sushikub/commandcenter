@@ -732,7 +732,7 @@ header h1#pgTitle{margin:0;font:700 19px/1.15 var(--f-display);letter-spacing:.0
   <section class="panel">
     <div class="ph"><h2>ขนาดพื้นที่จัดส่งรายสาขา</h2><span class="note" id="dTNote"></span><div class="right"><button class="btn" id="dCopyT">คัดลอกตาราง</button></div></div>
     <div class="tscroll" id="dTScroll"><table id="dT">
-      <thead><tr><th class="sort" data-k="code">รหัส</th><th class="sort" data-k="name">สาขา</th><th class="sort" data-k="stype">Store type</th><th class="sort" data-k="prov">จังหวัด</th>
+      <thead><tr><th class="sort" data-k="code">รหัส</th><th class="sort" data-k="name">สาขา</th><th class="sort" data-k="stype">Store type</th><th class="sort" data-k="prov">จังหวัด</th><th class="sort" data-k="div">ฝ่าย</th><th class="sort" data-k="dist">เขต</th><th class="sort" data-k="fc">FC</th>
         <th class="sort n" data-k="rMax">รัศมีไกลสุด กม.</th><th class="n">มาตรฐาน</th><th class="sort n" data-k="area">พื้นที่ ตร.กม.</th><th class="sort n" data-k="cnt">ลูกค้า</th><th class="sort n" data-k="reg">ประจำ</th>
         <th class="sort n" data-k="ordersDay">ออเดอร์/วัน</th><th class="sort n" data-k="actual">ไรเดอร์จริง/วัน</th><th class="sort n" data-k="avgT">SLA นาที</th><th class="sort n" data-k="rideMax">ขับรถไกลสุด นาที</th><th class="sort n" data-k="load">ภาระพีค</th><th class="sort" data-k="issue">ประเด็น</th></tr></thead>
       <tbody></tbody>
@@ -2256,21 +2256,21 @@ function renderDDetail() {
 let dLast = [];
 function renderDTable(list) {
   const k = dSortK, dir = dSortDir, ord = {sla: 0, cap: 1, over: 2, ok: 3};
-  const val = b => k === 'code' ? b.code : k === 'name' ? b.name : k === 'stype' ? (b.stype || '') : k === 'prov' ? (provByCode[b.prov]?.n || '') : k === 'issue' ? ord[b.dv.issue] : k === 'reg' ? b.dv.tiers[2] : k === 'actual' ? (b.dv.actual ?? -1) : b.dv[k];
+  const val = b => k === 'code' ? b.code : k === 'name' ? b.name : k === 'stype' ? (b.stype || '') : ['div', 'dist', 'fc'].includes(k) ? (b[k] || '') : k === 'prov' ? (provByCode[b.prov]?.n || '') : k === 'issue' ? ord[b.dv.issue] : k === 'reg' ? b.dv.tiers[2] : k === 'actual' ? (b.dv.actual ?? -1) : b.dv[k];
   list.sort((a, b) => { const x = val(a), y = val(b); return (typeof x === 'string' ? x.localeCompare(y, 'th') : x - y) * dir; });
   dLast = list;
   document.querySelector('#dT tbody').innerHTML = list.slice(0, dTShow).map(b => { const d = b.dv; return `<tr data-code="${b.code}" tabindex="0" class="${dSel === b ? 'selrow' : ''}">
-    <td class="num">${b.code}</td><td><b>${esc(b.name)}</b></td><td>${esc(b.stype || '–')}</td><td>${esc(provByCode[b.prov]?.n || '')}</td>
+    <td class="num">${b.code}</td><td><b>${esc(b.name)}</b></td><td>${esc(b.stype || '–')}</td><td>${esc(provByCode[b.prov]?.n || '')}</td><td>${esc(b.div || '–')}</td><td>${esc(b.dist || '–')}</td><td>${esc(b.fc || '–')}</td>
     <td class="n ${(page === 'anomaly' ? anomArea(b) : d.flags.over) ? 'diff-pos' : ''}">${b.rad ? f1(d.rMax) : '–'}</td><td class="n">${page === 'anomaly' ? f1(anomalyLim(b)) : d.lim}</td><td class="n">${b.rad ? f1(d.area) : '–'}</td><td class="n">${fmt(d.cnt)}</td><td class="n">${fmt(d.tiers[2])}</td>
     <td class="n" title="${d.ordSrc === 'file' ? 'จากไฟล์สาขา' : 'จากหมุดลูกค้า'}">${d.ordSrc ? fmt(Math.round(d.ordersDay)) : '–'}</td><td class="n">${d.actual != null ? f1r(d.actual) : '–'}</td><td class="n ${d.avgT > (page === 'anomaly' ? ASET.sla : DSET.sla) ? 'diff-neg' : ''}">${d.avgT ? d.avgT.toFixed(1) : '–'}</td><td class="n ${d.flags.far ? 'diff-neg' : ''}">${b.rad ? d.rideMax.toFixed(0) : '–'}</td>
-    <td class="n ${d.load > 1 ? 'diff-neg' : ''}">${pct(d.load)}</td><td>${issuePills(b)}</td></tr>`; }).join('') || `<tr><td colspan="15" class="empty">ไม่พบสาขาตามเงื่อนไข</td></tr>`;
+    <td class="n ${d.load > 1 ? 'diff-neg' : ''}">${pct(d.load)}</td><td>${issuePills(b)}</td></tr>`; }).join('') || `<tr><td colspan="18" class="empty">ไม่พบสาขาตามเงื่อนไข</td></tr>`;
   document.getElementById('dTNote').textContent = `${fmt(list.length)} สาขา`;
   const more = document.getElementById('dTMore');
   more.innerHTML = list.length > dTShow ? `แสดง ${fmt(dTShow)} จาก ${fmt(list.length)} <button class="btn" id="dTMoreBtn">แสดงเพิ่ม 50</button>` : '';
   const mb = document.getElementById('dTMoreBtn'); if (mb) mb.onclick = () => { dTShow += 50; renderDTable(dLast); };
   document.querySelectorAll('#dT th.sort').forEach(th => { const kk = th.dataset.k; th.innerHTML = th.textContent.replace(/[▲▼]/g, '') + (kk === dSortK ? `<span class="ar">${dSortDir > 0 ? '▲' : '▼'}</span>` : ''); });
 }
-document.querySelectorAll('#dT th.sort').forEach(th => th.onclick = () => { const k = th.dataset.k; if (dSortK === k) dSortDir *= -1; else { dSortK = k; dSortDir = ['code', 'name', 'stype', 'prov', 'issue'].includes(k) ? 1 : -1; } renderDTable(dLast); });
+document.querySelectorAll('#dT th.sort').forEach(th => th.onclick = () => { const k = th.dataset.k; if (dSortK === k) dSortDir *= -1; else { dSortK = k; dSortDir = ['code', 'name', 'stype', 'prov', 'div', 'dist', 'fc', 'issue'].includes(k) ? 1 : -1; } renderDTable(dLast); });
 document.querySelector('#dT tbody').addEventListener('click', e => { const tr = e.target.closest('tr[data-code]'); if (tr) selectDBranch(BR.find(b => b.code === tr.dataset.code)); });
 document.querySelector('#dT tbody').addEventListener('keydown', e => { if (e.key === 'Enter') { const tr = e.target.closest('tr[data-code]'); if (tr) selectDBranch(BR.find(b => b.code === tr.dataset.code)); } });
 document.getElementById('dCopyT').onclick = () => {
