@@ -856,7 +856,7 @@ header h1#pgTitle{margin:0;font:700 19px/1.15 var(--f-display);letter-spacing:.0
               <li>สร้าง flow แบบ <b>Instant cloud flow</b> ทริกเกอร์ <b>When an HTTP request is received</b> · Who can trigger = <b>Anyone</b> · ในตัวเลือกขั้นสูงตั้ง Method = <b>POST</b> · ช่อง Request Body JSON Schema <b>เว้นว่าง</b></li>
               <li>เพิ่มขั้น <b>Data Operation → Parse JSON</b> · Content = นิพจน์ <code>json(triggerBody())</code> · Schema = กล่องด้านล่าง (กดคัดลอก)</li>
               <li>เพิ่มขั้น <b>Office 365 Outlook → Send an email (V2)</b> (หรือ from a shared mailbox) เลือกค่าจาก Parse JSON: To = <code>to</code>, CC = <code>cc</code>, Subject = <code>subject</code>, Body = <code>html</code> (กดปุ่ม &lt;/&gt; ในช่อง Body เพื่อวางแบบ HTML)</li>
-              <li>Attachments: กดไอคอน <b>Switch to input entire array</b> (มุมขวาของช่อง Attachments) แล้วใส่นิพจน์ <code>body('Parse_JSON')?['attachments']</code> · (แนบทั้ง Excel และ HTML ให้เอง) · หรือถ้าใส่ทีละช่อง: Name = <code>fileName</code>, Content = <code>base64ToBinary(body('Parse_JSON')?['fileBase64'])</code> และเพิ่มอีกแถว Name = <code>htmlName</code>, Content = <code>base64ToBinary(body('Parse_JSON')?['htmlBase64'])</code> ห้ามใช้ base64ToString และห้ามใส่ fileBase64 ตรงๆ ไม่งั้นไฟล์จะเปิดไม่ได้</li>
+              <li>Attachments: กดไอคอน <b>Switch to input entire array</b> (มุมขวาของช่อง Attachments) แล้วใส่นิพจน์ <code>body('Parse_JSON')?['attachments']</code> · (แนบทั้ง Excel และ HTML ให้เอง ถ้าเคยตั้ง Schema ไว้ก่อน ให้คัดลอก Schema ใหม่ไปวางใน Parse JSON อีกครั้ง) · หรือถ้าใส่ทีละช่อง: Name = <code>fileName</code>, Content = <code>base64ToBinary(body('Parse_JSON')?['fileBase64'])</code> และเพิ่มอีกแถว Name = <code>htmlName</code>, Content = <code>base64ToBinary(body('Parse_JSON')?['htmlBase64'])</code> ห้ามใช้ base64ToString และห้ามใส่ fileBase64 ตรงๆ ไม่งั้นไฟล์จะเปิดไม่ได้</li>
               <li>บันทึก flow แล้วคัดลอก HTTP URL มาใส่ช่องด้านบน · ถ้าเพิ่มขั้น <b>Response</b> (Status 200, Header <code>Access-Control-Allow-Origin: *</code>) หน้านี้จะยืนยันผลการส่งได้</li>
             </ol>
             <div class="xschema"><button class="btn" id="xSchemaCopy">คัดลอก Schema</button><pre id="xSchema"></pre></div>
@@ -3226,12 +3226,15 @@ const xPrevArea = () => { if (XS.mode !== 'zone') return undefined; const L = xA
   return (p || L.find(z => z.X.A.length) || L[0]).id; };
 
 /* ---------- send actions (one email) ---------- */
+/* Power Automate's own binary shape (what base64ToBinary() returns): Outlook then attaches the decoded bytes for every
+   file type. A plain base64 string works for .xlsx but text types like .html get attached as the base64 text itself. */
+const xBin = b64 => ({'$content-type': 'application/octet-stream', '$content': b64});
 async function xDoHook(X, r) {
   const f = await xWorkbook(X), b64 = f.base64();
   if (!f.csv && !b64.startsWith('UEsDB')) throw new Error('สร้างไฟล์ Excel ไม่สมบูรณ์ ลองโหลดหน้านี้ใหม่แล้วส่งอีกครั้ง');   // a real .xlsx is a zip: base64 starts with 'UEsDB' (PK..)
   const h = await xReportHTML(X, document.getElementById('xPw').value), hb64 = xB64(new Uint8Array(await h.blob.arrayBuffer()));
   const payload = {to: r.to.join(';'), cc: r.cc.join(';'), subject: xSubject(X), html: xHTML(X), fileName: f.name, fileBase64: b64, htmlName: h.name, htmlBase64: hb64,
-    attachments: [{Name: f.name, ContentBytes: b64}, {Name: h.name, ContentBytes: hb64}], count: X.A.length, zone: X.area === undefined ? '' : X.scope};
+    attachments: [{Name: f.name, ContentBytes: xBin(b64)}, {Name: h.name, ContentBytes: xBin(hb64)}], count: X.A.length, zone: X.area === undefined ? '' : X.scope};
   // text/plain keeps this a "simple" request: no CORS preflight (OPTIONS), so the flow runs exactly once with the full body
   let res;
   try { res = await fetch(XS.url, {method: 'POST', headers: {'Content-Type': 'text/plain;charset=UTF-8'}, body: JSON.stringify(payload)}); }
@@ -3298,7 +3301,7 @@ function renderExport() {
   const bind = (id, k, ev = 'input', get = el => el.value) => { const el = $(id); if (el.type === 'checkbox') el.checked = !!XS[k]; else el.value = XS[k] ?? ''; el.addEventListener(ev, () => { XS[k] = get(el); xSave(); if (page === 'export') renderExport(); }); };
   bind('xTo', 'to'); bind('xCc', 'cc'); bind('xSubj', 'subj'); bind('xNote', 'note'); bind('xTop', 'top', 'change'); bind('xZone', 'zone', 'change', el => el.checked); bind('xUrl', 'url', 'change', el => el.value.trim());
   document.querySelectorAll('#xMode button').forEach(b => b.onclick = () => { XS.mode = b.dataset.m; xSave(); xMsg(''); renderExport(); });
-  const schema = {type: 'object', properties: {to: {type: 'string'}, cc: {type: 'string'}, subject: {type: 'string'}, html: {type: 'string'}, fileName: {type: 'string'}, fileBase64: {type: 'string'}, htmlName: {type: 'string'}, htmlBase64: {type: 'string'}, attachments: {type: 'array', items: {type: 'object', properties: {Name: {type: 'string'}, ContentBytes: {type: 'string'}}}}, count: {type: 'integer'}, zone: {type: 'string'}}};
+  const schema = {type: 'object', properties: {to: {type: 'string'}, cc: {type: 'string'}, subject: {type: 'string'}, html: {type: 'string'}, fileName: {type: 'string'}, fileBase64: {type: 'string'}, htmlName: {type: 'string'}, htmlBase64: {type: 'string'}, attachments: {type: 'array', items: {type: 'object', properties: {Name: {type: 'string'}, ContentBytes: {type: 'object', properties: {'$content-type': {type: 'string'}, '$content': {type: 'string'}}}}}}, count: {type: 'integer'}, zone: {type: 'string'}}};
   $('xSchema').textContent = JSON.stringify(schema, null, 2);
   $('xSchemaCopy').onclick = () => navigator.clipboard.writeText(JSON.stringify(schema, null, 2)).then(() => toast('คัดลอก Schema แล้ว'), () => toast('คัดลอกไม่สำเร็จ'));
   const busy = async (btn, fn) => { btn.disabled = true; const t = btn.textContent; btn.textContent = 'กำลังทำ…'; try { await fn(); } catch (e) { xMsg(esc(e.message || String(e)), 'err'); } finally { btn.textContent = t; btn.disabled = false; renderExport(); } };
