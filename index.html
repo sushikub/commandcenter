@@ -1585,6 +1585,17 @@ function afterDeliveryData(clip) {
 let GRID = new Map();
 const GSZ = .02, gkey = (lon, lat) => Math.floor(lon / GSZ) + ':' + Math.floor(lat / GSZ);
 function buildGrid() { GRID = new Map(); for (const b of BR) { const k = gkey(b.lon, b.lat); if (!GRID.has(k)) GRID.set(k, []); GRID.get(k).push(b); } }
+/* a neighbour may take over a cut piece only if the piece is close enough: straight distance and drive time from that store */
+const TAKE = {km: 2, min: 10};
+const takeOk = (o, d) => d <= TAKE.km + 1e-9 && rideMin(o, d) <= TAKE.min + 1e-9;
+/* branches that can take over at least one recommended cut piece (adjacent or not), with the closest piece's distance and drive time */
+function takeoverAdj(b) {
+  const c = b.dv?.cut; if (!c || !c.recN) return [];
+  const best = new Map(), adj = new Set(b.adj || []);
+  for (const z of c.steps.slice(0, c.recN)) { if (!z.mid) continue;
+    for (const {b: o, d} of nearBranches(z.mid[0], z.mid[1], TAKE.km)) { if (o === b || !takeOk(o, d)) continue; const p = best.get(o); if (!p || d < p.d) best.set(o, {o, d, t: rideMin(o, d), dir: z.dir, adj: adj.has(o)}); } }
+  return [...best.values()].sort((x, y) => x.d - y.d);
+}
 function nearBranches(lon, lat, maxKm) {
   const out = [], kx = kmLon(lat), sxn = Math.ceil(maxKm / (GSZ * kx)), syn = Math.ceil(maxKm / (GSZ * KM_LAT)), gx = Math.floor(lon / GSZ), gy = Math.floor(lat / GSZ), m2 = maxKm * maxKm;
   for (let x = gx - sxn; x <= gx + sxn; x++) for (let y = gy - syn; y <= gy + syn; y++) {
@@ -1715,7 +1726,9 @@ function computeCut(b) {
     st.cum = statsFor(b, keep); st.cumRMax = Math.max(...nr); st.cumArea = polyArea(nr);
     const a = st.acc; Object.assign(st, {c: a.c, ord: a.ord, reg: a.reg, occ: a.occ, mod: a.mod});
     const mid = offsetLL(b.lon, b.lat, st.k * 45, (st.r0 + Math.min(st.r1, rOut[st.k])) / 2);
-    st.takeover = nearBranches(mid[0], mid[1], 3).find(x => x.b !== b && x.d <= limitOf(x.b)) || null;
+    st.mid = mid;
+    st.takeover = nearBranches(mid[0], mid[1], TAKE.km).find(x => x.b !== b && takeOk(x.b, x.d)) || null;
+    if (st.takeover) st.takeover.t = rideMin(st.takeover.b, st.takeover.d);
   }
   let recN = 0;
   for (let i = 0; i < steps.length; i++) {
@@ -2198,7 +2211,7 @@ function renderDDetail() {
     <div class="dsec2"><div class="h">ลูกค้า ${fmt(d.cnt)} ราย</div>
       <div class="stack">${[2, 1, 0].map(t => `<i style="width:${d.cnt ? d.tiers[t] / d.cnt * 100 : 0}%;background:var(${TIER[t].v})"></i>`).join('')}</div>
       <div class="legend">${[2, 1, 0].map(t => `<span><span class="dot" style="background:var(${TIER[t].v})"></span>${TIER[t].t} <b>${fmt(d.tiers[t])}</b></span>`).join('')}<span>นอกรัศมีมาตรฐาน <b>${fmt(d.outC)}</b></span></div></div>
-    ${b.adj?.length ? `<div class="dsec2"><div class="h">พื้นที่ติดกับ ${b.adj.length} สาขา</div><div class="adjl">${b.adj.slice().sort((x, y) => distKm(b.lon, b.lat, x.lon, x.lat) - distKm(b.lon, b.lat, y.lon, y.lat)).map(o => `<button class="adjb" data-go="${o.code}"><span class="dot" style="background:var(--${o.dv?.issue === 'sla' ? 'short' : o.dv?.issue === 'cap' ? 'cap' : o.dv?.issue === 'over' ? 'over' : 'ok'})"></span>${esc(o.name)} <span class="num">${f1(distKm(b.lon, b.lat, o.lon, o.lat))} กม.</span></button>`).join('')}</div><div class="hint">นับเป็นพื้นที่ติดกันเมื่อขอบห่างกันไม่เกิน 50 ม.</div></div>` : ''}
+    ${(() => { const T = takeoverAdj(b); return T.length ? `<div class="dsec2"><div class="h">สาขาใกล้เคียงที่รับพื้นที่ตัดได้ ${T.length} สาขา</div><div class="adjl">${T.map(({o, d, t, dir, adj}) => `<button class="adjb" data-go="${o.code}"><span class="dot" style="background:var(--${o.dv?.issue === 'sla' ? 'short' : o.dv?.issue === 'cap' ? 'cap' : o.dv?.issue === 'over' ? 'over' : 'ok'})"></span>${esc(o.code)} ${esc(o.name)} <span class="num">ทิศ${dir} ${f1(d)} กม. · ${Math.round(t)} นาที${adj ? ' · พื้นที่ติดกัน' : ''}</span></button>`).join('')}</div><div class="hint">แสดงเฉพาะสาขาที่อยู่ห่างจากกลางพื้นที่ที่แนะนำให้ตัดไม่เกิน ${TAKE.km} กม. และขับรถไม่เกิน ${TAKE.min} นาที ถ้าไม่มีสาขาเข้าเงื่อนไข จะไม่แสดงหัวข้อนี้</div></div>` : ''; })()}
     ${d.cnt ? `<div class="dsec2"><div class="h">ออเดอร์และเวลาส่งตามระยะทาง (กม.)</div>${bandChart(b)}</div>` : ''}
     <div class="dsec2"><div class="h">คำแนะนำ</div>
       ${c && c.recN ? `<div class="cutsum">แนะนำตัด <b>${c.recN} ส่วน</b> ${c.nTravel ? `เริ่มจาก <b>${c.nTravel} ส่วนที่ขับรถเกิน ${c.tLim} นาที/เที่ยว</b> (เกิน ${f1(c.dT)} กม. ตามถนน วงประสีแดงบนแผนที่) แล้วตามด้วย` : 'เรียงจาก'}ส่วนที่ไกลและลูกค้าซื้อนานๆ ที · ลูกค้าในส่วนที่ตัดเป็นกลุ่มนานๆ ที <b>${pct(c.occShare)}</b>
@@ -2212,7 +2225,7 @@ function renderDDetail() {
           <div class="zm">ขับรถจากร้าน ${Math.round(rideMin(b, z.r0))}–${Math.round(rideMin(b, Math.min(z.r1, d.rMax)))} นาที/เที่ยว</div>
           <div class="tiers"><i style="width:${z.occS * 100}%;background:var(--t0)"></i><i style="width:${z.modS * 100}%;background:var(--t1)"></i><i style="width:${z.regS * 100}%;background:var(--t2)"></i></div>
           ${z.c ? `<div class="zm">ลูกค้า ${z.c} ราย · นานๆ ที ${pct(z.occS)} · ประจำ ${z.reg} ราย · ${fmt(Math.round(z.ord / 30 * (b.ordScale || 1) * 10) / 10)} ออเดอร์/วัน</div>` : '<div class="zm">ไม่มีหมุดลูกค้าในส่วนนี้</div>'}
-          <div class="zm">${z.takeover ? `ย้ายให้ <button class="linkbtn" data-go="${z.takeover.b.code}">${esc(z.takeover.b.name)}</button> ห่าง ${f1(z.takeover.d)} กม.` : 'ไม่มีสาขาใกล้เคียงรับแทน ควรคิดค่าส่งเพิ่มหรือนัดจุดรับ'}</div>
+          <div class="zm">${z.takeover ? `ย้ายให้ <button class="linkbtn" data-go="${z.takeover.b.code}">${esc(z.takeover.b.name)}</button> ห่าง ${f1(z.takeover.d)} กม. · ${Math.round(z.takeover.t)} นาที` : `ไม่มีสาขาใกล้เคียงรับแทนได้ (ต้องห่างไม่เกิน ${TAKE.km} กม. ขับรถไม่เกิน ${TAKE.min} นาที) ควรคิดค่าส่งเพิ่มหรือนัดจุดรับ`}</div>
           <div class="zm cum">ตัดถึงลำดับนี้: ${b.slaFile ? `SLA ประมาณ ${prev.avgT.toFixed(0)}→${z.cum.avgT.toFixed(0)} นาที · ` : ''}ขับรถเฉลี่ย ${z.cum.rideAvg.toFixed(1)} นาที/เที่ยว · ออเดอร์เหลือ ${pct(z.cum.ord / Math.max(1, c.before.ord))}</div>
           ${z.reg >= 5 ? `<div class="zm warn">มีลูกค้าประจำ ${z.reg} ราย ควรแจ้งล่วงหน้าหรือให้สาขาข้างเคียงรับต่อ</div>` : ''}</div>`; }).join('')}</div>` : ''}
       ${d.capRec ? `<div class="caprec">กำลังไรเดอร์ช่วงพีคไม่พอ: ต้องการ <b>${d.capRec.need} คน</b> มีประมาณ ${f1r(d.ridersPeak)} คน ควรเพิ่ม <b>${d.capRec.add} คน</b>${d.capRec.fitR ? ` หรือลดรัศมีเหลือ <b>${f1(d.capRec.fitR)} กม.</b>` : ''}</div>` : ''}
