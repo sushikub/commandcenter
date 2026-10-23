@@ -3168,13 +3168,21 @@ function xHTML(X) {
     h += `</table>`;
   }
   if (X.A.length) {
-    h += `<p style="margin:0 0 6px;font-weight:700">รายสาขา${top.length < X.A.length ? ` (${fmt(top.length)} อันดับแรกจาก ${fmt(X.A.length)} สาขา ดูทั้งหมดในไฟล์แนบ)` : ''}</p>
-      <table cellspacing="0" cellpadding="0" style="border-collapse:collapse;margin:0 0 14px;font-size:13px"><tr>
+    // one table per store type: CO first, then SBP, then any other type, then branches without a type
+    const tKey = b => { const t = String(b.stype || '').trim().toUpperCase(); return /\bCO\b|^CO/.test(t) ? 'CO' : /SBP/.test(t) ? 'SBP' : t; };
+    const rank = k => k === 'CO' ? 0 : k === 'SBP' ? 1 : k ? 2 : 3, groups = new Map();
+    for (const b of top) { const k = tKey(b); if (!groups.has(k)) groups.set(k, []); groups.get(k).push(b); }
+    const G = [...groups.entries()].sort((p, q) => rank(p[0]) - rank(q[0]) || p[0].localeCompare(q[0], 'th'));
+    h += `<p style="margin:0 0 6px;font-weight:700">รายสาขา${top.length < X.A.length ? ` (${fmt(top.length)} อันดับแรกจาก ${fmt(X.A.length)} สาขา ดูทั้งหมดในไฟล์แนบ)` : ''}</p>`;
+    for (const [k, list] of G) {
+      if (G.length > 1 || k) h += `<p style="margin:10px 0 4px;font-weight:700;font-size:13px;color:#2f5bd3">${k ? `ร้าน ${esc(k === 'CO' || k === 'SBP' ? k : list[0].stype.trim())}` : 'ไม่ระบุ Store type'} · ${fmt(list.length)} สาขา</p>`;
+      h += `<table cellspacing="0" cellpadding="0" style="border-collapse:collapse;margin:0 0 14px;font-size:13px"><tr>
       <th ${thn}>#</th><th ${th}>รหัส</th><th ${th}>สาขา</th><th ${th}>Store type</th><th ${th}>พื้นที่</th><th ${th}>จังหวัด</th>${org ? `<th ${th}>ฝ่าย / เขต / FC</th>` : ''}<th ${thn}>SLA นาที</th><th ${thn}>รัศมีไกลสุด / เกณฑ์ กม.</th><th ${thn}>เกินเกณฑ์</th><th ${thn}>ออเดอร์/วัน</th><th ${thn}>ไรเดอร์จริง/วัน</th></tr>`;
-    top.forEach((b, i) => { const d = b.dv;
-      h += `<tr><td ${tdn}>${i + 1}</td><td ${td}>${esc(b.code)}</td><td ${td}>${esc(b.name)}</td><td ${td}>${esc(b.stype || '–')}</td><td ${td}>${esc(xAreaLbl(b))}</td><td ${td}>${esc(provByCode[b.prov]?.n || '')}</td>${org ? `<td ${td}>${esc([b.div, b.dist, b.fc].filter(Boolean).join(' / ')) || '–'}</td>` : ''}
+      list.forEach((b, i) => { const d = b.dv;
+        h += `<tr><td ${tdn}>${i + 1}</td><td ${td}>${esc(b.code)}</td><td ${td}>${esc(b.name)}</td><td ${td}>${esc(b.stype || '–')}</td><td ${td}>${esc(xAreaLbl(b))}</td><td ${td}>${esc(provByCode[b.prov]?.n || '')}</td>${org ? `<td ${td}>${esc([b.div, b.dist, b.fc].filter(Boolean).join(' / ')) || '–'}</td>` : ''}
         <td ${red}>${d.avgT.toFixed(1)}</td><td ${tdn}>${d.rMax.toFixed(2)} / ${f1(anomalyLim(b))}</td><td ${tdn}>${xExcess(b)}</td><td ${tdn}>${d.ordSrc ? fmt(Math.round(d.ordersDay)) : '–'}</td><td ${tdn}>${d.actual != null ? f1r(d.actual) : '–'}</td></tr>`; });
-    h += `</table>`;
+      h += `</table>`;
+    }
   } else h += `<p>ไม่พบสาขาที่ SLA เกินเกณฑ์และขนาด Trade Area เกินมาตรฐานพร้อมกันในขอบเขตนี้</p>`;
   if (X.slaOnly.length) h += `<p style="margin:0 0 12px;color:#667085;font-size:12px">มีอีก ${fmt(X.slaOnly.length)} สาขาที่ SLA เกิน ${ASET.sla} นาที แต่พื้นที่อยู่ในเกณฑ์ปกติ</p>`;
   h += `<p style="margin:12px 0 0;color:#98a2b3;font-size:11px">ส่งจาก Rider Command Center · 7-Delivery</p></div>`;
