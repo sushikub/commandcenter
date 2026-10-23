@@ -3079,6 +3079,7 @@ function bootEmbed(e) {
   remember = false;
   for (const k of DS_KEYS) DS[k] = e.ds[k] || null; DS.log = [];
   Object.assign(ASET, e.aset || {}); Object.assign(DSET, e.dset || {});
+  if (e.sort) { dSortK = e.sort.k; dSortDir = e.sort.dir; }   // table opens sorted the way it was on the dashboard
   document.documentElement.classList.add('rcc-report');
   document.querySelectorAll('#acrit input').forEach(inp => { inp.value = ASET[inp.dataset.k] ?? inp.value; inp.disabled = true; });
   document.title = e.title || document.title;
@@ -3404,7 +3405,7 @@ if(P.k)run().catch(fail);else{$('s').textContent='รายงานนี้ป
 async function xReportHTML(X, pw) {
   if (!window.CompressionStream || !crypto.subtle) throw new Error('เบราว์เซอร์นี้สร้างไฟล์ HTML แบบเข้ารหัสไม่ได้ ใช้ Chrome หรือ Edge รุ่นใหม่ และเปิดแอปจากไฟล์บนเครื่องหรือ https');
   const title = `ชี้เป้ารายสาขา SLA สูง ขนาด Trade Area ใหญ่ผิดปกติ · ${X.scope}`;
-  const embed = {ds: xSubsetDS(X.base), aset: {...ASET}, dset: {...DSET}, title, scope: X.scope, stamp: xStamp()};
+  const embed = {ds: xSubsetDS(X.base), aset: {...ASET}, dset: {...DSET}, title, scope: X.scope, stamp: xStamp(), sort: {k: dSortK, dir: dSortDir}};
   const js = JSON.stringify(embed).replace(/</g, '\\u003c').replace(/[\u2028\u2029]/g, c => c === '\u2028' ? '\\u2028' : '\\u2029');
   const page = PRISTINE.replace('<head>', () => `<head><meta charset="utf-8"><script>window.__RCC_EMBED=${js};<\/script>`);
   const enc = await xEncrypt(await xGzip(page), pw);
