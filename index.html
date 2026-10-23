@@ -3132,7 +3132,10 @@ function xHTML(X) {
   const thn = 'style="background:#f2f4f7;border:1px solid #d0d5dd;padding:6px 8px;text-align:right;font-weight:600"';
   const td = 'style="border:1px solid #d0d5dd;padding:5px 8px"', tdn = 'style="border:1px solid #d0d5dd;padding:5px 8px;text-align:right;white-space:nowrap"';
   const red = 'style="border:1px solid #d0d5dd;padding:5px 8px;text-align:right;white-space:nowrap;color:#c4320a;font-weight:600"';
-  const top = +XS.top ? X.A.slice(0, +XS.top) : X.A;
+  // pick the worst N (same order as the page), then list them by ฝ่าย / เขต / FC, highest SLA first within each
+  const orgKey = b => [b.div, b.dist, b.fc].map(v => v || '').join('\u0001');
+  const top = (+XS.top ? X.A.slice(0, +XS.top) : X.A.slice()).sort((a, b) => { const p = orgKey(a), q = orgKey(b);
+    if (p !== q) return !p ? 1 : !q ? -1 : p.localeCompare(q, 'th', {numeric: true}); return b.dv.avgT - a.dv.avgT; });
   const org = top.some(b => b.div || b.dist || b.fc);
   const note = esc(XS.note || '').replace(/\n/g, '<br>');
   let h = `<div style="font-family:Tahoma,'Leelawadee UI',sans-serif;font-size:14px;color:#1d2433;line-height:1.5">`;
@@ -3153,10 +3156,10 @@ function xHTML(X) {
   if (X.A.length) {
     h += `<p style="margin:0 0 6px;font-weight:700">รายสาขา${top.length < X.A.length ? ` (${fmt(top.length)} อันดับแรกจาก ${fmt(X.A.length)} สาขา ดูทั้งหมดในไฟล์แนบ)` : ''}</p>
       <table cellspacing="0" cellpadding="0" style="border-collapse:collapse;margin:0 0 14px;font-size:13px"><tr>
-      <th ${thn}>#</th><th ${th}>รหัส</th><th ${th}>สาขา</th><th ${th}>Store type</th><th ${th}>พื้นที่</th><th ${th}>จังหวัด</th>${org ? `<th ${th}>ฝ่าย / เขต / FC</th>` : ''}<th ${thn}>SLA นาที</th><th ${thn}>รัศมีไกลสุด / เกณฑ์ กม.</th><th ${thn}>เกินเกณฑ์</th><th ${thn}>ออเดอร์/วัน</th><th ${thn}>ไรเดอร์จริง/วัน</th><th ${th}>แนะนำ</th></tr>`;
+      <th ${thn}>#</th><th ${th}>รหัส</th><th ${th}>สาขา</th><th ${th}>Store type</th><th ${th}>พื้นที่</th><th ${th}>จังหวัด</th>${org ? `<th ${th}>ฝ่าย / เขต / FC</th>` : ''}<th ${thn}>SLA นาที</th><th ${thn}>รัศมีไกลสุด / เกณฑ์ กม.</th><th ${thn}>เกินเกณฑ์</th><th ${thn}>ออเดอร์/วัน</th><th ${thn}>ไรเดอร์จริง/วัน</th></tr>`;
     top.forEach((b, i) => { const d = b.dv;
       h += `<tr><td ${tdn}>${i + 1}</td><td ${td}>${esc(b.code)}</td><td ${td}>${esc(b.name)}</td><td ${td}>${esc(b.stype || '–')}</td><td ${td}>${esc(xAreaLbl(b))}</td><td ${td}>${esc(provByCode[b.prov]?.n || '')}</td>${org ? `<td ${td}>${esc([b.div, b.dist, b.fc].filter(Boolean).join(' / ')) || '–'}</td>` : ''}
-        <td ${red}>${d.avgT.toFixed(1)}</td><td ${tdn}>${d.rMax.toFixed(2)} / ${f1(anomalyLim(b))}</td><td ${tdn}>${xExcess(b)}</td><td ${tdn}>${d.ordSrc ? fmt(Math.round(d.ordersDay)) : '–'}</td><td ${tdn}>${d.actual != null ? f1r(d.actual) : '–'}</td><td ${td}>${esc(xCut(b)) || '–'}</td></tr>`; });
+        <td ${red}>${d.avgT.toFixed(1)}</td><td ${tdn}>${d.rMax.toFixed(2)} / ${f1(anomalyLim(b))}</td><td ${tdn}>${xExcess(b)}</td><td ${tdn}>${d.ordSrc ? fmt(Math.round(d.ordersDay)) : '–'}</td><td ${tdn}>${d.actual != null ? f1r(d.actual) : '–'}</td></tr>`; });
     h += `</table>`;
   } else h += `<p>ไม่พบสาขาที่ SLA เกินเกณฑ์และขนาด Trade Area เกินมาตรฐานพร้อมกันในขอบเขตนี้</p>`;
   if (X.slaOnly.length) h += `<p style="margin:0 0 12px;color:#667085;font-size:12px">มีอีก ${fmt(X.slaOnly.length)} สาขาที่ SLA เกิน ${ASET.sla} นาที แต่พื้นที่อยู่ในเกณฑ์ปกติ</p>`;
