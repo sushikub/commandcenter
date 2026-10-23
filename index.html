@@ -3201,6 +3201,13 @@ function xPlain(X, max = Infinity) {
 }
 
 /* ---------- Excel ---------- */
+/* Excel row order: Store type (CO, SBP, other types, blank), then FC A→Z (blank last), then SLA high → low */
+const xTypeKey = b => { const t = String(b.stype || '').trim().toUpperCase(); return /^CO\b|\bCO\b/.test(t) ? 'CO' : /SBP/.test(t) ? 'SBP' : t; };
+const xTypeRank = k => k === 'CO' ? 0 : k === 'SBP' ? 1 : k ? 2 : 3;
+const xExcelOrder = A => A.slice().sort((a, b) => { const ka = xTypeKey(a), kb = xTypeKey(b);
+  const r = xTypeRank(ka) - xTypeRank(kb) || ka.localeCompare(kb, 'th'); if (r) return r;
+  const fa = a.fc || '', fb = b.fc || ''; if (fa !== fb) return !fa ? 1 : !fb ? -1 : fa.localeCompare(fb, 'th', {numeric: true});
+  return b.dv.avgT - a.dv.avgT; });
 /* Sheets as arrays first; written as .xlsx when SheetJS loads, otherwise the branch sheet goes out as a UTF-8 CSV */
 async function xWorkbook(X) {
   const sheets = [];
@@ -3208,7 +3215,7 @@ async function xWorkbook(X) {
   const cell = v => typeof v === 'number' && !isFinite(v) ? '' : v ?? '';
   const add = (name, aoa, widths) => sheets.push({name: name.replace(/[\[\]:*?\/\\]/g, ' ').slice(0, 31), aoa: aoa.map(r => r.map(cell)), widths});
   add('รายสาขา', [['ลำดับ', 'รหัสสาขา', 'ชื่อสาขา', 'Store type', 'พื้นที่', 'จังหวัด', 'ฝ่าย', 'เขต', 'FC', 'GM', 'กลุ่มเกณฑ์', 'SLA นาที', 'รัศมีไกลสุด กม.', 'เกณฑ์รัศมี กม.', 'เกินเกณฑ์ กม.', 'พื้นที่ ตร.กม.', 'ออเดอร์/วัน', 'ไรเดอร์เกิดจริง/วัน', 'ออเดอร์/ไรเดอร์', 'ขับรถไกลสุด นาที/เที่ยว', 'คำแนะนำ', 'ละติจูด', 'ลองจิจูด']]
-    .concat(X.A.map((b, i) => { const d = b.dv, c = d.cut;
+    .concat(xExcelOrder(X.A).map((b, i) => { const d = b.dv, c = d.cut;
       return [i + 1, b.code, b.name, b.stype ?? '', xAreaLbl(b), provByCode[b.prov]?.n || '', b.div ?? '', b.dist ?? '', b.fc ?? '', b.gm ?? '', ZONE_TH[zoneOf(b)], +d.avgT.toFixed(1), +d.rMax.toFixed(2), anomalyLim(b), +(d.rMax - anomalyLim(b)).toFixed(2), +d.area.toFixed(2),
         d.ordSrc ? Math.round(d.ordersDay) : '', d.actual ?? '', d.ordPerRider ? +d.ordPerRider.toFixed(1) : '', b.rad ? Math.round(d.rideMax) : '', xCut(b), +b.lat.toFixed(6), +b.lon.toFixed(6)]; })),
     [6, 10, 28, 14, 18, 16, 18, 10, 20, 20, 11, 9, 13, 12, 12, 11, 11, 14, 13, 18, 40, 11, 11]);
